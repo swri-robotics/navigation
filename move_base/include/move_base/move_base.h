@@ -45,8 +45,6 @@
 #include <actionlib/server/simple_action_server.h>
 #include <move_base_msgs/MoveBaseAction.h>
 
-#include <nav_core/base_local_planner.h>
-#include <nav_core/base_global_planner.h>
 #include <nav_core/recovery_behavior.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <costmap_2d/costmap_2d_ros.h>
@@ -94,14 +92,6 @@ namespace move_base {
        */
       virtual ~MoveBase();
 
-      /**
-       * @brief  Performs a control cycle
-       * @param goal A reference to the goal to pursue
-       * @param global_plan A reference to the global plan being used
-       * @return True if processing of the goal is done, false otherwise
-       */
-      bool executeCycle(geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& global_plan);
-
     private:
       /**
        * @brief  A service call that clears the costmaps of obstacles
@@ -118,14 +108,6 @@ namespace move_base {
        * @return True if planning succeeded, false otherwise
        */
       bool planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp);
-
-      /**
-       * @brief  Make a new global plan
-       * @param  goal The goal to plan to
-       * @param  plan Will be filled in with the plan made by the planner
-       * @return  True if planning succeeds, false otherwise
-       */
-      bool makePlan(const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
 
       /**
        * @brief  Load the recovery behaviors for the navigation stack from the parameter server
@@ -145,11 +127,6 @@ namespace move_base {
        * @param size_y The y size of the window
        */
       void clearCostmapWindows(double size_x, double size_y);
-
-      /**
-       * @brief  Publishes a velocity command of zero to the base
-       */
-      void publishZeroVelocity();
 
       /**
        * @brief  Reset the state of the move_base action and send a zero velocity command to the base
@@ -172,17 +149,11 @@ namespace move_base {
 
       MoveBaseActionServer* as_;
 
-      boost::shared_ptr<nav_core::BaseLocalPlanner> tc_;
-      costmap_2d::Costmap2DROS* planner_costmap_ros_, *controller_costmap_ros_;
-
-      boost::shared_ptr<nav_core::BaseGlobalPlanner> planner_;
-      std::string robot_base_frame_, global_frame_;
-
       std::vector<boost::shared_ptr<nav_core::RecoveryBehavior> > recovery_behaviors_;
       unsigned int recovery_index_;
 
       tf::Stamped<tf::Pose> global_pose_;
-      double planner_frequency_, controller_frequency_, inscribed_radius_, circumscribed_radius_;
+      double planner_frequency_, controller_frequency_;
       double planner_patience_, controller_patience_;
       double conservative_reset_dist_, clearing_radius_;
       ros::Publisher current_goal_pub_, vel_pub_, action_goal_pub_;
@@ -196,12 +167,10 @@ namespace move_base {
 
       ros::Time last_valid_plan_, last_valid_control_, last_oscillation_reset_;
       geometry_msgs::PoseStamped oscillation_pose_;
-      pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
-      pluginlib::ClassLoader<nav_core::BaseLocalPlanner> blp_loader_;
+
       pluginlib::ClassLoader<nav_core::RecoveryBehavior> recovery_loader_;
 
       //set up plan triple buffer
-      std::vector<geometry_msgs::PoseStamped>* planner_plan_;
       std::vector<geometry_msgs::PoseStamped>* latest_plan_;
       std::vector<geometry_msgs::PoseStamped>* controller_plan_;
 
