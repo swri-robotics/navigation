@@ -16,7 +16,7 @@ add_definitions(${EIGEN_DEFINITIONS})
 rosbuild_add_boost_directories()
 
 # move_base
-rosbuild_add_library(move_base src/move_base.cpp)
+rosbuild_add_library(move_base src/global_navigator.cpp src/move_base.cpp)
 rosbuild_link_boost(move_base system)
 
 rosbuild_add_executable(move_base_node src/move_base_node.cpp)
