@@ -6,9 +6,12 @@ namespace move_base {
     class LocalNavigator {
         public: 
             LocalNavigator(tf::TransformListener& tf);
-            
+            ~LocalNavigator();
             
             bool setGlobalPlan( std::vector<geometry_msgs::PoseStamped>& global_plan );
+            void start(){ controller_costmap_ros_->start(); }
+            void stop(){ controller_costmap_ros_->stop(); }
+            costmap_2d::Costmap2DROS* getCostmap(){ return controller_costmap_ros_; }
             
           /**
            * @brief  Performs a control cycle
@@ -17,12 +20,12 @@ namespace move_base {
            * @return True if processing of the goal is done, false otherwise
            */
           bool executeCycle();
-            
-        private:
             /**
              * @brief  Publishes a velocity command of zero to the base
              */
             void publishZeroVelocity();
+            
+        private:
             
             ros::Publisher vel_pub_;
             tf::TransformListener& tf_;

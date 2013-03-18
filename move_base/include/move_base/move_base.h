@@ -55,7 +55,9 @@
 #include <std_srvs/Empty.h>
 
 #include <dynamic_reconfigure/server.h>
-#include "move_base/MoveBaseConfig.h"
+#include <move_base/MoveBaseConfig.h>
+#include <move_base/global_navigator.h>
+#include <move_base/local_navigator.h>
 
 namespace move_base {
   //typedefs to help us out with the action server so that we don't hace to type so much
@@ -127,8 +129,6 @@ namespace move_base {
 
       void goalCB(const geometry_msgs::PoseStamped::ConstPtr& goal);
 
-      void planThread();
-
       void executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_goal);
 
       bool isQuaternionValid(const geometry_msgs::Quaternion& q);
@@ -140,18 +140,20 @@ namespace move_base {
       tf::TransformListener& tf_;
 
       MoveBaseActionServer* as_;
+      
+      GlobalNavigator global_nav_;
+      LocalNavigator local_nav_;
 
       std::vector<boost::shared_ptr<nav_core::RecoveryBehavior> > recovery_behaviors_;
       unsigned int recovery_index_;
 
       tf::Stamped<tf::Pose> global_pose_;
-      double planner_frequency_, controller_frequency_;
-      double planner_patience_, controller_patience_;
+      double controller_frequency_, controller_patience_;
       double conservative_reset_dist_, clearing_radius_;
       ros::Publisher current_goal_pub_, vel_pub_, action_goal_pub_;
       ros::Subscriber goal_sub_;
       ros::ServiceServer make_plan_srv_;
-      bool shutdown_costmaps_, clearing_roatation_allowed_, recovery_behavior_enabled_;
+      bool shutdown_costmaps_;
       double oscillation_timeout_, oscillation_distance_;
 
       MoveBaseState state_;
@@ -168,11 +170,7 @@ namespace move_base {
 
       //set up the planner's thread
       bool runPlanner_;
-      boost::mutex planner_mutex_;
       boost::condition_variable planner_cond_;
-      geometry_msgs::PoseStamped planner_goal_;
-      boost::thread* planner_thread_;
-
 
       boost::recursive_mutex configuration_mutex_;
       dynamic_reconfigure::Server<move_base::MoveBaseConfig> *dsrv_;

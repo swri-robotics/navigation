@@ -11,6 +11,8 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
     ros::NodeHandle nh;
     std::string global_planner;
     private_nh.param("base_global_planner", global_planner, std::string("navfn/NavfnROS"));
+    private_nh.param("planner_frequency", planner_frequency_, 0.0);
+    private_nh.param("planner_patience", planner_patience_, 5.0);
     planner_plan_ = new std::vector<geometry_msgs::PoseStamped>();
 
     //create the ros wrapper for the planner's costmap... and initializer a pointer we'll use with the underlying map
@@ -42,12 +44,99 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
     }
     
     planner_costmap_ros_->start();
+    
+    //set up the planner's thread
+    if(planner_frequency_ > 0.0){
+        planner_thread_ = new boost::thread(boost::bind(&GlobalNavigator::planThread, this));
+    }
 }     
 
 GlobalNavigator::~GlobalNavigator(){
     if(planner_costmap_ros_ != NULL)
       delete planner_costmap_ros_;
+      
+
+    planner_thread_->interrupt();
+    planner_thread_->join();
+    delete planner_thread_;
+    delete planner_plan_;
 }
+
+  void GlobalNavigator::setGoal(geometry_msgs::PoseStamped goal){
+          planner_goal_ = goal;
+  }
+
+
+  void GlobalNavigator::planThread(){
+    ROS_DEBUG_NAMED("move_base_plan_thread","Starting planner thread...");
+    ros::NodeHandle n;
+    ros::Rate r(planner_frequency_);
+    boost::unique_lock<boost::mutex> lock(planner_mutex_);
+    while(n.ok()){
+      if(p_freq_change_)
+      {
+        ROS_INFO("Setting planner frequency to %.2f", planner_frequency_);
+        r = ros::Rate(planner_frequency_);
+        p_freq_change_ = false;
+      }
+
+      //check if we should run the planner (the mutex is locked)
+      while(!runPlanner_){
+        //if we should not be running the planner then suspend this thread
+        ROS_DEBUG_NAMED("move_base_plan_thread","Planner thread is suspending");
+        planner_cond_.wait(lock);
+      }
+      //time to plan! get a copy of the goal and unlock the mutex
+      geometry_msgs::PoseStamped temp_goal = planner_goal_;
+      lock.unlock();
+      ROS_DEBUG_NAMED("move_base_plan_thread","Planning...");
+
+      //run planner
+      planner_plan_->clear();
+      bool gotPlan = n.ok() && makePlan(temp_goal, *planner_plan_);
+
+      if(gotPlan){
+        ROS_DEBUG_NAMED("move_base_plan_thread","Got Plan with %zu points!", planner_plan_->size());
+        //pointer swap the plans under mutex (the controller will pull from latest_plan_)
+        std::vector<geometry_msgs::PoseStamped>* temp_plan = planner_plan_;
+
+        lock.lock();
+        planner_plan_ = latest_plan_;
+        latest_plan_ = temp_plan;
+        last_valid_plan_ = ros::Time::now();
+        new_global_plan_ = true;
+
+        ROS_DEBUG_NAMED("move_base_plan_thread","Generated a plan from the base_global_planner");
+
+        //make sure we only start the controller if we still haven't reached the goal
+        if(runPlanner_)
+          state_ = CONTROLLING;
+        if(planner_frequency_ <= 0)
+          runPlanner_ = false;
+        lock.unlock();
+      }
+      //if we didn't get a plan and we are in the planning state (the robot isn't moving)
+      else if(state_==PLANNING){
+        ROS_DEBUG_NAMED("move_base_plan_thread","No Plan...");
+        ros::Time attempt_end = last_valid_plan_ + ros::Duration(planner_patience_);
+
+        //check if we've tried to make a plan for over our time limit
+        if(ros::Time::now() > attempt_end){
+          //we'll move into our obstacle clearing mode
+          state_ = CLEARING;
+          local_nav_.publishZeroVelocity();
+          recovery_trigger_ = PLANNING_R;
+        }
+      }
+
+      if(!p_freq_change_ && planner_frequency_ > 0)
+        r.sleep();
+
+      //take the mutex for the next iteration
+      lock.lock();
+    }
+  }
+
 
 bool GlobalNavigator::makePlan(const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan){
     boost::unique_lock< boost::shared_mutex > lock(*(planner_costmap_ros_->getCostmap()->getLock()));

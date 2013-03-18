@@ -45,6 +45,11 @@ LocalNavigator::LocalNavigator(tf::TransformListener& tf) :
 
 }     
 
+LocalNavigator::~LocalNavigator(){
+    if(controller_costmap_ros_ != NULL)
+      delete controller_costmap_ros_;
+}
+
   void LocalNavigator::publishZeroVelocity(){
     geometry_msgs::Twist cmd_vel;
     cmd_vel.linear.x = 0.0;

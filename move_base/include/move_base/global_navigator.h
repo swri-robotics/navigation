@@ -7,6 +7,11 @@ namespace move_base {
         public: 
               GlobalNavigator(tf::TransformListener& tf); 
               ~GlobalNavigator();
+              
+            void start(){ planner_costmap_ros_->start(); }
+              void stop(){ planner_costmap_ros_->stop(); }
+              std::string getGlobalFrameID(){ return planner_costmap_ros_->getGlobalFrameID(); }
+              costmap_2d::Costmap2DROS* getCostmap(){ return planner_costmap_ros_; }
       /**
        * @brief  Make a new global plan
        * @param  goal The goal to plan to
@@ -16,11 +21,17 @@ namespace move_base {
       bool makePlan(const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
         
         private:
+              void planThread();
               tf::TransformListener& tf_;
               boost::shared_ptr<nav_core::BaseGlobalPlanner> planner_;
               costmap_2d::Costmap2DROS* planner_costmap_ros_;
               pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
               std::vector<geometry_msgs::PoseStamped>* planner_plan_;
+              geometry_msgs::PoseStamped planner_goal_;
+
+              boost::mutex planner_mutex_;
+              boost::thread* planner_thread_;
+            double planner_frequency_, planner_patience_;
     };
 
 }; // namespace move_base
