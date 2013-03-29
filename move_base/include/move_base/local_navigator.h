@@ -26,12 +26,15 @@ namespace move_base {
             void publishZeroVelocity();
             
         private:
-            
+            void controlThread();
+      double controller_frequency_, controller_patience_;
             ros::Publisher vel_pub_;
             tf::TransformListener& tf_;
             boost::shared_ptr<nav_core::BaseLocalPlanner> tc_;
             costmap_2d::Costmap2DROS* controller_costmap_ros_;
             pluginlib::ClassLoader<nav_core::BaseLocalPlanner> blp_loader_;
+      std::vector<geometry_msgs::PoseStamped>* controller_plan_;
+      bool c_freq_change_;
     };
 
 }; // namespace move_base

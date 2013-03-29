@@ -63,12 +63,6 @@ namespace move_base {
   //typedefs to help us out with the action server so that we don't hace to type so much
   typedef actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction> MoveBaseActionServer;
 
-  enum MoveBaseState {
-    PLANNING,
-    CONTROLLING,
-    CLEARING
-  };
-
   enum RecoveryTrigger
   {
     PLANNING_R,
@@ -156,7 +150,6 @@ namespace move_base {
       unsigned int recovery_index_;
 
       tf::Stamped<tf::Pose> global_pose_;
-      double controller_frequency_, controller_patience_;
       double conservative_reset_dist_, clearing_radius_;
       ros::Publisher current_goal_pub_, vel_pub_, action_goal_pub_;
       ros::Subscriber goal_sub_;
@@ -166,21 +159,12 @@ namespace move_base {
 
       double oscillation_timeout_, oscillation_distance_;
 
-      MoveBaseState state_;
       RecoveryTrigger recovery_trigger_;
 
-      ros::Time last_valid_plan_, last_valid_control_, last_oscillation_reset_;
+      ros::Time last_valid_control_, last_oscillation_reset_;
       geometry_msgs::PoseStamped oscillation_pose_;
 
       pluginlib::ClassLoader<nav_core::RecoveryBehavior> recovery_loader_;
-
-      //set up plan triple buffer
-      std::vector<geometry_msgs::PoseStamped>* latest_plan_;
-      std::vector<geometry_msgs::PoseStamped>* controller_plan_;
-
-      //set up the planner's thread
-      bool runPlanner_;
-      boost::condition_variable planner_cond_;
 
       boost::recursive_mutex configuration_mutex_;
       dynamic_reconfigure::Server<move_base::MoveBaseConfig> *dsrv_;
@@ -189,7 +173,7 @@ namespace move_base {
 
       move_base::MoveBaseConfig last_config_;
       move_base::MoveBaseConfig default_config_;
-      bool setup_, p_freq_change_, c_freq_change_;
+      bool setup_;
       bool new_global_plan_;
   };
 };

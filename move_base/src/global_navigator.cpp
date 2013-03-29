@@ -5,7 +5,7 @@ namespace move_base {
 GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
      tf_(tf),
     planner_costmap_ros_(NULL),
-    bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner")
+    bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner"), p_freq_change_(false)
 {
     ros::NodeHandle private_nh("~");
     ros::NodeHandle nh;
@@ -14,6 +14,9 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
     private_nh.param("planner_frequency", planner_frequency_, 0.0);
     private_nh.param("planner_patience", planner_patience_, 5.0);
     planner_plan_ = new std::vector<geometry_msgs::PoseStamped>();
+    
+    planner_state_ = IDLE;
+    plan_state_ = NONE;
 
     //create the ros wrapper for the planner's costmap... and initializer a pointer we'll use with the underlying map
     planner_costmap_ros_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
@@ -54,7 +57,6 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
 GlobalNavigator::~GlobalNavigator(){
     if(planner_costmap_ros_ != NULL)
       delete planner_costmap_ros_;
-      
 
     planner_thread_->interrupt();
     planner_thread_->join();
@@ -64,6 +66,9 @@ GlobalNavigator::~GlobalNavigator(){
 
   void GlobalNavigator::setGoal(geometry_msgs::PoseStamped goal){
           planner_goal_ = goal;
+          plan_state_ = NONE;
+          planner_state_ = PLANNING;
+        planner_cond_.notify_one();
   }
 
 
@@ -81,11 +86,12 @@ GlobalNavigator::~GlobalNavigator(){
       }
 
       //check if we should run the planner (the mutex is locked)
-      while(!runPlanner_){
+      while(planner_state_ != PLANNING){
         //if we should not be running the planner then suspend this thread
         ROS_DEBUG_NAMED("move_base_plan_thread","Planner thread is suspending");
         planner_cond_.wait(lock);
       }
+      
       //time to plan! get a copy of the goal and unlock the mutex
       geometry_msgs::PoseStamped temp_goal = planner_goal_;
       lock.unlock();
@@ -101,31 +107,27 @@ GlobalNavigator::~GlobalNavigator(){
         std::vector<geometry_msgs::PoseStamped>* temp_plan = planner_plan_;
 
         lock.lock();
+        plan_state_ = VALID;
         planner_plan_ = latest_plan_;
         latest_plan_ = temp_plan;
         last_valid_plan_ = ros::Time::now();
-        new_global_plan_ = true;
 
         ROS_DEBUG_NAMED("move_base_plan_thread","Generated a plan from the base_global_planner");
 
-        //make sure we only start the controller if we still haven't reached the goal
-        if(runPlanner_)
-          state_ = CONTROLLING;
         if(planner_frequency_ <= 0)
-          runPlanner_ = false;
+          planner_state_ = IDLE;
         lock.unlock();
       }
       //if we didn't get a plan and we are in the planning state (the robot isn't moving)
-      else if(state_==PLANNING){
+      else if(plan_state_ == NONE){
         ROS_DEBUG_NAMED("move_base_plan_thread","No Plan...");
         ros::Time attempt_end = last_valid_plan_ + ros::Duration(planner_patience_);
 
         //check if we've tried to make a plan for over our time limit
         if(ros::Time::now() > attempt_end){
           //we'll move into our obstacle clearing mode
-          state_ = CLEARING;
-          local_nav_.publishZeroVelocity();
-          recovery_trigger_ = PLANNING_R;
+          planner_state_ = IDLE;
+          plan_state_ = FAILED;
         }
       }
 
@@ -136,6 +138,8 @@ GlobalNavigator::~GlobalNavigator(){
       lock.lock();
     }
   }
+  
+  ///TODO:          local_nav_.publishZeroVelocity();
 
 
 bool GlobalNavigator::makePlan(const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan){
