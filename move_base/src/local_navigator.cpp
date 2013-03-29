@@ -59,8 +59,10 @@ LocalNavigator::~LocalNavigator(){
   }
   
   bool LocalNavigator::setGlobalPlan( std::vector<geometry_msgs::PoseStamped>& global_plan ){
+      controller_plan_ = global_plan;
+      
+      /*
       ROS_DEBUG_NAMED("move_base","Got a new plan...swap pointers");
-
       //do a pointer swap under mutex
       std::vector<geometry_msgs::PoseStamped>* temp_plan = controller_plan_;
 
@@ -68,7 +70,7 @@ LocalNavigator::~LocalNavigator(){
       controller_plan_ = latest_plan_;
       latest_plan_ = temp_plan;
       lock.unlock();
-      ROS_DEBUG_NAMED("move_base","pointers swapped!");
+      ROS_DEBUG_NAMED("move_base","pointers swapped!");*/
 
       if(!tc_->setPlan(*controller_plan_)){
         //ABORT and SHUTDOWN COSTMAPS
@@ -87,6 +89,110 @@ LocalNavigator::~LocalNavigator(){
       //make sure to reset recovery_index_ since we were able to find a valid plan
       if(recovery_trigger_ == PLANNING_R)
         recovery_index_ = 0;
+    }
+    
+    void LocalNavigator::controlThread(){
+        ros::NodeHandle n;
+    while(n.ok())
+    {
+      if(c_freq_change_)
+      {
+        ROS_INFO("Setting controller frequency to %.2f", controller_frequency_);
+        r = ros::Rate(controller_frequency_);
+        c_freq_change_ = false;
+      }
+
+      if(as_->isPreemptRequested()){
+        if(as_->isNewGoalAvailable()){
+          //if we're active and a new goal is available, we'll accept it, but we won't shut anything down
+          move_base_msgs::MoveBaseGoal new_goal = *as_->acceptNewGoal();
+
+          if(!isQuaternionValid(new_goal.target_pose.pose.orientation)){
+            as_->setAborted(move_base_msgs::MoveBaseResult(), "Aborting on goal because it was sent with an invalid quaternion");
+            return;
+          }
+
+          goal = goalToGlobalFrame(new_goal.target_pose);
+
+          //we'll make sure that we reset our state for the next execution cycle
+          recovery_index_ = 0;
+          state_ = PLANNING;
+
+          //we have a new goal so make sure the planner is awake
+          lock.lock();
+          planner_goal_ = goal;
+          runPlanner_ = true;
+          planner_cond_.notify_one();
+          lock.unlock();
+
+          //publish the goal point to the visualizer
+          ROS_DEBUG_NAMED("move_base","move_base has received a goal of x: %.2f, y: %.2f", goal.pose.position.x, goal.pose.position.y);
+          current_goal_pub_.publish(goal);
+
+          //make sure to reset our timeouts
+          last_valid_control_ = ros::Time::now();
+          last_valid_plan_ = ros::Time::now();
+          last_oscillation_reset_ = ros::Time::now();
+        }
+        else {
+          //if we've been preempted explicitly we need to shut things down
+          resetState();
+
+          //notify the ActionServer that we've successfully preempted
+          ROS_DEBUG_NAMED("move_base","Move base preempting the current goal");
+          as_->setPreempted();
+
+          //we'll actually return from execute after preempting
+          return;
+        }
+      }
+
+      //we also want to check if we've changed global frames because we need to transform our goal pose
+      if(goal.header.frame_id != planner_costmap_ros_->getGlobalFrameID()){
+        goal = goalToGlobalFrame(goal);
+
+        //we want to go back to the planning state for the next execution cycle
+        recovery_index_ = 0;
+        state_ = PLANNING;
+
+        //we have a new goal so make sure the planner is awake
+        lock.lock();
+        planner_goal_ = goal;
+        runPlanner_ = true;
+        planner_cond_.notify_one();
+        lock.unlock();
+
+        //publish the goal point to the visualizer
+        ROS_DEBUG_NAMED("move_base","The global frame for move_base has changed, new frame: %s, new goal position x: %.2f, y: %.2f", goal.header.frame_id.c_str(), goal.pose.position.x, goal.pose.position.y);
+        current_goal_pub_.publish(goal);
+
+        //make sure to reset our timeouts
+        last_valid_control_ = ros::Time::now();
+        last_valid_plan_ = ros::Time::now();
+        last_oscillation_reset_ = ros::Time::now();
+      }
+
+      //for timing that gives real time even in simulation
+      ros::WallTime start = ros::WallTime::now();
+
+      //the real work on pursuing a goal is done here
+      bool done = executeCycle(goal, global_plan);
+
+      //if we're done, then we'll return from execute
+      if(done)
+        return;
+
+      //check if execution of the goal has completed in some way
+
+      ros::WallDuration t_diff = ros::WallTime::now() - start;
+      ROS_DEBUG_NAMED("move_base","Full control cycle time: %.9f\n", t_diff.toSec());
+
+      r.sleep();
+      //make sure to sleep for the remainder of our cycle time
+      if(r.cycleTime() > ros::Duration(1 / controller_frequency_) && state_ == CONTROLLING)
+        ROS_WARN("Control loop missed its desired rate of %.4fHz... the loop actually took %.4f seconds", controller_frequency_, r.cycleTime().toSec());
+    }
+
     }
   
   
