@@ -20,11 +20,13 @@ find_package(catkin REQUIRED
 
 find_package(PCL REQUIRED)
 find_package(Eigen REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system thread)
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${EIGEN_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
 )
 
 add_definitions(${EIGEN_DEFINITIONS})
@@ -67,6 +69,7 @@ catkin_package(
     DEPENDS
         PCL
         Eigen
+        Boost
 )
 
 add_library(costmap_2d
@@ -84,6 +87,7 @@ add_library(costmap_2d
 add_dependencies(costmap_2d geometry_msgs_gencpp)
 target_link_libraries(costmap_2d
   ${PCL_LIBRARIES}
+  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
 
