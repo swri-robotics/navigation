@@ -3,19 +3,19 @@ project(costmap_2d)
 
 find_package(catkin REQUIRED
         COMPONENTS
-            roslib
-            roscpp
-            rostest
-            std_msgs
-            geometry_msgs
-            tf
-            laser_geometry
             dynamic_reconfigure
+            geometry_msgs
+            laser_geometry
+            map_msgs
             message_generation
-            voxel_grid
             pcl_ros
             pluginlib
-            map_msgs
+            roscpp
+            roslib
+            rostest
+            std_msgs
+            tf
+            voxel_grid
         )
 
 find_package(PCL REQUIRED)
@@ -61,10 +61,10 @@ catkin_package(
         ${PCL_INCLUDE_DIRS}
     LIBRARIES costmap_2d
     CATKIN_DEPENDS
-        roslib
-        roscpp
         message_generation
         pcl_ros
+        roscpp
+        roslib
         voxel_grid
     DEPENDS
         PCL
