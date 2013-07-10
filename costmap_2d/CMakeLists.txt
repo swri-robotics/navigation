@@ -7,11 +7,14 @@ find_package(catkin REQUIRED
             geometry_msgs
             laser_geometry
             map_msgs
+            message_filters
             message_generation
+            nav_msgs
             pcl_ros
             pluginlib
             roscpp
             rostest
+            sensor_msgs
             std_msgs
             tf
             voxel_grid
@@ -60,9 +63,19 @@ catkin_package(
         ${PCL_INCLUDE_DIRS}
     LIBRARIES costmap_2d
     CATKIN_DEPENDS
-        message_generation
+        dynamic_reconfigure
+        geometry_msgs
+        laser_geometry
+        map_msgs
+        message_filters
+        message_runtime
+        nav_msgs
         pcl_ros
+        pluginlib
         roscpp
+        sensor_msgs
+        std_msgs
+        tf
         voxel_grid
     DEPENDS
         PCL
