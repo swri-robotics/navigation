@@ -53,6 +53,23 @@ generate_dynamic_reconfigure_options(
   cfg/VoxelPlugin.cfg
 )
 
+catkin_package(
+    INCLUDE_DIRS
+        include
+        ${EIGEN_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
+    LIBRARIES costmap_2d
+    CATKIN_DEPENDS
+        roslib
+        roscpp
+        message_generation
+        pcl_ros
+        voxel_grid
+    DEPENDS
+        PCL
+        Eigen
+)
+
 add_library(costmap_2d
   src/array_parser.cpp
   src/costmap_2d.cpp
