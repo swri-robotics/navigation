@@ -60,6 +60,7 @@ namespace base_local_planner {
        * @brief  Destructor for the world model
        */
       virtual ~CostmapModel(){}
+      using WorldModel::footprintCost;
 
       /**
        * @brief  Checks if any obstacles in the costmap lie inside a convex footprint that is rasterized into the grid

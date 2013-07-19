@@ -186,7 +186,7 @@ std::vector<base_local_planner::Position2DInt> FootprintHelper::getFootprintCell
   double y_i = pos[1];
   double theta_i = pos[2];
   std::vector<base_local_planner::Position2DInt> footprint_cells;
-  //std::vector<geometry_msgs::Point> footprint_spec_ = costmap_ros_->getRobotFootprint();
+
   //if we have no footprint... do nothing
   if (footprint_spec.size() <= 1) {
     unsigned int mx, my;

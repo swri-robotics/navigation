@@ -46,7 +46,7 @@ namespace base_local_planner {
     origin_x_(origin_x), origin_y_(origin_y), origin_z_(origin_z),
     max_z_(max_z), sq_obstacle_range_(obstacle_range * obstacle_range) {}
 
-  double VoxelGridModel::footprintCost(const geometry_msgs::Point& position, const vector<geometry_msgs::Point>& footprint, 
+  double VoxelGridModel::footprintCost(const geometry_msgs::Point& position, const std::vector<geometry_msgs::Point>& footprint, 
       double inscribed_radius, double circumscribed_radius){
     if(footprint.size() < 3)
       return -1.0;
@@ -179,7 +179,7 @@ namespace base_local_planner {
     return 1;
   }
 
-  void VoxelGridModel::updateWorld(const vector<geometry_msgs::Point>& footprint, 
+  void VoxelGridModel::updateWorld(const std::vector<geometry_msgs::Point>& footprint, 
       const vector<Observation>& observations, const vector<PlanarLaserScan>& laser_scans){
 
     //remove points in the laser scan boundry
@@ -190,21 +190,21 @@ namespace base_local_planner {
     for(vector<Observation>::const_iterator it = observations.begin(); it != observations.end(); ++it){
       const Observation& obs = *it;
       const pcl::PointCloud<pcl::PointXYZ>& cloud = obs.cloud_;
-      for(unsigned int i = 0; i < cloud.points.size(); ++i){
+      for(unsigned int i = 0; i < cloud.size(); ++i){
         //filter out points that are too high
-        if(cloud.points[i].z > max_z_)
+        if(cloud[i].z > max_z_)
           continue;
 
         //compute the squared distance from the hitpoint to the pointcloud's origin
-        double sq_dist = (cloud.points[i].x - obs.origin_.x) * (cloud.points[i].x - obs.origin_.x)
-          + (cloud.points[i].y - obs.origin_.y) * (cloud.points[i].y - obs.origin_.y) 
-          + (cloud.points[i].z - obs.origin_.z) * (cloud.points[i].z - obs.origin_.z);
+        double sq_dist = (cloud[i].x - obs.origin_.x) * (cloud[i].x - obs.origin_.x)
+          + (cloud[i].y - obs.origin_.y) * (cloud[i].y - obs.origin_.y) 
+          + (cloud[i].z - obs.origin_.z) * (cloud[i].z - obs.origin_.z);
 
         if(sq_dist >= sq_obstacle_range_)
           continue;
 
         //insert the point
-        insert(cloud.points[i]);
+        insert(cloud[i]);
       }
     }
 

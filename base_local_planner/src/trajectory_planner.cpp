@@ -36,7 +36,7 @@
 *********************************************************************/
 
 #include <base_local_planner/trajectory_planner.h>
-
+#include <costmap_2d/footprint.h>
 #include <string>
 #include <sstream>
 #include <math.h>
@@ -181,6 +181,10 @@ namespace base_local_planner{
     strafe_right = false;
 
     escaping_ = false;
+    final_goal_position_valid_ = false;
+
+
+    costmap_2d::calculateMinAndMaxDistances(footprint_spec_, inscribed_radius_, circumscribed_radius_);
   }
 
   TrajectoryPlanner::~TrajectoryPlanner(){}
@@ -487,6 +491,15 @@ namespace base_local_planner{
       global_plan_[i] = new_plan[i];
     }
 
+    if( global_plan_.size() > 0 ){
+      geometry_msgs::PoseStamped& final_goal_pose = global_plan_[ global_plan_.size() - 1 ];
+      final_goal_x_ = final_goal_pose.pose.position.x;
+      final_goal_y_ = final_goal_pose.pose.position.y;
+      final_goal_position_valid_ = true;
+    } else {
+      final_goal_position_valid_ = false;
+    }
+
     if (compute_dists) {
       //reset the map for new operations
       path_map_.resetPathDist();
@@ -536,18 +549,23 @@ namespace base_local_planner{
       double vx, double vy, double vtheta,
       double acc_x, double acc_y, double acc_theta) {
     //compute feasible velocity limits in robot space
-    double max_vel_x, max_vel_theta;
+    double max_vel_x = max_vel_x_, max_vel_theta;
     double min_vel_x, min_vel_theta;
+
+    if( final_goal_position_valid_ ){
+      double final_goal_dist = hypot( final_goal_x_ - x, final_goal_y_ - y );
+      max_vel_x = min( max_vel_x, final_goal_dist / sim_time_ );
+    }
 
     //should we use the dynamic window approach?
     if (dwa_) {
-      max_vel_x = max(min(max_vel_x_, vx + acc_x * sim_period_), min_vel_x_);
+      max_vel_x = max(min(max_vel_x, vx + acc_x * sim_period_), min_vel_x_);
       min_vel_x = max(min_vel_x_, vx - acc_x * sim_period_);
 
       max_vel_theta = min(max_vel_th_, vtheta + acc_theta * sim_period_);
       min_vel_theta = max(min_vel_th_, vtheta - acc_theta * sim_period_);
     } else {
-      max_vel_x = max(min(max_vel_x_, vx + acc_x * sim_time_), min_vel_x_);
+      max_vel_x = max(min(max_vel_x, vx + acc_x * sim_time_), min_vel_x_);
       min_vel_x = max(min_vel_x_, vx - acc_x * sim_time_);
 
       max_vel_theta = min(max_vel_th_, vtheta + acc_theta * sim_time_);
@@ -975,25 +993,8 @@ namespace base_local_planner{
 
   //we need to take the footprint of the robot into account when we calculate cost to obstacles
   double TrajectoryPlanner::footprintCost(double x_i, double y_i, double theta_i){
-    //build the oriented footprint
-    double cos_th = cos(theta_i);
-    double sin_th = sin(theta_i);
-    vector<geometry_msgs::Point> oriented_footprint;
-    for(unsigned int i = 0; i < footprint_spec_.size(); ++i){
-      geometry_msgs::Point new_pt;
-      new_pt.x = x_i + (footprint_spec_[i].x * cos_th - footprint_spec_[i].y * sin_th);
-      new_pt.y = y_i + (footprint_spec_[i].x * sin_th + footprint_spec_[i].y * cos_th);
-      oriented_footprint.push_back(new_pt);
-    }
-
-    geometry_msgs::Point robot_position;
-    robot_position.x = x_i;
-    robot_position.y = y_i;
-
     //check if the footprint is legal
-    double footprint_cost = world_model_.footprintCost(robot_position, oriented_footprint, costmap_.getInscribedRadius(), costmap_.getCircumscribedRadius());
-
-    return footprint_cost;
+    return world_model_.footprintCost(x_i, y_i, theta_i, footprint_spec_, inscribed_radius_, circumscribed_radius_);
   }
 
 

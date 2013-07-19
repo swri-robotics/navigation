@@ -36,7 +36,6 @@
 *********************************************************************/
 
 #include <dwa_local_planner/dwa_planner_ros.h>
-#include <costmap_2d/footprint.h>
 #include <Eigen/Core>
 #include <cmath>
 
@@ -48,7 +47,7 @@
 #include <nav_msgs/Path.h>
 
 //register this planner as a BaseLocalPlanner plugin
-PLUGINLIB_DECLARE_CLASS(dwa_local_planner, DWAPlannerROS, dwa_local_planner::DWAPlannerROS, nav_core::BaseLocalPlanner)
+PLUGINLIB_EXPORT_CLASS(dwa_local_planner::DWAPlannerROS, nav_core::BaseLocalPlanner)
 
 namespace dwa_local_planner {
 
@@ -108,24 +107,22 @@ namespace dwa_local_planner {
       // make sure to update the costmap we'll use for this cycle
       costmap_2d::Costmap2D* costmap = costmap_ros_->getCostmap();
 
-      planner_util_.initialize(tf, costmap, costmap->getGlobalFrameID());
+      planner_util_.initialize(tf, costmap, costmap_ros_->getGlobalFrameID());
 
       //create the actual planner that we'll use.. it'll configure itself from the parameter server
       dp_ = boost::shared_ptr<DWAPlanner>(new DWAPlanner(name, &planner_util_));
-
+      
       initialized_ = true;
 
       dsrv_ = new dynamic_reconfigure::Server<DWAPlannerConfig>(private_nh);
       dynamic_reconfigure::Server<DWAPlannerConfig>::CallbackType cb = boost::bind(&DWAPlannerROS::reconfigureCB, this, _1, _2);
       dsrv_->setCallback(cb);
-      
-      footprint_spec_ = loadRobotFootprint(private_nh);
     }
     else{
       ROS_WARN("This planner has already been initialized, doing nothing.");
     }
   }
-
+  
   bool DWAPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan) {
     if (! isInitialized()) {
       ROS_ERROR("This planner has not been initialized, please call initialize() before using this planner");
@@ -183,14 +180,12 @@ namespace dwa_local_planner {
     gettimeofday(&start, NULL);
     */
 
-
-
     //compute what trajectory to drive along
     tf::Stamped<tf::Pose> drive_cmds;
     drive_cmds.frame_id_ = costmap_ros_->getBaseFrameID();
     
     // call with updated footprint
-    base_local_planner::Trajectory path = dp_->findBestPath(global_pose, robot_vel, drive_cmds, footprint_spec_);
+    base_local_planner::Trajectory path = dp_->findBestPath(global_pose, robot_vel, drive_cmds, costmap_ros_->getRobotFootprint());
     //ROS_ERROR("Best: %.2f, %.2f, %.2f, %.2f", path.xv_, path.yv_, path.thetav_, path.cost_);
 
     /* For timing uncomment
@@ -225,11 +220,11 @@ namespace dwa_local_planner {
       path.getPoint(i, p_x, p_y, p_th);
 
       tf::Stamped<tf::Pose> p =
-    		  tf::Stamped<tf::Pose>(tf::Pose(
-    				  tf::createQuaternionFromYaw(p_th),
-    				  tf::Point(p_x, p_y, 0.0)),
-    				  ros::Time::now(),
-    				  costmap_ros_->getGlobalFrameID());
+              tf::Stamped<tf::Pose>(tf::Pose(
+                      tf::createQuaternionFromYaw(p_th),
+                      tf::Point(p_x, p_y, 0.0)),
+                      ros::Time::now(),
+                      costmap_ros_->getGlobalFrameID());
       geometry_msgs::PoseStamped pose;
       tf::poseStampedTFToMsg(p, pose);
       local_plan.push_back(pose);

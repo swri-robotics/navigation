@@ -223,6 +223,7 @@ class AmclNode
     double init_pose_[3];
     double init_cov_[3];
     laser_model_t laser_model_type_;
+    bool tf_broadcast_;
 
     void reconfigureCB(amcl::AMCLConfig &config, uint32_t level);
 
@@ -312,6 +313,10 @@ AmclNode::AmclNode() :
     odom_model_type_ = ODOM_MODEL_DIFF;
   else if(tmp_model_type == "omni")
     odom_model_type_ = ODOM_MODEL_OMNI;
+  else if(tmp_model_type == "diff-corrected")
+    odom_model_type_ = ODOM_MODEL_DIFF_CORRECTED;
+  else if(tmp_model_type == "omni-corrected")
+    odom_model_type_ = ODOM_MODEL_OMNI_CORRECTED;
   else
   {
     ROS_WARN("Unknown odom model type \"%s\"; defaulting to diff model",
@@ -329,6 +334,7 @@ AmclNode::AmclNode() :
   private_nh_.param("transform_tolerance", tmp_tol, 0.1);
   private_nh_.param("recovery_alpha_slow", alpha_slow_, 0.001);
   private_nh_.param("recovery_alpha_fast", alpha_fast_, 0.1);
+  private_nh_.param("tf_broadcast", tf_broadcast_, true);
 
   transform_tolerance_.fromSec(tmp_tol);
 
@@ -466,6 +472,10 @@ void AmclNode::reconfigureCB(AMCLConfig &config, uint32_t level)
     odom_model_type_ = ODOM_MODEL_DIFF;
   else if(config.odom_model_type == "omni")
     odom_model_type_ = ODOM_MODEL_OMNI;
+  else if(config.odom_model_type == "diff-corrected")
+    odom_model_type_ = ODOM_MODEL_DIFF_CORRECTED;
+  else if(config.odom_model_type == "omni-corrected")
+    odom_model_type_ = ODOM_MODEL_OMNI_CORRECTED;
 
   if(config.min_particles > config.max_particles)
   {
@@ -477,6 +487,7 @@ void AmclNode::reconfigureCB(AMCLConfig &config, uint32_t level)
   max_particles_ = config.max_particles;
   alpha_slow_ = config.recovery_alpha_slow;
   alpha_fast_ = config.recovery_alpha_fast;
+  tf_broadcast_ = config.tf_broadcast;
 
   pf_ = pf_alloc(min_particles_, max_particles_,
                  alpha_slow_, alpha_fast_,
@@ -504,10 +515,7 @@ void AmclNode::reconfigureCB(AMCLConfig &config, uint32_t level)
   delete odom_;
   odom_ = new AMCLOdom();
   ROS_ASSERT(odom_);
-  if(odom_model_type_ == ODOM_MODEL_OMNI)
-    odom_->SetModelOmni(alpha1_, alpha2_, alpha3_, alpha4_, alpha5_);
-  else
-    odom_->SetModelDiff(alpha1_, alpha2_, alpha3_, alpha4_);
+  odom_->SetModel( odom_model_type_, alpha1_, alpha2_, alpha3_, alpha4_, alpha5_ );
   // Laser
   delete laser_;
   laser_ = new AMCLLaser(max_beams_, map_);
@@ -633,10 +641,7 @@ AmclNode::handleMapMessage(const nav_msgs::OccupancyGrid& msg)
   delete odom_;
   odom_ = new AMCLOdom();
   ROS_ASSERT(odom_);
-  if(odom_model_type_ == ODOM_MODEL_OMNI)
-    odom_->SetModelOmni(alpha1_, alpha2_, alpha3_, alpha4_, alpha5_);
-  else
-    odom_->SetModelDiff(alpha1_, alpha2_, alpha3_, alpha4_);
+  odom_->SetModel( odom_model_type_, alpha1_, alpha2_, alpha3_, alpha4_, alpha5_ );
   // Laser
   delete laser_;
   laser_ = new AMCLLaser(max_beams_, map_);
@@ -1141,15 +1146,18 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
                                  tf::Point(odom_to_map.getOrigin()));
       latest_tf_valid_ = true;
 
-      // We want to send a transform that is good up until a
-      // tolerance time so that odom can be used
-      ros::Time transform_expiration = (laser_scan->header.stamp +
-                                        transform_tolerance_);
-      tf::StampedTransform tmp_tf_stamped(latest_tf_.inverse(),
-                                          transform_expiration,
-                                          global_frame_id_, odom_frame_id_);
-      this->tfb_->sendTransform(tmp_tf_stamped);
-      sent_first_transform_ = true;
+      if (tf_broadcast_ == true)
+      {
+        // We want to send a transform that is good up until a
+        // tolerance time so that odom can be used
+        ros::Time transform_expiration = (laser_scan->header.stamp +
+                                          transform_tolerance_);
+        tf::StampedTransform tmp_tf_stamped(latest_tf_.inverse(),
+                                            transform_expiration,
+                                            global_frame_id_, odom_frame_id_);
+        this->tfb_->sendTransform(tmp_tf_stamped);
+        sent_first_transform_ = true;
+      }
     }
     else
     {
@@ -1158,15 +1166,17 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
   }
   else if(latest_tf_valid_)
   {
-    // Nothing changed, so we'll just republish the last transform, to keep
-    // everybody happy.
-    ros::Time transform_expiration = (laser_scan->header.stamp +
-                                      transform_tolerance_);
-    tf::StampedTransform tmp_tf_stamped(latest_tf_.inverse(),
-                                        transform_expiration,
-                                        global_frame_id_, odom_frame_id_);
-    this->tfb_->sendTransform(tmp_tf_stamped);
-
+    if (tf_broadcast_ == true)
+    {
+      // Nothing changed, so we'll just republish the last transform, to keep
+      // everybody happy.
+      ros::Time transform_expiration = (laser_scan->header.stamp +
+                                        transform_tolerance_);
+      tf::StampedTransform tmp_tf_stamped(latest_tf_.inverse(),
+                                          transform_expiration,
+                                          global_frame_id_, odom_frame_id_);
+      this->tfb_->sendTransform(tmp_tf_stamped);
+    }
 
     // Is it time to save our last pose to the param server
     ros::Time now = ros::Time::now();

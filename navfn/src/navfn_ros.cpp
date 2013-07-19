@@ -40,6 +40,8 @@
 #include <costmap_2d/cost_values.h>
 #include <costmap_2d/costmap_2d.h>
 
+#include <pcl_conversions/pcl_conversions.h>
+
 //register this planner as a BaseGlobalPlanner plugin
 PLUGINLIB_DECLARE_CLASS(navfn, NavfnROS, navfn::NavfnROS, nav_core::BaseGlobalPlanner)
 
@@ -179,7 +181,7 @@ namespace navfn {
     makePlan(req.start, req.goal, resp.plan.poses);
 
     resp.plan.header.stamp = ros::Time::now();
-    resp.plan.header.frame_id = costmap_ros_->getCostmap()->getGlobalFrameID();
+    resp.plan.header.frame_id = costmap_ros_->getGlobalFrameID();
 
     return true;
   } 
@@ -208,7 +210,7 @@ namespace navfn {
 
     ros::NodeHandle n;
     costmap_2d::Costmap2D* costmap = costmap_ros_->getCostmap();
-    std::string global_frame = costmap->getGlobalFrameID();
+    std::string global_frame = costmap_ros_->getGlobalFrameID();
 
     //until tf can handle transforming things that are way in the past... we'll require the goal to be in our global frame
     if(tf::resolve(tf_prefix_, goal.header.frame_id) != tf::resolve(tf_prefix_, global_frame)){
@@ -237,9 +239,27 @@ namespace navfn {
     tf::poseStampedMsgToTF(start, start_pose);
     clearRobotCell(start_pose, mx, my);
 
+#if 0
+    {
+      static int n = 0;
+      static char filename[1000];
+      snprintf( filename, 1000, "navfnros-makeplan-costmapB-%04d.pgm", n++ );
+      costmap->saveRawMap( std::string( filename ));
+    }
+#endif
+
     //make sure to resize the underlying array that Navfn uses
     planner_->setNavArr(costmap->getSizeInCellsX(), costmap->getSizeInCellsY());
     planner_->setCostmap(costmap->getCharMap(), true, allow_unknown_);
+
+#if 0
+    {
+      static int n = 0;
+      static char filename[1000];
+      snprintf( filename, 1000, "navfnros-makeplan-costmapC-%04d", n++ );
+      planner_->savemap( filename );
+    }
+#endif
 
     int map_start[2];
     map_start[0] = mx;
@@ -309,7 +329,10 @@ namespace navfn {
       pcl::PointCloud<PotarrPoint> pot_area;
       pot_area.header.frame_id = global_frame;
       pot_area.points.clear();
-      pot_area.header.stamp = ros::Time::now();
+      std_msgs::Header header;
+      pcl_conversions::fromPCL(pot_area.header, header);
+      header.stamp = ros::Time::now();
+      pot_area.header = pcl_conversions::toPCL(header);
 
       PotarrPoint pt;
       float *pp = planner_->potarr;
@@ -366,14 +389,15 @@ namespace navfn {
     }
     
     costmap_2d::Costmap2D* costmap = costmap_ros_->getCostmap();
+    std::string global_frame = costmap_ros_->getGlobalFrameID();
 
     //clear the plan, just in case
     plan.clear();
 
     //until tf can handle transforming things that are way in the past... we'll require the goal to be in our global frame
-    if(tf::resolve(tf_prefix_, goal.header.frame_id) != tf::resolve(tf_prefix_, costmap->getGlobalFrameID())){
+    if(tf::resolve(tf_prefix_, goal.header.frame_id) != tf::resolve(tf_prefix_, global_frame)){
       ROS_ERROR("The goal pose passed to this planner must be in the %s frame.  It is instead in the %s frame.", 
-                tf::resolve(tf_prefix_, costmap->getGlobalFrameID()).c_str(), tf::resolve(tf_prefix_, goal.header.frame_id).c_str());
+                tf::resolve(tf_prefix_, global_frame).c_str(), tf::resolve(tf_prefix_, goal.header.frame_id).c_str());
       return false;
     }
 
@@ -400,7 +424,7 @@ namespace navfn {
     float *y = planner_->getPathY();
     int len = planner_->getPathLen();
     ros::Time plan_time = ros::Time::now();
-    std::string global_frame = costmap->getGlobalFrameID();
+
     for(int i = len - 1; i >= 0; --i){
       //convert the plan to world coordinates
       double world_x, world_y;

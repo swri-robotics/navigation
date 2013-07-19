@@ -42,7 +42,7 @@
 
 //for obstacle data access
 #include <costmap_2d/costmap_2d.h>
-
+#include <costmap_2d/cost_values.h>
 #include <base_local_planner/footprint_helper.h>
 
 #include <base_local_planner/world_model.h>
@@ -202,6 +202,14 @@ namespace base_local_planner {
        * @return True if the cell is traversible and therefore a legal location for the robot to move to
        */
       bool getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost);
+
+      /** @brief Set the footprint specification of the robot. */
+      void setFootprint( std::vector<geometry_msgs::Point> footprint ) { footprint_spec_ = footprint; }
+
+      /** @brief Return the footprint specification of the robot. */
+      geometry_msgs::Polygon getFootprintPolygon() const { return costmap_2d::toPolygon(footprint_spec_); }
+      std::vector<geometry_msgs::Point> getFootprint() const { return footprint_spec_; }
+
     private:
       /**
        * @brief  Create the trajectories we wish to explore, score them, and return the best option
@@ -271,6 +279,8 @@ namespace base_local_planner {
 
       double goal_x_,goal_y_; ///< @brief Storage for the local goal the robot is pursuing
 
+      double final_goal_x_, final_goal_y_; ///< @brief The end position of the plan.
+      bool final_goal_position_valid_; ///< @brief True if final_goal_x_ and final_goal_y_ have valid data.  Only false if an empty path is sent.
 
       double sim_time_; ///< @brief The number of seconds each trajectory is "rolled-out"
       double sim_granularity_; ///< @brief The distance between simulation points
@@ -305,6 +315,8 @@ namespace base_local_planner {
 
       double stop_time_buffer_; ///< @brief How long before hitting something we're going to enforce that the robot stop
       double sim_period_; ///< @brief The number of seconds to use to compute max/min vels for dwa
+
+      double inscribed_radius_, circumscribed_radius_;
 
       boost::mutex configuration_mutex_;
 

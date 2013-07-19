@@ -50,8 +50,6 @@
 #include <nav_msgs/Odometry.h>
 
 #include <costmap_2d/costmap_2d_ros.h>
-#include <costmap_2d/footprint.h>
-
 #include <nav_core/base_local_planner.h>
 #include <base_local_planner/latched_stop_rotate_controller.h>
 
@@ -147,7 +145,6 @@ namespace dwa_local_planner {
       dwa_local_planner::DWAPlannerConfig default_config_;
       bool setup_;
       tf::Stamped<tf::Pose> current_pose_;
-      geometry_msgs::Polygon footprint_spec_;
 
       base_local_planner::LatchedStopRotateController latchedStopRotateController_;
 

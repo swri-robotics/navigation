@@ -44,8 +44,9 @@ using namespace costmap_2d;
 namespace base_local_planner {
   CostmapModel::CostmapModel(const Costmap2D& ma) : costmap_(ma) {}
 
-  double CostmapModel::footprintCost(const geometry_msgs::Point& position, const vector<geometry_msgs::Point>& footprint, 
+  double CostmapModel::footprintCost(const geometry_msgs::Point& position, const std::vector<geometry_msgs::Point>& footprint, 
       double inscribed_radius, double circumscribed_radius){
+
     //used to put things into grid coordinates
     unsigned int cell_x, cell_y;
 

@@ -1,34 +1,79 @@
-cmake_minimum_required (VERSION 2.4.6)
+cmake_minimum_required(VERSION 2.8.3)
+project(navfn)
 
-### If you're trying to debug include directives or so, this here
-### might help:
-#set (CMAKE_VERBOSE_MAKEFILE ON)
-
-include ($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
-
-### Debug mode implies slower runtime, "of course"
-#set (ROS_BUILD_TYPE Debug)
-set (ROS_BUILD_TYPE RelWithDebInfo)
-
-add_definitions (-Wall)
-rosbuild_init()
-rosbuild_gensrv()
-rosbuild_genmsg()
+find_package(catkin REQUIRED
+    COMPONENTS
+        costmap_2d
+        geometry_msgs
+        nav_core
+        nav_msgs
+        pcl_conversions
+        pcl_ros
+        pluginlib
+        roscpp
+        tf
+        visualization_msgs
+        )
 
 find_package(Eigen REQUIRED)
 find_package(PCL REQUIRED)
-include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS}
-                           ${PCL_INCLUDE_DIRS}
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+    SYSTEM
+    ${EIGEN_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
 )
 add_definitions(${EIGEN_DEFINITIONS})
 
-rosbuild_add_library (navfn src/navfn.cpp src/navfn_ros.cpp)
 
-rosbuild_add_executable(bin/navfn_node src/navfn_node.cpp)
-target_link_libraries(bin/navfn_node navfn)
+# services
+add_service_files(
+    DIRECTORY srv
+    FILES
+    MakeNavPlan.srv
+    SetCostmap.srv
+)
 
+generate_messages(
+    DEPENDENCIES
+        std_msgs
+        geometry_msgs
+        nav_msgs
+)
 
+catkin_package(
+    INCLUDE_DIRS
+        include
+    LIBRARIES
+        navfn
+    CATKIN_DEPENDS
+        nav_core
+        roscpp
+        pluginlib
+)
 
+add_library (navfn src/navfn.cpp src/navfn_ros.cpp)
+target_link_libraries(navfn
+    ${catkin_LIBRARIES}
+    )
+
+add_executable(navfn_node src/navfn_node.cpp)
+target_link_libraries(navfn_node
+    navfn
+    )
+
+install(TARGETS navfn
+       LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+       )
+
+install(DIRECTORY include/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(FILES bgp_plugin.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 ### The problem with FindFLTK is that it only reports success if *all*
 ### fltk components are installed, but we only need the core library.
@@ -40,7 +85,7 @@ message (STATUS "NAVFN_HAVE_FLTK: ${NAVFN_HAVE_FLTK}, NETPBM: ${NAVFN_HAVE_NETPB
 # Just linking -lfltk is not sufficient on OS X
 if (NAVFN_HAVE_FLTK AND NAVFN_HAVE_NETPBM AND NOT APPLE)
   message (STATUS "FLTK found: adding navtest to build")
-  rosbuild_add_executable (navtest src/navtest.cpp src/navwin.cpp)
+  add_executable (navtest src/navtest.cpp src/navwin.cpp)
   set (FLTK_SKIP_FLUID 1)
   set (FLTK_SKIP_FORMS 1)
   set (FLTK_SKIP_IMAGES 1)

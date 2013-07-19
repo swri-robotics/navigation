@@ -36,6 +36,7 @@
 *********************************************************************/
 #include <move_slow_and_clear/move_slow_and_clear.h>
 #include <pluginlib/class_list_macros.h>
+#include <costmap_2d/obstacle_layer.h>
 
 PLUGINLIB_DECLARE_CLASS(move_slow_and_clear, MoveSlowAndClear, move_slow_and_clear::MoveSlowAndClear,
     nav_core::RecoveryBehavior)
@@ -84,8 +85,8 @@ namespace move_slow_and_clear
     local_costmap_->getRobotPose(local_pose);
 
     std::vector<geometry_msgs::Point> global_poly, local_poly;
-
     geometry_msgs::Point pt;
+
     for(int i = -1; i <= 1; i+=2)
     {
       pt.x = global_pose.getOrigin().x() + i * clearing_distance_;
@@ -105,9 +106,26 @@ namespace move_slow_and_clear
       local_poly.push_back(pt);
     }
 
-    //clear the desired space in both costmaps
-    global_costmap_->setConvexPolygonCost(global_poly, costmap_2d::FREE_SPACE);
-    local_costmap_->setConvexPolygonCost(local_poly, costmap_2d::FREE_SPACE);
+    //clear the desired space in the costmaps
+    std::vector<boost::shared_ptr<costmap_2d::Layer> >* plugins = global_costmap_->getLayeredCostmap()->getPlugins();
+    for (std::vector<boost::shared_ptr<costmap_2d::Layer> >::iterator pluginp = plugins->begin(); pluginp != plugins->end(); ++pluginp) {
+            boost::shared_ptr<costmap_2d::Layer> plugin = *pluginp;
+          if(plugin->getName().find("obstacles")!=std::string::npos){
+            boost::shared_ptr<costmap_2d::ObstacleLayer> costmap;
+            costmap = boost::static_pointer_cast<costmap_2d::ObstacleLayer>(plugin);
+            costmap->setConvexPolygonCost(global_poly, costmap_2d::FREE_SPACE);
+          }
+    }
+     
+    plugins = local_costmap_->getLayeredCostmap()->getPlugins();
+    for (std::vector<boost::shared_ptr<costmap_2d::Layer> >::iterator pluginp = plugins->begin(); pluginp != plugins->end(); ++pluginp) {
+            boost::shared_ptr<costmap_2d::Layer> plugin = *pluginp;
+          if(plugin->getName().find("obstacles")!=std::string::npos){
+            boost::shared_ptr<costmap_2d::ObstacleLayer> costmap;
+            costmap = boost::static_pointer_cast<costmap_2d::ObstacleLayer>(plugin);
+            costmap->setConvexPolygonCost(local_poly, costmap_2d::FREE_SPACE);
+          }
+    } 
 
     //lock... just in case we're already speed limited
     boost::mutex::scoped_lock l(mutex_);

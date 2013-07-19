@@ -40,7 +40,6 @@
 #include <list>
 #include <cfloat>
 #include <geometry_msgs/Point.h>
-#include <geometry_msgs/Point32.h>
 #include <costmap_2d/observation.h>
 #include <base_local_planner/world_model.h>
 
@@ -94,6 +93,8 @@ namespace base_local_planner {
        */
       virtual double footprintCost(const geometry_msgs::Point& position, const std::vector<geometry_msgs::Point>& footprint,
           double inscribed_radius, double circumscribed_radius);
+
+      using WorldModel::footprintCost;
 
       /**
        * @brief  Inserts observations from sensors into the point grid
