@@ -90,9 +90,6 @@ namespace move_base {
 
     private_nh.param("shutdown_costmaps", shutdown_costmaps_, false);
 
-    //advertise a service for clearing the costmaps
-    clear_costmaps_srv_ = private_nh.advertiseService("clear_costmaps", &MoveBase::clearCostmapsService, this);
-
     //if we shutdown our costmaps when we're deactivated... we'll do that now
     if(shutdown_costmaps_){
       ROS_DEBUG_NAMED("move_base","Stopping costmaps initially");
