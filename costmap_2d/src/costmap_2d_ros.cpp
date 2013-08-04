@@ -50,7 +50,7 @@
 #include <costmap_2d/voxel_costmap_2d.h>
 #include <costmap_2d/VoxelGrid.h>
 #include <limits>
-
+#include <std_msgs/Float32.h>
 using namespace std;
 
 namespace costmap_2d {
@@ -103,6 +103,10 @@ namespace costmap_2d {
     double map_origin_x, map_origin_y;
 
     private_nh.param("static_map", static_map, true);
+
+    private_nh.param("publish_time", publish_time_, true);
+    if(publish_time_)
+      time_pub_ = private_nh.advertise<std_msgs::Float32>("update_time", 10);
 
     //check if we want a rolling window version of the costmap
     private_nh.param("rolling_window", rolling_window_, false);
@@ -1112,6 +1116,12 @@ namespace costmap_2d {
       end_t = end.tv_sec + double(end.tv_usec) / 1e6;
       t_diff = end_t - start_t;
       ROS_DEBUG("Map update time: %.9f", t_diff);
+
+      if(publish_time_){
+	std_msgs::Float32 a;
+	a.data = t_diff;
+	time_pub_.publish(a);
+      }
 
       r.sleep();
       //make sure to sleep for the remainder of our cycle time

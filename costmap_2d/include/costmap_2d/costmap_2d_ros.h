@@ -407,6 +407,9 @@ namespace costmap_2d {
       bool map_initialized_;
       std::string tf_prefix_;
 
+      bool publish_time_;
+      ros::Publisher time_pub_;
+
       //we need this to be able to initialize the map using a latched topic approach
       //strictly speaking, we don't need the lock, but since this all happens on startup
       //and there is little overhead... we'll be careful and use it anyways just in case
