@@ -42,7 +42,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-
+#include <std_msgs/Float32.h>
 
 using namespace std;
 
@@ -100,6 +100,11 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
   // check if we want a rolling window version of the costmap
   bool rolling_window, track_unknown_space;
   private_nh.param("rolling_window", rolling_window, false);
+
+  private_nh.param("publish_time", publish_time_, true);
+  if(publish_time_)
+    time_pub_ = private_nh.advertise<std_msgs::Float32>("update_time", 10);
+
   private_nh.param("track_unknown_space", track_unknown_space, false);
 
   layered_costmap_ = new LayeredCostmap(global_frame_, rolling_window, track_unknown_space);
@@ -566,6 +571,13 @@ void Costmap2DROS::mapUpdateLoop(double frequency)
         last_publish_ = now;
       }
     }
+
+    if(publish_time_){
+      std_msgs::Float32 a;
+      a.data = t_diff;
+      time_pub_.publish(a);
+    }
+
     r.sleep();
     // make sure to sleep for the remainder of our cycle time
     if (r.cycleTime() > ros::Duration(1 / frequency))
