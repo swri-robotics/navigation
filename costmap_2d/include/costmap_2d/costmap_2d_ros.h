@@ -223,6 +223,9 @@ protected:
   std::string robot_base_frame_;  ///< @brief The frame_id of the robot base
   double transform_tolerance_; ///< timeout before transform errors
 
+  bool publish_time_;
+  ros::Publisher time_pub_;
+
 private:
   /** @brief Set the footprint from the given string.
    *

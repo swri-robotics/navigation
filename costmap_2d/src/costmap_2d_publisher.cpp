@@ -110,7 +110,7 @@ void Costmap2DPublisher::prepareGrid()
 
 void Costmap2DPublisher::publishCostmap()
 {
-  double resolution = costmap_->getResolution();
+  float resolution = costmap_->getResolution();
 
   if (grid_.info.resolution != resolution || grid_.info.width != costmap_->getSizeInCellsX())
   {
