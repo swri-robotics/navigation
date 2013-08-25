@@ -145,12 +145,9 @@ namespace dwa_local_planner {
     oscillation_costs_.resetOscillationFlags();
 
     private_nh.param("publish_cost_grid_pc", publish_cost_grid_pc_, false);
-    map_viz_.initialize(name, boost::bind(&DWAPlanner::getCellCosts, this, _1, _2, _3, _4, _5, _6));
+    map_viz_.initialize(name, planner_util->getGlobalFrame(), boost::bind(&DWAPlanner::getCellCosts, this, _1, _2, _3, _4, _5, _6));
 
-    std::string frame_id;
-    private_nh.param("global_frame_id", frame_id, std::string("odom"));
-
-    traj_cloud_.header.frame_id = frame_id;
+    traj_cloud_.header.frame_id = planner_util->getGlobalFrame();
     traj_cloud_pub_.advertise(private_nh, "trajectory_cloud", 1);
     private_nh.param("publish_traj_pc", publish_traj_pc_, false);
 

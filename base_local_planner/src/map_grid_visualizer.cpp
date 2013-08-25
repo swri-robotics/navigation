@@ -39,14 +39,12 @@ namespace base_local_planner {
   MapGridVisualizer::MapGridVisualizer() {}
 
 
-  void MapGridVisualizer::initialize(const std::string& name, boost::function<bool (int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost)> cost_function) {
+  void MapGridVisualizer::initialize(const std::string& name, std::string frame_id, boost::function<bool (int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost)> cost_function) {
     name_ = name;
     cost_function_ = cost_function;
 
     ns_nh_ = ros::NodeHandle("~/" + name_);
-    ns_nh_.param("global_frame_id", frame_id_, std::string("odom"));
-
-    cost_cloud_.header.frame_id = frame_id_;
+    cost_cloud_.header.frame_id = frame_id;
     pub_.advertise(ns_nh_, "cost_cloud", 1);
   }
 
