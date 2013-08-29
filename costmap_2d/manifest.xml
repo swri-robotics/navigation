@@ -27,6 +27,7 @@
 <rosdep name="pcl" />
 <depend package="pcl_ros" />
 <depend package="dynamic_reconfigure" />
+<depend package="path_planning_analysis" />
 
 <rosdep name="eigen" />
 <export>

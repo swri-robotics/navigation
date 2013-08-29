@@ -105,8 +105,10 @@ namespace costmap_2d {
     private_nh.param("static_map", static_map, true);
 
     private_nh.param("publish_time", publish_time_, true);
-    if(publish_time_)
+    if(publish_time_){
       time_pub_ = private_nh.advertise<std_msgs::Float32>("update_time", 10);
+      time_pub2_ = private_nh.advertise<path_planning_analysis::CycleTimes>("cycle_times", 10);
+    }
 
     //check if we want a rolling window version of the costmap
     private_nh.param("rolling_window", rolling_window_, false);
@@ -1121,6 +1123,8 @@ namespace costmap_2d {
 	std_msgs::Float32 a;
 	a.data = t_diff;
 	time_pub_.publish(a);
+
+	time_pub2_.publish(costmap_->timing);
       }
 
       r.sleep();
@@ -1156,6 +1160,11 @@ namespace costmap_2d {
 
 
   void Costmap2DROS::updateMap(){
+    costmap_->timing.events.clear();
+
+    TIME t0, t1;
+    write_time(t0);
+
     tf::Stamped<tf::Pose> global_pose;
     if(!getRobotPose(global_pose))
       return;
@@ -1175,6 +1184,12 @@ namespace costmap_2d {
     //update the global current status
     current_ = current;
 
+    write_time(t1);
+    path_planning_analysis::TimingEvent e;
+    e.name = "Initialization";
+    e.time = time_diff(t1, t0);
+    costmap_->timing.events.push_back( e);
+
     boost::recursive_mutex::scoped_lock uml(configuration_mutex_);
     boost::recursive_mutex::scoped_lock lock(lock_);
     //if we're using a rolling buffer costmap... we need to update the origin using the robot's position
@@ -1183,10 +1198,22 @@ namespace costmap_2d {
       double origin_y = wy - costmap_->getSizeInMetersY() / 2;
       costmap_->updateOrigin(origin_x, origin_y);
     }
+
+    write_time(t0);
+    e.name = "UpdateOrigin";
+    e.time = time_diff(t0, t1);
+    costmap_->timing.events.push_back(e);
+
     costmap_->updateWorld(wx, wy, observations, clearing_observations);
 
+    write_time(t0);
     //make sure to clear the robot footprint of obstacles at the end
     clearRobotFootprint();
+    write_time(t1);
+    e.name = "Clear Footprint";
+    e.time = time_diff(t1, t0);
+    costmap_->timing.events.push_back( e);
+
     
     if(save_debug_pgm_)
       costmap_->saveMap(name_ + ".pgm");

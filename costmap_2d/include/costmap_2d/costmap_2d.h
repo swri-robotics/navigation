@@ -45,6 +45,12 @@
 #include <costmap_2d/cost_values.h>
 #include <boost/thread.hpp>
 
+#include <path_planning_analysis/CycleTimes.h>
+
+typedef struct timeval TIME;
+#define write_time(x) gettimeofday(&x, NULL)
+#define time_diff(x,y) y.tv_sec - x.tv_sec + ((double) y.tv_usec - x .tv_usec)/1e6
+
 namespace costmap_2d {
   class Costmap2DConfig;
 
@@ -352,6 +358,8 @@ namespace costmap_2d {
         }
         return cost;
       }
+
+      path_planning_analysis::CycleTimes timing;
     
       /***
        * @brief Get the lower bound of cost for cells inside the circumscribed radius

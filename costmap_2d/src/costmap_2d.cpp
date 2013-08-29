@@ -611,14 +611,28 @@ namespace costmap_2d{
       const vector<Observation>& observations, const vector<Observation>& clearing_observations){
     boost::recursive_mutex::scoped_lock uwl(configuration_mutex_);
 
+    TIME t0, t1;
+    path_planning_analysis::TimingEvent e;
+    write_time(t0);
+
     //reset the markers for inflation
     memset(markers_, 0, size_x_ * size_y_ * sizeof(unsigned char));
+
+    write_time(t1);
+    e.name = "Clear Markers";
+    e.time = time_diff(t1, t0);
+    timing.events.push_back( e);
 
     //make sure the inflation queue is empty at the beginning of the cycle (should always be true)
     ROS_ASSERT_MSG(inflation_queue_.empty(), "The inflation queue must be empty at the beginning of inflation");
 
     //raytrace freespace
     raytraceFreespace(clearing_observations);
+
+    write_time(t0);
+    e.name = "Raytrace";
+    e.time = time_diff(t0, t1);
+    timing.events.push_back(e);
 
     //if we raytrace X meters out... we must re-inflate obstacles within the containing square of that circle
     double inflation_window_size = 2 * (max_raytrace_range_ + inflation_radius_);
@@ -629,10 +643,26 @@ namespace costmap_2d{
     //reset the inflation window
     resetInflationWindow(robot_x, robot_y, inflation_window_size + 2 * inflation_radius_, inflation_window_size + 2 * inflation_radius_, inflation_queue_, false);
 
+    write_time(t1);
+    e.name = "Reset";
+    e.time = time_diff(t1, t0);
+    timing.events.push_back( e);
+
     //now we also want to add the new obstacles we've received to the cost map
     updateObstacles(observations, inflation_queue_);
 
+    write_time(t0);
+    e.name = "Update Obstacles";
+    e.time = time_diff(t0, t1);
+    timing.events.push_back(e);
+
+
     inflateObstacles(inflation_queue_);
+
+    write_time(t1);
+    e.name = "Inflation";
+    e.time = time_diff(t1, t0);
+    timing.events.push_back( e);
   }
   
   void Costmap2D::reinflateWindow(double wx, double wy, double w_size_x, double w_size_y, bool clear){

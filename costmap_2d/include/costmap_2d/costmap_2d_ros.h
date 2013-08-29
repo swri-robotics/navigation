@@ -48,7 +48,6 @@
 #include <vector>
 #include <string>
 
-
 #include <boost/algorithm/string.hpp>
 
 #include <tf/transform_datatypes.h>
@@ -409,6 +408,7 @@ namespace costmap_2d {
 
       bool publish_time_;
       ros::Publisher time_pub_;
+      ros::Publisher time_pub2_;
 
       //we need this to be able to initialize the map using a latched topic approach
       //strictly speaking, we don't need the lock, but since this all happens on startup
