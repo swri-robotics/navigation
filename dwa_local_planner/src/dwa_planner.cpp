@@ -261,7 +261,7 @@ namespace dwa_local_planner {
     goal_front_costs_.setTargetPoses(front_global_plan);
     
     // keeping the nose on the path
-    if (sq_dist > forward_point_distance_ * forward_point_distance_ ) {
+    if (sq_dist > forward_point_distance_ * forward_point_distance_ * 2) {
       alignment_costs_.setScale(1.0);
       // costs for robot being aligned with path (nose on path, not ju
       alignment_costs_.setTargetPoses(global_plan_);
