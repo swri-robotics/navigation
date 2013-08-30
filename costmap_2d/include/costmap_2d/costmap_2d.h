@@ -49,7 +49,7 @@
 
 typedef struct timeval TIME;
 #define write_time(x) gettimeofday(&x, NULL)
-#define time_diff(x,y) y.tv_sec - x.tv_sec + ((double) y.tv_usec - x .tv_usec)/1e6
+#define time_diff(y,x) y.tv_sec - x.tv_sec + ((double) y.tv_usec - x .tv_usec)/1e6
 
 namespace costmap_2d {
   class Costmap2DConfig;
