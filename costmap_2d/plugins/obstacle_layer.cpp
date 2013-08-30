@@ -233,8 +233,18 @@ void ObstacleLayer::pointCloud2Callback(const sensor_msgs::PointCloud2ConstPtr& 
 void ObstacleLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
                                           double* min_y, double* max_x, double* max_y)
 {
+TIME t0, t1;
+    TimingEventG e;
+    write_time(t0);
+
   if (rolling_window_)
     updateOrigin(origin_x - getSizeInMetersX() / 2, origin_y - getSizeInMetersY() / 2);
+
+write_time(t1);
+    e.name = "Obstacles/UpdateOrigin";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);  
+
   if (!enabled_)
     return;
   if (has_been_reset_)
@@ -262,11 +272,20 @@ void ObstacleLayer::updateBounds(double origin_x, double origin_y, double origin
   //update the global current status
   current_ = current;
 
+write_time(t0);
+    e.name = "Obstacles/Setup";
+    e.time = time_diff(t1, t0);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);     
+
   //raytrace freespace
   for (unsigned int i = 0; i < clearing_observations.size(); ++i)
   {
     raytraceFreespace(clearing_observations[i], min_x, min_y, max_x, max_y);
   }
+    write_time(t1);
+    e.name = "Obstacles/Raytrace";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);    
 
   //place the new obstacles into a priority queue... each with a priority of zero to begin with
   for (std::vector<Observation>::const_iterator it = observations.begin(); it != observations.end(); ++it)
@@ -316,7 +335,17 @@ void ObstacleLayer::updateBounds(double origin_x, double origin_y, double origin
     }
   }
 
+write_time(t0);
+    e.name = "Obstacles/Mark";
+    e.time = time_diff(t1, t0);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);     
+
   footprint_layer_.updateBounds(origin_x, origin_y, origin_yaw, min_x, min_y, max_x, max_y);
+
+write_time(t1);
+    e.name = "Obstacles/FootprintBounds";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);
 }
 
 void ObstacleLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
@@ -324,9 +353,19 @@ void ObstacleLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, i
   if (!enabled_)
     return;
 
+
+TIME t0, t1;
+    TimingEventG e;
+    write_time(t0);
+
   // The footprint layer clears the footprint in this ObstacleLayer
   // before we merge this obstacle layer into the master_grid.
   footprint_layer_.updateCosts(*this, min_i, min_j, max_i, max_j);
+
+write_time(t1);
+    e.name = "Obstacles/FootprintCosts";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);     
 
   const unsigned char* master_array = master_grid.getCharMap();
   for (int j = min_j; j < max_j; j++)
@@ -341,6 +380,11 @@ void ObstacleLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, i
         master_grid.setCost(i, j, costmap_[index]);
     }
   }
+
+write_time(t0);
+    e.name = "Obstacles/UpdateCosts";
+    e.time = time_diff(t1, t0);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);   
 }
 
 void ObstacleLayer::addStaticObservation(costmap_2d::Observation& obs, bool marking, bool clearing)

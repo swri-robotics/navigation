@@ -233,6 +233,7 @@ protected:
 
   bool publish_time_;
   ros::Publisher time_pub_;
+  ros::Publisher time_pub2_;
 
 private:
   /** @brief Set the footprint from the given string.

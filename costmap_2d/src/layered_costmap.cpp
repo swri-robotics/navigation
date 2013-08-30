@@ -77,6 +77,9 @@ void LayeredCostmap::resizeMap(unsigned int size_x, unsigned int size_y, double 
 
 void LayeredCostmap::updateMap(double origin_x, double origin_y, double origin_yaw)
 {
+    TIME t0, t1;
+    TimingEventG e;
+    write_time(t0);
 
   // if we're using a rolling buffer costmap... we need to update the origin using the robot's position
   if (rolling_window_)
@@ -85,6 +88,11 @@ void LayeredCostmap::updateMap(double origin_x, double origin_y, double origin_y
     double new_origin_y = origin_y - costmap_.getSizeInMetersY() / 2;
     costmap_.updateOrigin(new_origin_x, new_origin_y);
   }
+
+    write_time(t1);
+    e.name = "UpdateOrigin";
+    e.time = time_diff(t0, t1);
+    costmap_.timing.events.push_back(e);    
 
   if (plugins_.size() == 0)
     return;
@@ -112,7 +120,14 @@ void LayeredCostmap::updateMap(double origin_x, double origin_y, double origin_y
   if (xn < x0 || yn < y0)
     return;
 
+
+    write_time(t0);
   costmap_.resetMap(x0, y0, xn, yn);
+    write_time(t1);
+    e.name = "Map Reset";
+    e.time = time_diff(t0, t1);
+    costmap_.timing.events.push_back(e);    
+
 
   {
     boost::unique_lock < boost::shared_mutex > lock(*(costmap_.getLock()));

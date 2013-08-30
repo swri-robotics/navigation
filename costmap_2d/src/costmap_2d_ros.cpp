@@ -102,8 +102,10 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
   private_nh.param("rolling_window", rolling_window, false);
 
   private_nh.param("publish_time", publish_time_, true);
-  if(publish_time_)
+  if(publish_time_){
     time_pub_ = private_nh.advertise<std_msgs::Float32>("update_time", 10);
+    time_pub2_= private_nh.advertise<CycleTimesG>("cycle_times_G", 10);
+  }
 
   private_nh.param("track_unknown_space", track_unknown_space, false);
 
@@ -583,6 +585,9 @@ void Costmap2DROS::mapUpdateLoop(double frequency)
       std_msgs::Float32 a;
       a.data = t_diff;
       time_pub_.publish(a);
+
+      time_pub2_.publish( layered_costmap_->getCostmap()->timing );
+      layered_costmap_->getCostmap()->timing.events.clear();
     }
 
     r.sleep();

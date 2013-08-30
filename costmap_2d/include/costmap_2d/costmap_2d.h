@@ -43,6 +43,13 @@
 #include <geometry_msgs/Point.h>
 #include <boost/thread.hpp>
 
+#include <costmap_2d/CycleTimesG.h>
+
+typedef struct timeval TIME;
+#define write_time(x) gettimeofday(&x, NULL)
+#define time_diff(x,y) y.tv_sec - x.tv_sec + ((double) y.tv_usec - x .tv_usec)/1e6
+
+
 namespace costmap_2d
 {
 
@@ -77,6 +84,8 @@ public:
    * @param map The costmap to copy
    */
   Costmap2D(const Costmap2D& map);
+
+  CycleTimesG timing;
 
   /**
    * @brief  Overloaded assignment operator

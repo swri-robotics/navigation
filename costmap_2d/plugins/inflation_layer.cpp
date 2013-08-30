@@ -94,6 +94,11 @@ void InflationLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
 {
   if (!enabled_)
     return;
+
+TIME t0, t1;
+    TimingEventG e;
+    write_time(t0);
+
   unsigned char* master_array = master_grid.getCharMap();
   unsigned int size_x = master_grid.getSizeInCellsX(), size_y = master_grid.getSizeInCellsY();
 
@@ -126,6 +131,11 @@ void InflationLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     }
   }
 
+    write_time(t1);
+    e.name = "Inflation/CostScan";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);     
+
   while (!inflation_queue_.empty())
   {
     //get the highest priority cell and pop it off the priority queue
@@ -150,6 +160,11 @@ void InflationLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     //remove the current cell from the priority queue
     inflation_queue_.pop();
   }
+
+    write_time(t0);
+    e.name = "Inflation";
+    e.time = time_diff(t1, t0);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);     
 }
 
 /**

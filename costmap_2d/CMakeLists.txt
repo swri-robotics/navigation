@@ -34,6 +34,8 @@ add_message_files(
     DIRECTORY msg
     FILES
     VoxelGrid.msg
+    TimingEventG.msg
+    CycleTimesG.msg
 )
 
 generate_messages(

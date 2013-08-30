@@ -57,9 +57,16 @@ void VoxelLayer::matchSize()
 
 void VoxelLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
                                        double* min_y, double* max_x, double* max_y)
-{
+{TIME t0, t1;
+    TimingEventG e;
+    write_time(t0);
   if (rolling_window_)
     updateOrigin(origin_x - getSizeInMetersX() / 2, origin_y - getSizeInMetersY() / 2);
+
+write_time(t1);
+    e.name = "Voxels/UpdateOrigin";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);  
   if (!enabled_)
     return;
   if (has_been_reset_)
@@ -86,12 +93,20 @@ void VoxelLayer::updateBounds(double origin_x, double origin_y, double origin_ya
 
   //update the global current status
   current_ = current;
+write_time(t0);
+    e.name = "Voxels/Setup";
+    e.time = time_diff(t1, t0);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);     
 
   //raytrace freespace
   for (unsigned int i = 0; i < clearing_observations.size(); ++i)
   {
     raytraceFreespace(clearing_observations[i], min_x, min_y, max_x, max_y);
   }
+write_time(t1);
+    e.name = "Voxels/Raytrace";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);    
 
   //place the new obstacles into a priority queue... each with a priority of zero to begin with
   for (std::vector<Observation>::const_iterator it = observations.begin(); it != observations.end(); ++it)
@@ -143,6 +158,11 @@ void VoxelLayer::updateBounds(double origin_x, double origin_y, double origin_ya
     }
   }
 
+
+write_time(t0);
+    e.name = "Voxels/Mark";
+    e.time = time_diff(t1, t0);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);    
   if (publish_voxel_)
   {
     costmap_2d::VoxelGrid grid_msg;
@@ -165,7 +185,13 @@ void VoxelLayer::updateBounds(double origin_x, double origin_y, double origin_ya
     voxel_pub_.publish(grid_msg);
   }
 
+write_time(t0);
   footprint_layer_.updateBounds(origin_x, origin_y, origin_yaw, min_x, min_y, max_x, max_y);
+
+write_time(t1);
+    e.name = "Voxels/FootprintBounds";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);
 }
 
 void VoxelLayer::clearNonLethal(double wx, double wy, double w_size_x, double w_size_y, bool clear_no_info)

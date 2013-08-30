@@ -98,21 +98,33 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 void StaticLayer::updateBounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y,
                                         double* max_x, double* max_y)
 {
+    TIME t0, t1;
+    TimingEventG e;
+    write_time(t0);
+
   if (!map_recieved_ || map_initialized_)
-    return;
+    {
+    }else{
 
   mapToWorld(0, 0, *min_x, *min_y);
   mapToWorld(size_x_, size_y_, *max_x, *max_y);
   map_initialized_ = true;
+    }
+    write_time(t1);
+    e.name = "Static/UpdateBounds";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);    
 
 }
 
 void StaticLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
-  if (!map_initialized_)
-    return;
-  if (!enabled_)
-    return;
+TIME t0, t1;
+    TimingEventG e;
+    write_time(t0);
+  if (!map_initialized_ || !enabled_){
+
+  }else{
   for (int j = min_j; j < max_j; j++)
   {
     for (int i = min_i; i < max_i; i++)
@@ -120,7 +132,11 @@ void StaticLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int
       int index = getIndex(i, j);
       master_grid.setCost(i, j, costmap_[index]);
     }
-  }
+  }}
+   write_time(t1);
+    e.name = "Static/UpdateCosts";
+    e.time = time_diff(t0, t1);
+    layered_costmap_->getCostmap()->timing.events.push_back(e);     
 }
 
 }
