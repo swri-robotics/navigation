@@ -109,11 +109,6 @@ public:
     plugins_.push_back(plugin);
   }
 
-  void clearPlugins()
-  {
-    plugins_.clear();
-  }
-
   bool isSizeLocked()
   {
     return size_locked_;

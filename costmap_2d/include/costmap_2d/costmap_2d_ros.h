@@ -46,7 +46,6 @@
 #include <geometry_msgs/Polygon.h>
 #include <dynamic_reconfigure/server.h>
 #include <pluginlib/class_loader.h>
-#include <std_srvs/Empty.h>
 
 class SuperValue : public XmlRpc::XmlRpcValue
 {
@@ -216,13 +215,6 @@ public:
    * getUnpaddedRobotFootprint(). */
   void setUnpaddedRobotFootprintPolygon( const geometry_msgs::Polygon& footprint );
 
-  bool resetCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response){
-    initializeLayers();
-    return true;
-  }
-
-  void initializeLayers();
-
 protected:
   LayeredCostmap* layered_costmap_;
   std::string name_;
@@ -296,7 +288,6 @@ private:
   float footprint_padding_;
   costmap_2d::Costmap2DConfig old_config_;
 
-  ros::ServiceServer reset_server_;
 };
 // class Costmap2DROS
 }// namespace costmap_2d

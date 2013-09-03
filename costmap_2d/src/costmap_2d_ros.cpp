@@ -109,7 +109,22 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
     resetOldParameters(private_nh);
   }
 
-  initializeLayers();
+
+  if (private_nh.hasParam("plugins"))
+  {
+      XmlRpc::XmlRpcValue my_list;
+      private_nh.getParam("plugins", my_list);
+      for (int32_t i = 0; i < my_list.size(); ++i)
+      {
+        std::string pname = static_cast<std::string>(my_list[i]["name"]);
+        std::string type = static_cast<std::string>(my_list[i]["type"]);
+        ROS_INFO("Using plugin \"%s\"", pname.c_str());
+
+        boost::shared_ptr<Layer> plugin = plugin_loader_.createInstance(type);
+        layered_costmap_->addPlugin(plugin);
+        plugin->initialize(layered_costmap_, name_ + "/" + pname, &tf_);
+      }
+  }
 
   // subscribe to the footprint topic
   std::string topic_param, topic;
@@ -138,27 +153,6 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
   dynamic_reconfigure::Server<Costmap2DConfig>::CallbackType cb = boost::bind(&Costmap2DROS::reconfigureCB, this, _1,
                                                                               _2);
   dsrv_->setCallback(cb);
-
-  reset_server_ = private_nh.advertiseService("reset", &Costmap2DROS::resetCallback, this);
-}
-
-void Costmap2DROS::initializeLayers()
-{
-    layered_costmap_->clearPlugins();
-    ros::NodeHandle private_nh("~/" + name_);
-
-    XmlRpc::XmlRpcValue my_list;
-    private_nh.getParam("plugins", my_list);
-    for (int32_t i = 0; i < my_list.size(); ++i)
-    {
-      std::string pname = static_cast<std::string>(my_list[i]["name"]);
-      std::string type = static_cast<std::string>(my_list[i]["type"]);
-      ROS_INFO("Using plugin \"%s\"", pname.c_str());
-
-      boost::shared_ptr<Layer> plugin = plugin_loader_.createInstance(type);
-      layered_costmap_->addPlugin(plugin);
-      plugin->initialize(layered_costmap_, name_ + "/" + pname, &tf_);
-    }
 }
 
 void Costmap2DROS::setUnpaddedRobotFootprintPolygon( const geometry_msgs::Polygon& footprint )
