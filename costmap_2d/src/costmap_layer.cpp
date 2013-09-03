@@ -11,6 +11,13 @@ void CostmapLayer::touch(double x, double y, double* min_x, double* min_y, doubl
     *max_y = std::max(y, *max_y);
 }
 
+void CostmapLayer::matchSize()
+{
+    Costmap2D* master = layered_costmap_->getCostmap();
+    resizeMap(master->getSizeInCellsX(), master->getSizeInCellsY(), master->getResolution(),
+            master->getOriginX(), master->getOriginY());
+}
+
 void CostmapLayer::updateWithMax(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
   if (!enabled_)

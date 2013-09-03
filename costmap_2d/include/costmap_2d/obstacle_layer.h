@@ -38,7 +38,7 @@
 #ifndef OBSTACLE_COSTMAP_PLUGIN_H_
 #define OBSTACLE_COSTMAP_PLUGIN_H_
 #include <ros/ros.h>
-#include <costmap_2d/layer.h>
+#include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <costmap_2d/observation_buffer.h>
 
@@ -57,7 +57,7 @@
 
 namespace costmap_2d
 {
-class ObstacleLayer : public Layer, public Costmap2D
+class ObstacleLayer : public CostmapLayer
 {
 public:
   ObstacleLayer()
@@ -72,11 +72,6 @@ public:
 
   virtual void activate();
   virtual void deactivate();
-  bool isDiscretized()
-  {
-    return true;
-  }
-  virtual void matchSize();
 
   /**
    * @brief  A callback to handle buffering LaserScan messages
@@ -115,7 +110,6 @@ public:
   void addStaticObservation(costmap_2d::Observation& obs, bool marking, bool clearing);
 
 protected:
-  void initMaps();
 
   /**
    * @brief  Get the observations used to mark space

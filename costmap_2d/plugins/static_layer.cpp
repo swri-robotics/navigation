@@ -111,16 +111,7 @@ void StaticLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int
 {
   if (!map_initialized_)
     return;
-  if (!enabled_)
-    return;
-  for (int j = min_j; j < max_j; j++)
-  {
-    for (int i = min_i; i < max_i; i++)
-    {
-      int index = getIndex(i, j);
-      master_grid.setCost(i, j, costmap_[index]);
-    }
-  }
+  updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
 }

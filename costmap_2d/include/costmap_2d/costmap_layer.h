@@ -51,6 +51,8 @@ public:
     return true;
   }
 
+  virtual void matchSize();
+
 protected:
   void updateWithOverwrite(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
   void updateWithMax      (costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);

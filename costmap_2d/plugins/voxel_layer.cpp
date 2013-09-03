@@ -30,13 +30,6 @@ void VoxelLayer::onInitialize()
   clearing_endpoints_pub_ = private_nh.advertise<sensor_msgs::PointCloud>( "clearing_endpoints", 1 );
 }
 
-void VoxelLayer::initMaps()
-{
-  ObstacleLayer::initMaps();
-  voxel_grid_.resize(size_x_, size_y_, size_z_);
-  ROS_ASSERT(voxel_grid_.sizeX() == size_x_ && voxel_grid_.sizeY() == size_y_);
-}
-
 void VoxelLayer::reconfigureCB(costmap_2d::VoxelPluginConfig &config, uint32_t level)
 {
   enabled_ = config.enabled;
@@ -46,13 +39,14 @@ void VoxelLayer::reconfigureCB(costmap_2d::VoxelPluginConfig &config, uint32_t l
   z_resolution_ = config.z_resolution;
   unknown_threshold_ = config.unknown_threshold + (VOXEL_BITS - size_z_);
   mark_threshold_ = config.mark_threshold;
-  initMaps();
+  matchSize();
 }
 
 void VoxelLayer::matchSize()
 {
-  initMaps();
-
+  ObstacleLayer::matchSize();
+  voxel_grid_.resize(size_x_, size_y_, size_z_);
+  ROS_ASSERT(voxel_grid_.sizeX() == size_x_ && voxel_grid_.sizeY() == size_y_);
 }
 
 void VoxelLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
@@ -135,10 +129,7 @@ void VoxelLayer::updateBounds(double origin_x, double origin_y, double origin_ya
         unsigned int index = getIndex(mx, my);
 
         costmap_[index] = LETHAL_OBSTACLE;
-        *min_x = std::min((double)cloud.points[i].x, *min_x);
-        *min_y = std::min((double)cloud.points[i].y, *min_y);
-        *max_x = std::max((double)cloud.points[i].x, *max_x);
-        *max_y = std::max((double)cloud.points[i].y, *max_y);
+        touch((double)cloud.points[i].x, (double)cloud.points[i].y, min_x, min_y, max_x, max_y);
       }
     }
   }

@@ -82,7 +82,6 @@ private:
   void clearNonLethal(double wx, double wy, double w_size_x, double w_size_y, bool clear_no_info);
   virtual void raytraceFreespace(const costmap_2d::Observation& clearing_observation, double* min_x, double* min_y,
                                  double* max_x, double* max_y);
-  void initMaps();
 
   dynamic_reconfigure::Server<costmap_2d::VoxelPluginConfig> *dsrv_;
 
