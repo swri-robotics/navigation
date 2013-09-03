@@ -287,7 +287,6 @@ private:
   std::vector<geometry_msgs::Point> padded_footprint_;
   float footprint_padding_;
   costmap_2d::Costmap2DConfig old_config_;
-
 };
 // class Costmap2DROS
 }// namespace costmap_2d

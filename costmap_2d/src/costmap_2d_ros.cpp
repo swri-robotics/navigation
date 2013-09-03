@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <vector>
 
+
 using namespace std;
 
 namespace costmap_2d
@@ -99,7 +100,6 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
   // check if we want a rolling window version of the costmap
   bool rolling_window, track_unknown_space;
   private_nh.param("rolling_window", rolling_window, false);
-
   private_nh.param("track_unknown_space", track_unknown_space, false);
 
   layered_costmap_ = new LayeredCostmap(global_frame_, rolling_window, track_unknown_space);
@@ -109,21 +109,20 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
     resetOldParameters(private_nh);
   }
 
-
   if (private_nh.hasParam("plugins"))
   {
-      XmlRpc::XmlRpcValue my_list;
-      private_nh.getParam("plugins", my_list);
-      for (int32_t i = 0; i < my_list.size(); ++i)
-      {
-        std::string pname = static_cast<std::string>(my_list[i]["name"]);
-        std::string type = static_cast<std::string>(my_list[i]["type"]);
-        ROS_INFO("Using plugin \"%s\"", pname.c_str());
+    XmlRpc::XmlRpcValue my_list;
+    private_nh.getParam("plugins", my_list);
+    for (int32_t i = 0; i < my_list.size(); ++i)
+    {
+      std::string pname = static_cast<std::string>(my_list[i]["name"]);
+      std::string type = static_cast<std::string>(my_list[i]["type"]);
+      ROS_INFO("Using plugin \"%s\"", pname.c_str());
 
-        boost::shared_ptr<Layer> plugin = plugin_loader_.createInstance(type);
-        layered_costmap_->addPlugin(plugin);
-        plugin->initialize(layered_costmap_, name_ + "/" + pname, &tf_);
-      }
+      boost::shared_ptr<Layer> plugin = plugin_loader_.createInstance(type);
+      layered_costmap_->addPlugin(plugin);
+      plugin->initialize(layered_costmap_, name_ + "/" + pname, &tf_);
+    }
   }
 
   // subscribe to the footprint topic
@@ -567,7 +566,6 @@ void Costmap2DROS::mapUpdateLoop(double frequency)
         last_publish_ = now;
       }
     }
-
     r.sleep();
     // make sure to sleep for the remainder of our cycle time
     if (r.cycleTime() > ros::Duration(1 / frequency))
