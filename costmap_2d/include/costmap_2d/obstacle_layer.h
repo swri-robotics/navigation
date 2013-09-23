@@ -72,6 +72,8 @@ public:
 
   virtual void activate();
   virtual void deactivate();
+  virtual void reset();
+
   bool isDiscretized()
   {
     return true;
@@ -116,6 +118,8 @@ public:
 
 protected:
   void initMaps();
+
+  virtual void setupDynamicReconfigure(ros::NodeHandle& nh);
 
   /**
    * @brief  Get the observations used to mark space

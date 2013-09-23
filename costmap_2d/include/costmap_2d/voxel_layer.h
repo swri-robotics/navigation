@@ -76,6 +76,11 @@ public:
     return true;
   }
   virtual void matchSize();
+  virtual void reset();
+
+
+protected:
+  virtual void setupDynamicReconfigure(ros::NodeHandle& nh);
 
 private:
   void reconfigureCB(costmap_2d::VoxelPluginConfig &config, uint32_t level);
