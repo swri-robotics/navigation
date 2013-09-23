@@ -153,12 +153,16 @@ void ObstacleLayer::onInitialize()
 
   }
 
+  setupDynamicReconfigure(nh);
+  footprint_layer_.initialize( layered_costmap_, name_ + "_footprint", tf_);
+}
+
+void ObstacleLayer::setupDynamicReconfigure(ros::NodeHandle& nh)
+{
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::ObstaclePluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::ObstaclePluginConfig>::CallbackType cb = boost::bind(
       &ObstacleLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
-
-  footprint_layer_.initialize( layered_costmap_, name_ + "_footprint", tf_);
 }
 
 void ObstacleLayer::reconfigureCB(costmap_2d::ObstaclePluginConfig &config, uint32_t level)
@@ -470,6 +474,14 @@ void ObstacleLayer::updateRaytraceBounds(double ox, double oy, double wx, double
   touch(ex, ey, min_x, min_y, max_x, max_y);
 }
 
+void ObstacleLayer::reset()
+{
+    deactivate();
+    initMaps();
+    current_ = true;
+    has_been_reset_ = false;
+    activate();
+}
 
 void ObstacleLayer::onFootprintChanged()
 {
