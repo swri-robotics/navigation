@@ -46,7 +46,11 @@ void InflationLayer::reconfigureCB(costmap_2d::InflationPluginConfig &config, ui
     need_reinflation_ = true;
     computeCaches();
   }
-  enabled_ = config.enabled;
+
+  if (enabled_ != config.enabled) {
+    enabled_ = config.enabled;
+    need_reinflation_ = true;
+  }
 }
 
 void InflationLayer::matchSize()
@@ -65,6 +69,7 @@ void InflationLayer::matchSize()
 void InflationLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
                                            double* min_y, double* max_x, double* max_y)
 {
+    ROS_INFO(need_reinflation_?"Needs refinlation":"No reinflation");
   if( need_reinflation_ )
   {
     // For some reason when I make these -<double>::max() it does not
@@ -75,6 +80,8 @@ void InflationLayer::updateBounds(double origin_x, double origin_y, double origi
     *max_x = std::numeric_limits<float>::max();
     *max_y = std::numeric_limits<float>::max();
     need_reinflation_ = false;
+
+    ROS_INFO("%f %f", *min_x, *max_x);
   }
 }
 
