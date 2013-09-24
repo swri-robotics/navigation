@@ -147,7 +147,7 @@ void StaticLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int
 {
   if (!map_initialized_)
     return;
-  updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
+  updateWithTrueOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
 }

@@ -54,9 +54,10 @@ public:
   virtual void matchSize();
 
 protected:
-  void updateWithOverwrite(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
-  void updateWithMax      (costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
-  void updateWithAddition (costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+  void updateWithTrueOverwrite(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+  void updateWithOverwrite    (costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+  void updateWithMax          (costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+  void updateWithAddition     (costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
 
   void touch(double x, double y, double* min_x, double* min_y, double* max_x, double* max_y);
 };
