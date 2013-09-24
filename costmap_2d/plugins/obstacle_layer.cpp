@@ -481,7 +481,7 @@ void ObstacleLayer::updateRaytraceBounds(double ox, double oy, double wx, double
 void ObstacleLayer::reset()
 {
     deactivate();
-    initMaps();
+    resetMaps();
     current_ = true;
     has_been_reset_ = false;
     activate();

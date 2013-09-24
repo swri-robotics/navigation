@@ -25,13 +25,6 @@ void VoxelLayer::onInitialize()
   clearing_endpoints_pub_ = private_nh.advertise<sensor_msgs::PointCloud>( "clearing_endpoints", 1 );
 }
 
-void VoxelLayer::initMaps()
-{
-  ObstacleLayer::initMaps();
-  voxel_grid_.resize(size_x_, size_y_, size_z_);
-  ROS_ASSERT(voxel_grid_.sizeX() == size_x_ && voxel_grid_.sizeY() == size_y_);
-}
-
 void VoxelLayer::setupDynamicReconfigure(ros::NodeHandle& nh)
 {
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::VoxelPluginConfig>(nh);
@@ -62,7 +55,7 @@ void VoxelLayer::matchSize()
 void VoxelLayer::reset()
 {
   deactivate();
-  ObstacleLayer::initMaps();
+  resetMaps();
   voxel_grid_.reset();
   activate();
 }
