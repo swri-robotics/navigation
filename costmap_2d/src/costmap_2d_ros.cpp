@@ -121,7 +121,7 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
 
       boost::shared_ptr<Layer> plugin = plugin_loader_.createInstance(type);
       layered_costmap_->addPlugin(plugin);
-      plugin->initialize(layered_costmap_, name_ + "/" + pname, &tf_);
+      plugin->initialize(layered_costmap_, name + "/" + pname, &tf_);
     }
   }
 
@@ -137,7 +137,7 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
 
   readFootprintFromParams( private_nh );
 
-  publisher_ = new Costmap2DPublisher(private_nh, layered_costmap_->getCostmap(), global_frame_, "costmap");
+  publisher_ = new Costmap2DPublisher(&private_nh, layered_costmap_->getCostmap(), global_frame_, "costmap");
 
   // create a thread to handle updating the map
   stop_updates_ = false;
@@ -281,7 +281,13 @@ void Costmap2DROS::reconfigureCB(costmap_2d::Costmap2DConfig &config, uint32_t l
                                 (unsigned int)(map_height_meters / resolution), resolution, origin_x, origin_y);
   }
 
-  footprint_padding_ = config.footprint_padding;
+  // If the padding has changed, call setUnpaddedRobotFootprint() to
+  // re-apply the padding.
+  if( footprint_padding_ != config.footprint_padding )
+  {
+    footprint_padding_ = config.footprint_padding;
+    setUnpaddedRobotFootprint( unpadded_footprint_ );
+  }
 
   readFootprintFromConfig( config, old_config_ );
 
@@ -624,6 +630,17 @@ void Costmap2DROS::resume()
   ros::Rate r(100.0);
   while (!initialized_)
     r.sleep();
+}
+
+
+void Costmap2DROS::resetLayers()
+{
+  std::vector < boost::shared_ptr<Layer> > *plugins = layered_costmap_->getPlugins();
+  for (vector<boost::shared_ptr<Layer> >::iterator plugin = plugins->begin(); plugin != plugins->end();
+      ++plugin)
+  {
+    (*plugin)->reset();
+  }
 }
 
 bool Costmap2DROS::getRobotPose(tf::Stamped<tf::Pose>& global_pose) const
