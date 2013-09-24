@@ -35,52 +35,30 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef STATIC_COSTMAP_PLUGIN_H_
-#define STATIC_COSTMAP_PLUGIN_H_
+#ifndef COSTMAP_LAYER_H_
+#define COSTMAP_LAYER_H_
 #include <ros/ros.h>
-#include <costmap_2d/costmap_layer.h>
+#include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
-#include <costmap_2d/GenericPluginConfig.h>
-#include <dynamic_reconfigure/server.h>
-#include <nav_msgs/OccupancyGrid.h>
-#include <message_filters/subscriber.h>
 
 namespace costmap_2d
 {
-class StaticLayer : public CostmapLayer
+class CostmapLayer : public Layer, public Costmap2D
 {
 public:
-  StaticLayer();
-  virtual void onInitialize();
-  virtual void activate();
-  virtual void deactivate();
-  virtual void reset();
-
-  virtual void updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x,
-                             double* max_y);
-  virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+  bool isDiscretized()
+  {
+    return true;
+  }
 
   virtual void matchSize();
 
-private:
-  /**
-   * @brief  Callback to update the costmap's map from the map_server
-   * @param new_map The map to put into the costmap. The origin of the new
-   * map along with its size will determine what parts of the costmap's
-   * static map are overwritten.
-   */
-  void incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map);
-  void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
+protected:
+  void updateWithOverwrite(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+  void updateWithMax      (costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+  void updateWithAddition (costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
 
-  std::string global_frame_; ///< @brief The global frame for the costmap
-  bool map_received_, map_initialized_;
-  bool track_unknown_space_;
-  ros::Subscriber map_sub_;
-
-  unsigned char lethal_threshold_, unknown_cost_value_;
-
-  mutable boost::recursive_mutex lock_;
-  dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
+  void touch(double x, double y, double* min_x, double* min_y, double* max_x, double* max_y);
 };
 }
 #endif
