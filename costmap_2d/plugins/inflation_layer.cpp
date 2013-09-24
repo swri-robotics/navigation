@@ -60,11 +60,6 @@ void InflationLayer::matchSize()
 void InflationLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
                                            double* min_y, double* max_x, double* max_y)
 {
-  if (!enabled_)
-    return;
-  //make sure the inflation queue is empty at the beginning of the cycle (should always be true)
-  ROS_ASSERT_MSG(inflation_queue_.empty(), "The inflation queue must be empty at the beginning of inflation");
-
   if( need_reinflation_ )
   {
     // For some reason when I make these -<double>::max() it does not
@@ -94,6 +89,10 @@ void InflationLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
 {
   if (!enabled_)
     return;
+
+  //make sure the inflation queue is empty at the beginning of the cycle (should always be true)
+  ROS_ASSERT_MSG(inflation_queue_.empty(), "The inflation queue must be empty at the beginning of inflation");
+
   unsigned char* master_array = master_grid.getCharMap();
   unsigned int size_x = master_grid.getSizeInCellsX(), size_y = master_grid.getSizeInCellsY();
 
