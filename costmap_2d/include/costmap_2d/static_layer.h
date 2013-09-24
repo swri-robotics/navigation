@@ -72,9 +72,12 @@ private:
   void incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map);
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
 
+  unsigned char interpretValue(unsigned char value);
+
   std::string global_frame_; ///< @brief The global frame for the costmap
   bool map_received_, map_initialized_;
   bool track_unknown_space_;
+  bool trinary_costmap_;
   ros::Subscriber map_sub_;
 
   unsigned char lethal_threshold_, unknown_cost_value_;

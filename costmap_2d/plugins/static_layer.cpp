@@ -28,6 +28,7 @@ void StaticLayer::onInitialize()
   int temp_lethal_threshold, temp_unknown_cost_value;
   nh.param("lethal_cost_threshold", temp_lethal_threshold, int(100));
   nh.param("unknown_cost_value", temp_unknown_cost_value, int(-1));
+  nh.param("trinary_costmap", trinary_costmap_, true);
 
   lethal_threshold_ = std::max(std::min(temp_lethal_threshold, 100), 0);
   unknown_cost_value_ = temp_unknown_cost_value;
@@ -72,6 +73,20 @@ void StaticLayer::matchSize()
             master->getOriginX(), master->getOriginY());
 }
 
+unsigned char StaticLayer::interpretValue(unsigned char value)
+{
+  //check if the static value is above the unknown or lethal thresholds
+  if (track_unknown_space_ && value == unknown_cost_value_)
+    return NO_INFORMATION;
+  else if (value >= lethal_threshold_)
+    return LETHAL_OBSTACLE;
+  else if (trinary_costmap_)
+    return FREE_SPACE;
+
+  double scale = (double) value / lethal_threshold_;
+  return scale * LETHAL_OBSTACLE;
+}
+
 void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
   unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
@@ -100,14 +115,7 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
     for (unsigned int j = 0; j < size_x; ++j)
     {
       unsigned char value = new_map->data[index];
-      //check if the static value is above the unknown or lethal thresholds
-      if (track_unknown_space_ && value == unknown_cost_value_)
-        costmap_[index] = NO_INFORMATION;
-      else if (value >= lethal_threshold_)
-        costmap_[index] = LETHAL_OBSTACLE;
-      else
-        costmap_[index] = FREE_SPACE;
-
+      costmap_[index] = interpretValue(value);
       ++index;
     }
   }
