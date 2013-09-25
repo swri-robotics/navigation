@@ -1,6 +1,5 @@
 #include<costmap_2d/static_layer.h>
 #include<costmap_2d/costmap_math.h>
-
 #include <pluginlib/class_list_macros.h>
 
 PLUGINLIB_EXPORT_CLASS(costmap_2d::StaticLayer, costmap_2d::Layer)
@@ -23,6 +22,8 @@ void StaticLayer::onInitialize()
 
   std::string map_topic;
   nh.param("map_topic", map_topic, std::string("map"));
+  nh.param("subscribe_to_updates", subscribe_to_updates_, false);
+  
   nh.param("track_unknown_space", track_unknown_space_, true);
 
   int temp_lethal_threshold, temp_unknown_cost_value;
@@ -36,6 +37,7 @@ void StaticLayer::onInitialize()
   ROS_INFO("Requesting the map...");
   map_sub_ = g_nh.subscribe(map_topic, 1, &StaticLayer::incomingMap, this);
   map_received_ = false;
+  has_updated_data_ = false;
 
   ros::Rate r(10);
   while (!map_received_ && g_nh.ok())
@@ -45,6 +47,12 @@ void StaticLayer::onInitialize()
   }
 
   ROS_INFO("Received a %d X %d map at %f m/pix", getSizeInCellsX(), getSizeInCellsY(), getResolution());
+  
+  if(subscribe_to_updates_)
+  {
+    ROS_INFO("Subscribing to updates");
+    map_update_sub_ = g_nh.subscribe(map_topic + "_updates", 10, &StaticLayer::incomingUpdate, this);
+  }
 
   if(dsrv_)
   {
@@ -62,7 +70,10 @@ void StaticLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_
   if (config.enabled != enabled_)
   {
     enabled_ = config.enabled;
-    map_initialized_ = false;
+    has_updated_data_ = true;
+    x_ = y_ = 0;
+    width_ = size_x_;
+    height_ = size_y_;
   }
 }
 
@@ -120,7 +131,29 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
     }
   }
   map_received_ = true;
-  map_initialized_ = false; // force costmap update
+  x_ = y_ = 0;
+  width_ = size_x_;
+  height_ = size_y_;
+  has_updated_data_ = true;
+}
+
+void StaticLayer::incomingUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
+{
+    unsigned int di = 0;
+    for (unsigned int y = 0; y < update->height ; y++)
+    {
+        unsigned int index_base = (update->y + y) * update->width;
+        for (unsigned int x = 0; x < update->width ; x++)
+        {
+            unsigned int index = index_base + x + update->x;
+            costmap_[index] = interpretValue( update->data[di++] );
+        }
+    }
+    x_ = update->x;
+    y_ = update->y;
+    width_ = update->width;
+    height_ = update->height;
+    has_updated_data_ = true;
 }
 
 void StaticLayer::activate()
@@ -131,6 +164,8 @@ void StaticLayer::activate()
 void StaticLayer::deactivate()
 {
     map_sub_.shutdown();
+    if (subscribe_to_updates_)
+        map_update_sub_.shutdown();
 }
 
 void StaticLayer::reset()
@@ -142,18 +177,26 @@ void StaticLayer::reset()
 void StaticLayer::updateBounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y,
                                         double* max_x, double* max_y)
 {
-  if (!map_received_ || map_initialized_)
+  if (!map_received_ || !has_updated_data_)
     return;
 
-  mapToWorld(0, 0, *min_x, *min_y);
-  mapToWorld(size_x_, size_y_, *max_x, *max_y);
-  map_initialized_ = true;
+  double mx, my;
+  
+  mapToWorld(x_, y_, mx, my);
+  *min_x = std::min(mx, *min_x);
+  *min_y = std::min(my, *min_y);
+  
+  mapToWorld(x_ + width_, y_ + height_, mx, my);
+  *max_x = std::max(mx, *max_x);
+  *max_y = std::max(my, *max_y);
+  
+  has_updated_data_ = false;
 
 }
 
 void StaticLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
-  if (!map_initialized_)
+  if (!map_received_)
     return;
   updateWithTrueOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
