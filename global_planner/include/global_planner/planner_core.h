@@ -165,6 +165,8 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
     private:
         void mapToWorld(double mx, double my, double& wx, double& wy);
         void clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my);
+        void publishPotential(float* potential);
+
         double planner_window_x_, planner_window_y_, default_tolerance_;
         std::string tf_prefix_;
         boost::mutex mutex_;
@@ -174,7 +176,9 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
         Expander* planner_;
         Traceback* path_maker_;
 
+        bool publish_potential_;
         ros::Publisher potential_pub_;
+        int publish_scale_;
 
         void outlineMap(unsigned char* costarr, int nx, int ny, unsigned char value);
         unsigned char* cost_array_;

@@ -115,6 +115,7 @@ void PlannerCore::initialize(std::string name, costmap_2d::Costmap2DROS* costmap
         private_nh.param("planner_window_x", planner_window_x_, 0.0);
         private_nh.param("planner_window_y", planner_window_y_, 0.0);
         private_nh.param("default_tolerance", default_tolerance_, 0.0);
+        private_nh.param("publish_scale", publish_scale_, 100);
 
         double costmap_pub_freq;
         private_nh.param("planner_costmap_publish_frequency", costmap_pub_freq, 0.0);
@@ -141,6 +142,7 @@ void PlannerCore::reconfigureCB(global_planner::GlobalPlannerConfig& config, uin
     path_maker_->setLethalCost(config.lethal_cost);
     planner_->setNeutralCost(config.neutral_cost);
     planner_->setFactor(config.cost_factor);
+    publish_potential_ = config.publish_potential;
 }
 
 void PlannerCore::clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my) {
@@ -240,44 +242,8 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
     bool found_legal = planner_->calculatePotentials(costmap->getCharMap(), start_x, start_y, goal_x, goal_y,
                                                     nx * ny * 2, potential_array_);
 
-    //**********************888
-    double resolution = costmap->getResolution();
-    nav_msgs::OccupancyGrid grid;
-    // Publish Whole Grid
-    grid.header.frame_id = costmap_ros_->getGlobalFrameID();
-    grid.header.stamp = ros::Time::now();
-    grid.info.resolution = resolution;
-
-    grid.info.width = nx;
-    grid.info.height = ny;
-
-    costmap->mapToWorld(0, 0, wx, wy);
-    grid.info.origin.position.x = wx - resolution / 2;
-    grid.info.origin.position.y = wy - resolution / 2;
-    grid.info.origin.position.z = 0.0;
-    grid.info.origin.orientation.w = 1.0;
-
-    grid.data.resize(nx * ny);
-
-    float max = 0.0;
-    for (unsigned int i = 0; i < grid.data.size(); i++) {
-        float potential = potential_array_[i];
-        if (potential < POT_HIGH) {
-            if (potential > max) {
-                max = potential;
-            }
-        }
-    }
-
-    for (unsigned int i = 0; i < grid.data.size(); i++) {
-        if (potential_array_[i] >= POT_HIGH) {
-            grid.data[i] = 255;
-        } else
-            grid.data[i] = potential_array_[i] * 254 / max;
-    }
-    potential_pub_.publish(grid);
-
-    //************************8888888
+    if(publish_potential_)
+        publishPotential(potential_array_);
 
     if (found_legal) {
         //extract the plan
@@ -381,6 +347,48 @@ bool PlannerCore::getPlanFromPotential(const geometry_msgs::PoseStamped& goal,
     //publish the plan for visualization purposes
     publishPlan(plan, 0.0, 1.0, 0.0, 0.0);
     return !plan.empty();
+}
+
+void PlannerCore::publishPotential(float* potential)
+{
+    costmap_2d::Costmap2D* costmap = costmap_ros_->getCostmap();
+    int nx = costmap->getSizeInCellsX(), ny = costmap->getSizeInCellsY();
+    double resolution = costmap->getResolution();
+    nav_msgs::OccupancyGrid grid;
+    // Publish Whole Grid
+    grid.header.frame_id = costmap_ros_->getGlobalFrameID();
+    grid.header.stamp = ros::Time::now();
+    grid.info.resolution = resolution;
+
+    grid.info.width = nx;
+    grid.info.height = ny;
+
+    double wx, wy;
+    costmap->mapToWorld(0, 0, wx, wy);
+    grid.info.origin.position.x = wx - resolution / 2;
+    grid.info.origin.position.y = wy - resolution / 2;
+    grid.info.origin.position.z = 0.0;
+    grid.info.origin.orientation.w = 1.0;
+
+    grid.data.resize(nx * ny);
+
+    float max = 0.0;
+    for (unsigned int i = 0; i < grid.data.size(); i++) {
+        float potential = potential_array_[i];
+        if (potential < POT_HIGH) {
+            if (potential > max) {
+                max = potential;
+            }
+        }
+    }
+
+    for (unsigned int i = 0; i < grid.data.size(); i++) {
+        if (potential_array_[i] >= POT_HIGH) {
+            grid.data[i] = -1;
+        } else 
+            grid.data[i] = potential_array_[i] * publish_scale_ / max;
+    }
+    potential_pub_.publish(grid);
 }
 
 } //end namespace global_planner
