@@ -82,6 +82,7 @@ private:
   bool has_updated_data_;
   unsigned int x_,y_,width_,height_;
   bool track_unknown_space_;
+  bool use_maximum_;
   bool trinary_costmap_;
   ros::Subscriber map_sub_, map_update_sub_;
 

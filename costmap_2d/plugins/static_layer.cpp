@@ -25,6 +25,7 @@ void StaticLayer::onInitialize()
   nh.param("subscribe_to_updates", subscribe_to_updates_, false);
   
   nh.param("track_unknown_space", track_unknown_space_, true);
+  nh.param("use_maximum", use_maximum_, false);
 
   int temp_lethal_threshold, temp_unknown_cost_value;
   nh.param("lethal_cost_threshold", temp_lethal_threshold, int(100));
@@ -116,6 +117,11 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
     ROS_INFO("Resizing costmap to %d X %d at %f m/pix", size_x, size_y, new_map->info.resolution);
     layered_costmap_->resizeMap(size_x, size_y, new_map->info.resolution, new_map->info.origin.position.x,
                                 new_map->info.origin.position.y, true);
+  }else if(size_x_ != size_x || size_y_ != size_y ||
+      resolution_ != new_map->info.resolution ||
+      origin_x_ != new_map->info.origin.position.x ||
+      origin_y_ != new_map->info.origin.position.y){
+    matchSize();
   }
 
   unsigned int index = 0;
@@ -130,10 +136,10 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
       ++index;
     }
   }
-  map_received_ = true;
   x_ = y_ = 0;
   width_ = size_x_;
   height_ = size_y_;
+  map_received_ = true;
   has_updated_data_ = true;
 }
 
@@ -198,7 +204,10 @@ void StaticLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int
 {
   if (!map_received_)
     return;
-  updateWithTrueOverwrite(master_grid, min_i, min_j, max_i, max_j);
+  if(!use_maximum_)
+      updateWithTrueOverwrite(master_grid, min_i, min_j, max_i, max_j);
+  else
+      updateWithMax(master_grid, min_i, min_j, max_i, max_j);
 }
 
 }
