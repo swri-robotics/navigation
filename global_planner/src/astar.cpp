@@ -77,6 +77,9 @@ void AStarExpansion::add(unsigned char* costs, float* potential, float prev_pote
     if (potential[next_i] < POT_HIGH)
         return;
 
+    if(costs[next_i]>=lethal_cost_ && !(unknown_ && costs[next_i]==255))
+        return;
+
     potential[next_i] = p_calc_->calculatePotential(potential, costs[next_i] + neutral_cost_, next_i, prev_potential);
     int x = next_i % nx_, y = next_i / nx_;
     float distance = abs(end_x - x) + abs(end_y - y);

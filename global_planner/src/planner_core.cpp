@@ -111,6 +111,7 @@ void PlannerCore::initialize(std::string name, costmap_2d::Costmap2DROS* costmap
         potential_pub_ = private_nh.advertise<nav_msgs::OccupancyGrid>("potential", 1);
 
         private_nh.param("allow_unknown", allow_unknown_, true);
+        planner_->setHasUnknown(allow_unknown_);
         private_nh.param("planner_window_x", planner_window_x_, 0.0);
         private_nh.param("planner_window_y", planner_window_y_, 0.0);
         private_nh.param("default_tolerance", default_tolerance_, 0.0);
@@ -234,6 +235,8 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
     path_maker_->setSize(nx, ny);
     potential_array_ = new float[nx * ny];
 
+    outlineMap(costmap->getCharMap(), nx, ny, 254);
+
     bool found_legal = planner_->calculatePotentials(costmap->getCharMap(), start_x, start_y, goal_x, goal_y,
                                                     nx * ny * 2, potential_array_);
 
@@ -286,6 +289,8 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
         } else {
             ROS_ERROR("Failed to get a plan from potential when a legal potential was found. This shouldn't happen.");
         }
+    }else{
+        ROS_ERROR("Failed to get a plan.");
     }
 
     //publish the plan for visualization purposes
