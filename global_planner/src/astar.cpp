@@ -53,8 +53,9 @@ bool AStarExpansion::calculatePotentials(unsigned char* costs, int start_x, int 
     potential[start_i] = 0;
 
     int goal_i = toIndex(end_x, end_y);
+    int cycle = 0;
 
-    while (queue_.size() > 0) {
+    while (queue_.size() > 0 && cycle < cycles) {
         Index top = queue_[0];
         std::pop_heap(queue_.begin(), queue_.end(), greater1());
         queue_.pop_back();
