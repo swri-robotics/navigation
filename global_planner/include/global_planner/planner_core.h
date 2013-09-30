@@ -75,7 +75,7 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
          * @param  name The name of this planner
          * @param  costmap A pointer to the ROS wrapper of the costmap to use
          */
-        PlannerCore(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+        PlannerCore(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
 
         /**
          * @brief  Initialization function for the PlannerCore object
@@ -83,6 +83,8 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
          * @param  costmap A pointer to the ROS wrapper of the costmap to use for planning
          */
         void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+
+        void initialize(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
 
         /**
          * @brief Given a goal pose in the world, compute a plan
@@ -158,7 +160,8 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
         /**
          * @brief Store a copy of the current costmap in \a costmap.  Called by makePlan.
          */
-        costmap_2d::Costmap2DROS* costmap_ros_;
+        costmap_2d::Costmap2D* costmap_;
+        std::string frame_id_;
         ros::Publisher plan_pub_;
         bool initialized_, allow_unknown_, visualize_potential_;
 
