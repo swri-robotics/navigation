@@ -24,6 +24,9 @@ void ObstacleLayer::onInitialize()
   current_ = true;
   has_been_reset_ = false;
 
+  laser_min_range_ = -1;
+  laser_max_range_ = -1;
+
   global_frame_ = layered_costmap_->getGlobalFrameID();
   double transform_tolerance;
   nh.param("transform_tolerance", transform_tolerance, 0.2);
@@ -190,10 +193,15 @@ void ObstacleLayer::laserScanCallback(const sensor_msgs::LaserScanConstPtr& mess
   sensor_msgs::PointCloud2 cloud;
   cloud.header = message->header;
 
+  laser_min_range_ = message->range_min;
+  laser_max_range_ = message->range_max;
+
+  if (!tf_->waitForTransform(global_frame_, message->header.frame_id, message->header.stamp + ros::Duration(message->scan_time), ros::Duration(0.25))) return;
+
   //project the scan into a point cloud
   try
   {
-    projector_.transformLaserScanToPointCloud(message->header.frame_id, *message, cloud, *tf_);
+    projector_.transformLaserScanToPointCloud(global_frame_, *message, cloud, *tf_);
   }
   catch (tf::TransformException &ex)
   {
@@ -302,6 +310,12 @@ void ObstacleLayer::updateBounds(double origin_x, double origin_y, double origin
         ROS_DEBUG("The point is too far away");
         continue;
       }
+
+      if (sq_dist >= laser_max_range_*laser_max_range_ /*|| sq_dist <= laser_min_range_*laser_min_range_*/)
+	  {
+	    ROS_DEBUG("The point is out of sensor range");
+	    continue;
+	  }
 
       //now we need to compute the map coordinates for the observation
       unsigned int mx, my;
@@ -421,6 +435,11 @@ void ObstacleLayer::raytraceFreespace(const Observation& clearing_observation, d
     double wx = cloud.points[i].x;
     double wy = cloud.points[i].y;
 
+    double dist = distance(ox,oy,wx,wy);
+
+    // we can skip points which are too close
+    if (dist <= laser_min_range_) continue;
+
     //now we also need to make sure that the enpoint we're raytracing
     //to isn't off the costmap and scale if necessary
     double a = wx - ox;
@@ -454,6 +473,7 @@ void ObstacleLayer::raytraceFreespace(const Observation& clearing_observation, d
       wy = map_end_y - .001;
     }
 
+
     //now that the vector is scaled correctly... we'll get the map coordinates of its endpoint
     unsigned int x1, y1;
 
@@ -461,10 +481,23 @@ void ObstacleLayer::raytraceFreespace(const Observation& clearing_observation, d
     if (!worldToMap(wx, wy, x1, y1))
       continue;
 
+    // compute new origin for raytracing according to laser_min_range
+    // we are going to raytrace from laser_min_range distance from sensor origin
+    double al = atan2(wy - oy, wx - ox);
+
+    double oox = laser_min_range_ * cos(al) + ox;
+    double ooy = laser_min_range_ * sin(al) + oy;
+
+    unsigned int x00 = x0;
+    unsigned int y00 = x0;
+
+    if (!worldToMap(oox, ooy, x00, y00))
+          continue;
+
     unsigned int cell_raytrace_range = cellDistance(clearing_observation.raytrace_range_);
     MarkCell marker(costmap_, FREE_SPACE);
     //and finally... we can execute our trace to clear obstacles along that line
-    raytraceLine(marker, x0, y0, x1, y1, cell_raytrace_range);
+    raytraceLine(marker, x00, y00, x1, y1, cell_raytrace_range);
 
     updateRaytraceBounds(ox, oy, wx, wy, clearing_observation.raytrace_range_, min_x, min_y, max_x, max_y);
   }
