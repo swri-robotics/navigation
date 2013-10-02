@@ -15,6 +15,7 @@ find_package(catkin REQUIRED
             voxel_grid
             pcl_ros
             pluginlib
+            map_msgs
         )
 
 find_package(PCL REQUIRED)
@@ -40,6 +41,7 @@ generate_messages(
     DEPENDENCIES
         std_msgs
         geometry_msgs
+        map_msgs
 )
 
 # dynamic reconfigure
@@ -92,6 +94,7 @@ catkin_package(
         message_generation
         pcl_ros
         voxel_grid
+        map_msgs
     DEPENDS
         PCL
         Eigen
