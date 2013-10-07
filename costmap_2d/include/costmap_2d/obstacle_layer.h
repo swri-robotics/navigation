@@ -151,9 +151,6 @@ protected:
   std::string global_frame_; ///< @brief The global frame for the costmap
   double max_obstacle_height_; ///< @brief Max Obstacle Height
 
-  double laser_min_range_; ///< @brief range_min from LaserScan message
-  double laser_max_range_; ///< @brief range_max from LaserScan message
-
   laser_geometry::LaserProjection projector_; ///< @brief Used to project laser scans into point clouds
 
   std::vector<boost::shared_ptr<tf::MessageFilterBase> > observation_notifiers_; ///< @brief Used to make sure that transforms are available for each sensor
