@@ -24,9 +24,6 @@ void ObstacleLayer::onInitialize()
   current_ = true;
   has_been_reset_ = false;
 
-  laser_min_range_ = -1;
-  laser_max_range_ = -1;
-
   global_frame_ = layered_costmap_->getGlobalFrameID();
   double transform_tolerance;
   nh.param("transform_tolerance", transform_tolerance, 0.2);
