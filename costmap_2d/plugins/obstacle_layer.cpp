@@ -423,11 +423,6 @@ void ObstacleLayer::raytraceFreespace(const Observation& clearing_observation, d
     double wx = cloud.points[i].x;
     double wy = cloud.points[i].y;
 
-    double dist = distance(ox,oy,wx,wy);
-
-    // we can skip points which are too close
-    if (dist <= laser_min_range_) continue;
-
     //now we also need to make sure that the enpoint we're raytracing
     //to isn't off the costmap and scale if necessary
     double a = wx - ox;
@@ -460,7 +455,6 @@ void ObstacleLayer::raytraceFreespace(const Observation& clearing_observation, d
       wx = ox + a * t;
       wy = map_end_y - .001;
     }
-
 
     //now that the vector is scaled correctly... we'll get the map coordinates of its endpoint
     unsigned int x1, y1;
