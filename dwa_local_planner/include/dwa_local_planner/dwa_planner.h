@@ -143,6 +143,8 @@ namespace dwa_local_planner {
       bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
 
     private:
+      void updateCostScales();
+      bool use_alignment_costs_;
 
       base_local_planner::LocalPlannerUtil *planner_util_;
 
