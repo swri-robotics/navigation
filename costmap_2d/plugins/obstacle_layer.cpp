@@ -18,7 +18,13 @@ void ObstacleLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_), g_nh;
   rolling_window_ = layered_costmap_->isRolling();
-  default_value_ = NO_INFORMATION;
+
+  bool track_unknown_space;
+  nh.param("track_unknown_space", track_unknown_space, false);
+  if(track_unknown_space)
+    default_value_ = NO_INFORMATION;
+  else
+    default_value_ = FREE_SPACE;
 
   initMaps();
   current_ = true;
