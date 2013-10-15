@@ -172,6 +172,7 @@ private:
 
   double inflation_radius_, inscribed_radius_, weight_;
   unsigned int cell_inflation_radius_;
+  unsigned int cached_cell_inflation_radius_;
   std::priority_queue<CellData> inflation_queue_;
 
   double resolution_;

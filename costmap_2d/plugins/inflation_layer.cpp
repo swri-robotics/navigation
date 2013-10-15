@@ -14,6 +14,8 @@ namespace costmap_2d
 InflationLayer::InflationLayer()
   : inflation_radius_( 0 )
   , weight_( 0 )
+  , cell_inflation_radius_(0)
+  , cached_cell_inflation_radius_(0)
   , dsrv_(NULL)
 {}
 
@@ -200,15 +202,31 @@ inline void InflationLayer::enqueue(unsigned char* grid, unsigned int index, uns
 void InflationLayer::computeCaches()
 {
   //based on the inflation radius... compute distance and cost caches
-  cached_costs_ = new unsigned char*[cell_inflation_radius_ + 2];
-  cached_distances_ = new double*[cell_inflation_radius_ + 2];
+  if(cell_inflation_radius_ != cached_cell_inflation_radius_)
+  {
+    if(cached_cell_inflation_radius_ > 0)
+      deleteKernels();
+
+    cached_costs_ = new unsigned char*[cell_inflation_radius_ + 2];
+    cached_distances_ = new double*[cell_inflation_radius_ + 2];
+
+    for (unsigned int i = 0; i <= cell_inflation_radius_ + 1; ++i)
+    {
+      cached_costs_[i] = new unsigned char[cell_inflation_radius_ + 2];
+      cached_distances_[i] = new double[cell_inflation_radius_ + 2];
+      for (unsigned int j = 0; j <= cell_inflation_radius_ + 1; ++j)
+      {
+        cached_distances_[i][j] = sqrt(i * i + j * j);
+      }
+    }
+
+    cached_cell_inflation_radius_ = cell_inflation_radius_;
+  }
+
   for (unsigned int i = 0; i <= cell_inflation_radius_ + 1; ++i)
   {
-    cached_costs_[i] = new unsigned char[cell_inflation_radius_ + 2];
-    cached_distances_[i] = new double[cell_inflation_radius_ + 2];
     for (unsigned int j = 0; j <= cell_inflation_radius_ + 1; ++j)
     {
-      cached_distances_[i][j] = sqrt(i * i + j * j);
       cached_costs_[i][j] = computeCost(cached_distances_[i][j]);
     }
   }
@@ -218,7 +236,7 @@ void InflationLayer::deleteKernels()
 {
   if (cached_distances_ != NULL)
   {
-    for (unsigned int i = 0; i <= cell_inflation_radius_ + 1; ++i)
+    for (unsigned int i = 0; i <= cached_cell_inflation_radius_ + 1; ++i)
     {
       delete[] cached_distances_[i];
     }
@@ -227,7 +245,7 @@ void InflationLayer::deleteKernels()
 
   if (cached_costs_ != NULL)
   {
-    for (unsigned int i = 0; i <= cell_inflation_radius_ + 1; ++i)
+    for (unsigned int i = 0; i <= cached_cell_inflation_radius_ + 1; ++i)
     {
       delete[] cached_costs_[i];
     }
