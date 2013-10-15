@@ -38,7 +38,7 @@
 #ifndef OBSTACLE_COSTMAP_PLUGIN_H_
 #define OBSTACLE_COSTMAP_PLUGIN_H_
 #include <ros/ros.h>
-#include <costmap_2d/layer.h>
+#include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <costmap_2d/observation_buffer.h>
 
@@ -57,7 +57,7 @@
 
 namespace costmap_2d
 {
-class ObstacleLayer : public Layer, public Costmap2D
+class ObstacleLayer : public CostmapLayer
 {
 public:
   ObstacleLayer()
@@ -73,12 +73,6 @@ public:
   virtual void activate();
   virtual void deactivate();
   virtual void reset();
-
-  bool isDiscretized()
-  {
-    return true;
-  }
-  virtual void matchSize();
 
   /**
    * @brief  A callback to handle buffering LaserScan messages
@@ -117,7 +111,6 @@ public:
   void addStaticObservation(costmap_2d::Observation& obs, bool marking, bool clearing);
 
 protected:
-  void initMaps();
 
   virtual void setupDynamicReconfigure(ros::NodeHandle& nh);
 
@@ -169,6 +162,8 @@ protected:
   double reset_min_x_, reset_max_x_, reset_min_y_, reset_max_y_;
 
   FootprintLayer footprint_layer_; ///< @brief clears the footprint in this obstacle layer.
+  
+  int combination_method_;
 
 private:
   void reconfigureCB(costmap_2d::ObstaclePluginConfig &config, uint32_t level);

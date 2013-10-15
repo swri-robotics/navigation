@@ -26,7 +26,7 @@ void ObstacleLayer::onInitialize()
   else
     default_value_ = FREE_SPACE;
 
-  initMaps();
+  matchSize();
   current_ = true;
   has_been_reset_ = false;
 
@@ -175,18 +175,7 @@ void ObstacleLayer::reconfigureCB(costmap_2d::ObstaclePluginConfig &config, uint
 {
   enabled_ = config.enabled;
   max_obstacle_height_ = config.max_obstacle_height;
-}
-
-void ObstacleLayer::initMaps()
-{
-  Costmap2D* master = layered_costmap_->getCostmap();
-  resizeMap(master->getSizeInCellsX(), master->getSizeInCellsY(), master->getResolution(),
-            master->getOriginX(), master->getOriginY());
-}
-
-void ObstacleLayer::matchSize()
-{
-  initMaps();
+  combination_method_ = config.combination_method;
 }
 
 void ObstacleLayer::laserScanCallback(const sensor_msgs::LaserScanConstPtr& message,
@@ -319,10 +308,7 @@ void ObstacleLayer::updateBounds(double origin_x, double origin_y, double origin
 
       unsigned int index = getIndex(mx, my);
       costmap_[index] = LETHAL_OBSTACLE;
-      *min_x = std::min(px, *min_x);
-      *min_y = std::min(py, *min_y);
-      *max_x = std::max(px, *max_x);
-      *max_y = std::max(py, *max_y);
+      touch(px, py, min_x, min_y, max_x, max_y);
     }
   }
 
@@ -338,19 +324,10 @@ void ObstacleLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, i
   // before we merge this obstacle layer into the master_grid.
   footprint_layer_.updateCosts(*this, min_i, min_j, max_i, max_j);
 
-  const unsigned char* master_array = master_grid.getCharMap();
-  for (int j = min_j; j < max_j; j++)
-  {
-    for (int i = min_i; i < max_i; i++)
-    {
-      int index = getIndex(i, j);
-      if (costmap_[index] == NO_INFORMATION)
-        continue;
-      unsigned char old_cost = master_array[index];
-      if (old_cost == NO_INFORMATION || old_cost < costmap_[index])
-        master_grid.setCost(i, j, costmap_[index]);
-    }
-  }
+  if(combination_method_==0)
+    updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
+  else
+    updateWithMax(master_grid, min_i, min_j, max_i, max_j);
 }
 
 void ObstacleLayer::addStaticObservation(costmap_2d::Observation& obs, bool marking, bool clearing)
@@ -416,10 +393,7 @@ void ObstacleLayer::raytraceFreespace(const Observation& clearing_observation, d
   double map_end_y = origin_y + size_y_ * resolution_;
 
 
-  *min_x = std::min(ox, *min_x);
-  *min_y = std::min(oy, *min_y);
-  *max_x = std::max(ox, *max_x);
-  *max_y = std::max(oy, *max_y);
+  touch(ox, oy, min_x, min_y, max_x, max_y);
 
   //for each point in the cloud, we want to trace a line from the origin and clear obstacles along it
   for (unsigned int i = 0; i < cloud.points.size(); ++i)
@@ -507,16 +481,13 @@ void ObstacleLayer::updateRaytraceBounds(double ox, double oy, double wx, double
   double full_distance = sqrt( dx*dx+dy*dy );
   double scale = std::min(1.0, range / full_distance);
   double ex = ox + dx * scale, ey = oy + dy * scale;
-  *min_x = std::min(ex, *min_x);
-  *min_y = std::min(ey, *min_y);
-  *max_x = std::max(ex, *max_x);
-  *max_y = std::max(ey, *max_y);
+  touch(ex, ey, min_x, min_y, max_x, max_y);
 }
 
 void ObstacleLayer::reset()
 {
     deactivate();
-    initMaps();
+    resetMaps();
     current_ = true;
     has_been_reset_ = false;
     activate();
