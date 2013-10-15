@@ -60,11 +60,11 @@ void VoxelLayer::reset()
   activate();
 }
 
-void VoxelLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
+void VoxelLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
                                        double* min_y, double* max_x, double* max_y)
 {
   if (rolling_window_)
-    updateOrigin(origin_x - getSizeInMetersX() / 2, origin_y - getSizeInMetersY() / 2);
+    updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
   if (!enabled_)
     return;
   if (has_been_reset_)
@@ -167,7 +167,7 @@ void VoxelLayer::updateBounds(double origin_x, double origin_y, double origin_ya
     voxel_pub_.publish(grid_msg);
   }
 
-  footprint_layer_.updateBounds(origin_x, origin_y, origin_yaw, min_x, min_y, max_x, max_y);
+  footprint_layer_.updateBounds(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
 }
 
 void VoxelLayer::clearNonLethal(double wx, double wy, double w_size_x, double w_size_y, bool clear_no_info)

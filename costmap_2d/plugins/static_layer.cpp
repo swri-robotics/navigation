@@ -180,7 +180,7 @@ void StaticLayer::reset()
     activate();
 }
 
-void StaticLayer::updateBounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y,
+void StaticLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
                                         double* max_x, double* max_y)
 {
   if (!map_received_ || !has_updated_data_)

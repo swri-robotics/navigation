@@ -66,7 +66,7 @@ void InflationLayer::matchSize()
   seen_ = new bool[size_x * size_y];
 }
 
-void InflationLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
+void InflationLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
                                            double* min_y, double* max_x, double* max_y)
 {
   if( need_reinflation_ )

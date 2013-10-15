@@ -229,11 +229,11 @@ void ObstacleLayer::pointCloud2Callback(const sensor_msgs::PointCloud2ConstPtr& 
   buffer->unlock();
 }
 
-void ObstacleLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
+void ObstacleLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
                                           double* min_y, double* max_x, double* max_y)
 {
   if (rolling_window_)
-    updateOrigin(origin_x - getSizeInMetersX() / 2, origin_y - getSizeInMetersY() / 2);
+    updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
   if (!enabled_)
     return;
   if (has_been_reset_)
@@ -312,7 +312,7 @@ void ObstacleLayer::updateBounds(double origin_x, double origin_y, double origin
     }
   }
 
-  footprint_layer_.updateBounds(origin_x, origin_y, origin_yaw, min_x, min_y, max_x, max_y);
+  footprint_layer_.updateBounds(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
 }
 
 void ObstacleLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)

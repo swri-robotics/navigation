@@ -67,7 +67,7 @@ public:
   }
 
   virtual void onInitialize();
-  virtual void updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x,
+  virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,
                              double* max_y);
 
   void updateOrigin(double new_origin_x, double new_origin_y);
