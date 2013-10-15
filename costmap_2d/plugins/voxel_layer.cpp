@@ -283,7 +283,7 @@ void VoxelLayer::raytraceFreespace(const Observation& clearing_observation, doub
     if (wpz > max_obstacle_height_)
     {
       //we know we want the vector's z value to be max_z
-      t = std::min(t, (max_obstacle_height_ - 0.01 - oz) / c);
+      t = std::max(0.0, std::min(t, (max_obstacle_height_ - 0.01 - oz) / c));
     }
     //and we can only raytrace down to the floor
     else if (wpz < origin_z_)
