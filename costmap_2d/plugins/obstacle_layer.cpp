@@ -50,7 +50,7 @@ void ObstacleLayer::onInitialize()
     //get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
     std::string topic, sensor_frame, data_type;
-    bool clearing, marking;
+    bool inf_is_valid, clearing, marking;
 
     source_node.param("topic", topic, source);
     source_node.param("sensor_frame", sensor_frame, std::string(""));
@@ -59,6 +59,7 @@ void ObstacleLayer::onInitialize()
     source_node.param("data_type", data_type, std::string("PointCloud"));
     source_node.param("min_obstacle_height", min_obstacle_height, 0.0);
     source_node.param("max_obstacle_height", max_obstacle_height, 2.0);
+    source_node.param("inf_is_valid", inf_is_valid, false);
     source_node.param("clearing", clearing, false);
     source_node.param("marking", marking, true);
 
@@ -114,8 +115,17 @@ void ObstacleLayer::onInitialize()
 
       boost::shared_ptr < tf::MessageFilter<sensor_msgs::LaserScan>
           > filter(new tf::MessageFilter<sensor_msgs::LaserScan>(*sub, *tf_, global_frame_, 50));
-      filter->registerCallback(
-          boost::bind(&ObstacleLayer::laserScanCallback, this, _1, observation_buffers_.back()));
+
+      if (inf_is_valid)
+      {
+        filter->registerCallback(
+            boost::bind(&ObstacleLayer::laserScanValidInfCallback, this, _1, observation_buffers_.back()));
+      }
+      else
+      {
+        filter->registerCallback(
+            boost::bind(&ObstacleLayer::laserScanCallback, this, _1, observation_buffers_.back()));
+      }
 
       observation_subscribers_.push_back(sub);
       observation_notifiers_.push_back(filter);
@@ -126,6 +136,11 @@ void ObstacleLayer::onInitialize()
     {
       boost::shared_ptr < message_filters::Subscriber<sensor_msgs::PointCloud>
           > sub(new message_filters::Subscriber<sensor_msgs::PointCloud>(g_nh, topic, 50));
+
+      if( inf_is_valid )
+      {
+       ROS_WARN("obstacle_layer: inf_is_valid option is not applicable to PointCloud observations.");
+      }
 
       boost::shared_ptr < tf::MessageFilter<sensor_msgs::PointCloud>
           > filter(new tf::MessageFilter<sensor_msgs::PointCloud>(*sub, *tf_, global_frame_, 50));
@@ -139,6 +154,11 @@ void ObstacleLayer::onInitialize()
     {
       boost::shared_ptr < message_filters::Subscriber<sensor_msgs::PointCloud2>
           > sub(new message_filters::Subscriber<sensor_msgs::PointCloud2>(g_nh, topic, 50));
+
+      if( inf_is_valid )
+      {
+       ROS_WARN("obstacle_layer: inf_is_valid option is not applicable to PointCloud observations.");
+      }
 
       boost::shared_ptr < tf::MessageFilter<sensor_msgs::PointCloud2>
           > filter(new tf::MessageFilter<sensor_msgs::PointCloud2>(*sub, *tf_, global_frame_, 50));
@@ -179,7 +199,7 @@ void ObstacleLayer::reconfigureCB(costmap_2d::ObstaclePluginConfig &config, uint
 }
 
 void ObstacleLayer::laserScanCallback(const sensor_msgs::LaserScanConstPtr& message,
-                                              const boost::shared_ptr<ObservationBuffer>& buffer)
+                                      const boost::shared_ptr<ObservationBuffer>& buffer)
 {
   //project the laser into a point cloud
   sensor_msgs::PointCloud2 cloud;
@@ -195,6 +215,41 @@ void ObstacleLayer::laserScanCallback(const sensor_msgs::LaserScanConstPtr& mess
     ROS_WARN("High fidelity enabled, but TF returned a transform exception to frame %s: %s", global_frame_.c_str(),
              ex.what());
     projector_.projectLaser(*message, cloud);
+  }
+
+  //buffer the point cloud
+  buffer->lock();
+  buffer->bufferCloud(cloud);
+  buffer->unlock();
+}
+
+void ObstacleLayer::laserScanValidInfCallback(const sensor_msgs::LaserScanConstPtr& raw_message, 
+                                              const boost::shared_ptr<ObservationBuffer>& buffer){
+  // Filter positive infinities ("Inf"s) to max_range.
+  float epsilon = 0.0001; // a tenth of a millimeter
+  sensor_msgs::LaserScan message = *raw_message;
+  for( size_t i = 0; i < message.ranges.size(); i++ )
+  {
+    float range = message.ranges[ i ];
+    if( !isfinite( range ) && range > 0 )
+    {
+      message.ranges[ i ] = message.range_max - epsilon;
+    }
+  }
+
+  //project the laser into a point cloud
+  sensor_msgs::PointCloud2 cloud;
+  cloud.header = message.header;
+
+  //project the scan into a point cloud
+  try
+  {
+    projector_.transformLaserScanToPointCloud(message.header.frame_id, message, cloud, tf_);
+  }
+  catch (tf::TransformException &ex)
+  {
+    ROS_WARN ("High fidelity enabled, but TF returned a transform exception to frame %s: %s", global_frame_.c_str (), ex.what ());
+    projector_.projectLaser(message, cloud);
   }
 
   //buffer the point cloud
