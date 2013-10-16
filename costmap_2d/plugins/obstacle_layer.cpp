@@ -190,7 +190,8 @@ void ObstacleLayer::laserScanCallback(const sensor_msgs::LaserScanConstPtr& mess
   sensor_msgs::PointCloud2 cloud;
   cloud.header = message->header;
 
-  if (!tf_->waitForTransform(global_frame_, message->header.frame_id, message->header.stamp + ros::Duration(message->scan_time), ros::Duration(0.25)))
+  if (!tf_->waitForTransform(global_frame_, message->header.frame_id,
+		  message->header.stamp + ros::Duration(message->scan_time), ros::Duration(0.25)))
   {
 	  ROS_DEBUG("Transform from %s to %s is not available.", message->header.frame_id.c_str(), global_frame_.c_str());
 	  return;
