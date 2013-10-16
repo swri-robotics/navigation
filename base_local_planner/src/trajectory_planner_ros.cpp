@@ -161,6 +161,18 @@ namespace base_local_planner {
       private_nh.param("vx_samples", vx_samples, 3);
       private_nh.param("vtheta_samples", vtheta_samples, 20);
 
+      if(private_nh.hasParam("pdist_scale"))
+      {
+        ROS_WARN("The parameter name pdist_scale is deprecated. Please use path_distance_bias instead");
+        private_nh.param("pdist_scale", pdist_scale, 0.6);
+      }
+
+      if(private_nh.hasParam("gdist_scale"))
+      {
+        ROS_WARN("The parameter name gdist_scale is deprecated. Please use goal_distance_bias instead");
+        private_nh.param("gdist_scale", gdist_scale, 0.6);
+      }
+
       private_nh.param("path_distance_bias", pdist_scale, 0.6);
       private_nh.param("goal_distance_bias", gdist_scale, 0.8);
       private_nh.param("occdist_scale", occdist_scale, 0.01);
@@ -194,7 +206,16 @@ namespace base_local_planner {
       private_nh.param("max_rotational_vel", max_rotational_vel, 1.0);
       max_vel_th_ = max_rotational_vel;
       min_vel_th_ = -1.0 * max_rotational_vel;
-      private_nh.param("min_in_place_rotational_vel", min_in_place_vel_th_, 0.4);
+
+      if(private_nh.hasParam("min_in_place_rotational_vel"))
+      {
+        ROS_WARN("Please use min_in_place_vel_theta instead of min_in_place_rotational_vel");
+        private_nh.param("min_in_place_rotational_vel", min_in_place_vel_th_, 0.4);        
+      }
+      else
+      {
+        private_nh.param("min_in_place_vel_theta", min_in_place_vel_th_, 0.4);
+      }
 
       backup_vel = -0.1;
       if(private_nh.getParam("backup_vel", backup_vel))

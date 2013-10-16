@@ -77,8 +77,8 @@ namespace base_local_planner{
       sim_granularity_ = config.sim_granularity;
       angular_sim_granularity_ = config.angular_sim_granularity;
 
-      pdist_scale_ = config.pdist_scale;
-      gdist_scale_ = config.gdist_scale;
+      pdist_scale_ = config.path_distance_bias;
+      gdist_scale_ = config.goal_distance_bias;
       occdist_scale_ = config.occdist_scale;
 
       if (meter_scoring_) {
