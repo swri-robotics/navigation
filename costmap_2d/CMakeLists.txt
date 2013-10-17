@@ -63,6 +63,7 @@ add_library(costmap_2d
   src/costmap_2d_publisher.cpp
   src/costmap_math.cpp
   src/footprint.cpp
+  src/costmap_layer.cpp
 )
 add_dependencies(costmap_2d geometry_msgs_gencpp)
 target_link_libraries(costmap_2d
