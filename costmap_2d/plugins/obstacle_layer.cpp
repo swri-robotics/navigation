@@ -26,7 +26,7 @@ void ObstacleLayer::onInitialize()
   else
     default_value_ = FREE_SPACE;
 
-  matchSize();
+  ObstacleLayer::matchSize();
   current_ = true;
   has_been_reset_ = false;
 
