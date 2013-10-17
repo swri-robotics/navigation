@@ -42,6 +42,7 @@
 
 
 #include <dwa_local_planner/DWAPlannerConfig.h>
+#include <dwa_local_planner/PlanningSnapshot.h>
 
 //for creating a local cost grid
 #include <base_local_planner/map_grid_visualizer.h>
@@ -178,6 +179,9 @@ namespace dwa_local_planner {
       base_local_planner::MapGridCostFunction alignment_costs_;
 
       base_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
+
+      ros::Publisher snapshot_pub_;
+      dwa_local_planner::PlanningSnapshot snapshot_;
   };
 };
 #endif

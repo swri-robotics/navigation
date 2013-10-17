@@ -145,6 +145,7 @@ namespace dwa_local_planner {
 
     traj_cloud_.header.frame_id = planner_util->getGlobalFrame();
     traj_cloud_pub_.advertise(private_nh, "trajectory_cloud", 1);
+    snapshot_pub_ = private_nh.advertise<dwa_local_planner::PlanningSnapshot>("drop_tables", 1);
     private_nh.param("publish_traj_pc", publish_traj_pc_, false);
 
     // set up all the cost functions that will be applied in order
@@ -289,6 +290,16 @@ namespace dwa_local_planner {
     Eigen::Vector3f goal(goal_pose.pose.position.x, goal_pose.pose.position.y, tf::getYaw(goal_pose.pose.orientation));
     base_local_planner::LocalPlannerLimits limits = planner_util_->getCurrentLimits();
 
+    snapshot_.pos.x = pos.x();
+    snapshot_.pos.y = pos.y();
+    snapshot_.pos.z = pos.z();
+    snapshot_.vel.x = vel.x();
+    snapshot_.vel.y = vel.y();
+    snapshot_.vel.z = vel.z();
+    snapshot_.goal.x = goal.x();
+    snapshot_.goal.y = goal.y();
+    snapshot_.goal.z = goal.z();
+
     // prepare cost functions and generators for this run
     generator_.initialise(pos,
         vel,
@@ -325,12 +336,34 @@ namespace dwa_local_planner {
             }
         }
         traj_cloud_pub_.publish(traj_cloud_);
+         pcl::toROSMsg(traj_cloud_, snapshot_.trajectories);
     }
 
     // verbose publishing of point clouds
     if (publish_cost_grid_pc_) {
       //we'll publish the visualization of the costs to rviz before returning our best trajectory
       map_viz_.publishCostCloud(planner_util_->getCostmap());
+    }
+
+    if(true){
+        costmap_2d::Costmap2D* costmap_p = planner_util_->getCostmap();
+        snapshot_.width = costmap_p->getSizeInCellsX();
+        snapshot_.height =costmap_p->getSizeInCellsY();
+        int prod = snapshot_.width * snapshot_.height;
+        snapshot_.path_grid.resize(prod);
+        snapshot_.goal_grid.resize(prod);
+        snapshot_.occ_grid.resize(prod);
+
+    for (unsigned int cy = 0; cy < snapshot_.height; cy++) {
+      for (unsigned int cx = 0; cx < snapshot_.width; cx++) {
+        int index = cy * snapshot_.width + cx;
+        snapshot_.path_grid[index] = path_costs_.getCellCosts(cx, cy);
+        snapshot_.goal_grid[index] = goal_costs_.getCellCosts(cx, cy);
+        snapshot_.occ_grid[index] = planner_util_->getCostmap()->getCost(cx, cy);
+        
+      }
+    }
+        snapshot_pub_.publish(snapshot_);
     }
 
     // debrief stateful scoring functions
@@ -366,6 +399,19 @@ namespace dwa_local_planner {
     goal_front_costs_.setScale(factor * gdist_scale_ * gorient_scale_);
 
     obstacle_costs_.setScale(resolution * occdist_scale_);
+
+    snapshot_.params.resize(5);
+    snapshot_.scales.resize(5);
+    snapshot_.params[0] = pdist_scale_;
+    snapshot_.params[1] = gdist_scale_;
+    snapshot_.params[2] = occdist_scale_;
+    snapshot_.params[3] = porient_scale_;
+    snapshot_.params[4] = gorient_scale_;
+    snapshot_.scales[0] = path_costs_.getScale();
+    snapshot_.scales[1] = goal_costs_.getScale();
+    snapshot_.scales[2] = obstacle_costs_.getScale();
+    snapshot_.scales[3] = alignment_costs_.getScale();
+    snapshot_.scales[4] = goal_front_costs_.getScale();
 
   }
 };

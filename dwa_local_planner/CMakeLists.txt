@@ -12,6 +12,7 @@ find_package(catkin REQUIRED
             base_local_planner
             dynamic_reconfigure
             pluginlib
+            message_generation
         )
 
 find_package(Eigen)
@@ -26,9 +27,21 @@ add_definitions(${EIGEN_DEFINITIONS})
 
 link_directories(${catkin_LIBRARY_DIRS})
 
+add_message_files(
+    DIRECTORY msg
+    FILES
+    PlanningSnapshot.msg
+)
+
 # dynamic reconfigure
 generate_dynamic_reconfigure_options(
     cfg/DWAPlanner.cfg
+)
+generate_messages(
+    DEPENDENCIES
+        std_msgs
+        geometry_msgs
+        sensor_msgs
 )
 
 catkin_package(
@@ -38,6 +51,7 @@ catkin_package(
         roslib
         roscpp
         dynamic_reconfigure
+        message_runtime
         pluginlib
 )
 
