@@ -62,6 +62,8 @@ namespace dwa_local_planner {
     pdist_scale_ = config.path_distance_bias;
     gdist_scale_ = config.goal_distance_bias;
     occdist_scale_ = config.occdist_scale;
+    porient_scale_ = config.path_orientation_bias;
+    gorient_scale_ = config.goal_orientation_bias;
 
     updateCostScales();
 
@@ -356,12 +358,12 @@ namespace dwa_local_planner {
     path_costs_.setScale(factor * pdist_scale_);
 
     if(use_alignment_costs_)
-        alignment_costs_.setScale(factor * pdist_scale_);
+        alignment_costs_.setScale(factor * pdist_scale_ * porient_scale_);
     else    
         alignment_costs_.setScale(0);
 
     goal_costs_.setScale(factor * gdist_scale_);
-    goal_front_costs_.setScale(factor * gdist_scale_);
+    goal_front_costs_.setScale(factor * gdist_scale_ * gorient_scale_);
 
     obstacle_costs_.setScale(resolution * occdist_scale_);
 
