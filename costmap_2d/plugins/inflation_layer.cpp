@@ -201,6 +201,9 @@ inline void InflationLayer::enqueue(unsigned char* grid, unsigned int index, uns
 
 void InflationLayer::computeCaches()
 {
+  if(cell_inflation_radius_ == 0)
+    return;
+
   //based on the inflation radius... compute distance and cost caches
   if(cell_inflation_radius_ != cached_cell_inflation_radius_)
   {
