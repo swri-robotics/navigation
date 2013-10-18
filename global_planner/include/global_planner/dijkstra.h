@@ -76,9 +76,11 @@ class DijkstraExpansion : public Expander {
 
         /**
          * @brief  Updates the cell at index n
+         * @param costs The costmap
+         * @param potential The potential array in which we are calculating
          * @param n The index to update
          */
-        void updateCell(unsigned char* costs, float* potential, int n); /**< updates the cell at index <n> */
+        void updateCell(unsigned char* costs, float* potential, int n); /** updates the cell at index n */
 
         float getCost(unsigned char* costs, int n) {
             float c = costs[n];

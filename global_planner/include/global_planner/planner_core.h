@@ -73,14 +73,15 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
         /**
          * @brief  Constructor for the PlannerCore object
          * @param  name The name of this planner
-         * @param  costmap A pointer to the ROS wrapper of the costmap to use
+         * @param  costmap A pointer to the costmap to use
+         * @param  frame_id Frame of the costmap
          */
         PlannerCore(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
 
         /**
          * @brief  Initialization function for the PlannerCore object
          * @param  name The name of this planner
-         * @param  costmap A pointer to the ROS wrapper of the costmap to use for planning
+         * @param  costmap_ros A pointer to the ROS wrapper of the costmap to use for planning
          */
         void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
