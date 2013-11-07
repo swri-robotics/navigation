@@ -7,9 +7,10 @@
 
     </description>
     <author>Eitan Marder-Eppstein</author>
-    <maintainer email="contradict@gmail.com">contradict</maintainer>
+    <author>contradict@gmail.com</author>
+    <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
     <license>BSD</license>
-    <url>http://pr.willowgarage.com/wiki/move_base_msgs</url>
+    <url>http://wiki.ros.org/move_base_msgs</url>
 
     <buildtool_depend>catkin</buildtool_depend>
 
