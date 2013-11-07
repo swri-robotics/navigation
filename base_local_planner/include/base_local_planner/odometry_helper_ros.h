@@ -48,7 +48,11 @@ namespace base_local_planner {
 class OdometryHelperRos {
 public:
 
-  OdometryHelperRos(std::string odom_topic);
+  /** @brief Constructor.
+   * @param odom_topic The topic on which to subscribe to Odometry
+   *        messages.  If the empty string is given (the default), no
+   *        subscription is done. */
+  OdometryHelperRos(std::string odom_topic = "");
   ~OdometryHelperRos() {}
 
   /**
@@ -61,7 +65,20 @@ public:
 
   void getRobotVel(tf::Stamped<tf::Pose>& robot_vel);
 
+  /** @brief Set the odometry topic.  This overrides what was set in the constructor, if anything.
+   *
+   * This unsubscribes from the old topic (if any) and subscribes to the new one (if any).
+   *
+   * If odom_topic is the empty string, this just unsubscribes from the previous topic. */
+  void setOdomTopic(std::string odom_topic);
+
+  /** @brief Return the current odometry topic. */
+  std::string getOdomTopic() const { return odom_topic_; }
+
 private:
+  //odom topic
+  std::string odom_topic_;
+
   // we listen on odometry on the odom topic
   ros::Subscriber odom_sub_;
   nav_msgs::Odometry base_odom_;
