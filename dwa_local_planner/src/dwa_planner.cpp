@@ -354,6 +354,10 @@ namespace dwa_local_planner {
         snapshot_.goal_grid.resize(prod);
         snapshot_.occ_grid.resize(prod);
 
+	snapshot_.origin_x = costmap_p->getOriginX();
+	snapshot_.origin_y = costmap_p->getOriginY();
+	snapshot_.resolution = costmap_p->getResolution();
+
     for (unsigned int cy = 0; cy < snapshot_.height; cy++) {
       for (unsigned int cx = 0; cx < snapshot_.width; cx++) {
         int index = cy * snapshot_.width + cx;
