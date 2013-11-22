@@ -173,7 +173,7 @@ namespace dwa_local_planner {
       base_local_planner::MapGridCostFunction goal_costs_;
       base_local_planner::MapGridCostFunction goal_front_costs_;
       base_local_planner::MapGridCostFunction alignment_costs_;
-
+      int ss;
       base_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
   };
 };
