@@ -7,9 +7,10 @@
 
     </description>
     <author>Eitan Marder-Eppstein</author>
-    <maintainer email="contradict@gmail.com">contradict</maintainer>
+    <author>contradict@gmail.com</author>
+    <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
     <license>BSD</license>
-    <url>http://ros.org/wiki/rotate_recovery</url>
+    <url>http://wiki.ros.org/rotate_recovery</url>
 
     <buildtool_depend>catkin</buildtool_depend>
 

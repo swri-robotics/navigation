@@ -11,9 +11,12 @@
         and configuration of sensor topics.
     </description>
     <author>Eitan Marder-Eppstein</author>
-    <maintainer email="contradict@gmail.com">contradict</maintainer>
+    <author>David V. Lu!!</author>
+    <author>Dave Hershberger</author>
+    <author>contradict@gmail.com</author>
+    <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
     <license>BSD</license>
-    <url>http://pr.willowgarage.com/wiki/costmap_2d</url>
+    <url>http://wiki.ros.org/costmap_2d</url>
 
     <buildtool_depend>catkin</buildtool_depend>
 

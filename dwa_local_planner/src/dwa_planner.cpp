@@ -172,6 +172,8 @@ namespace dwa_local_planner {
     generator_list.push_back(&generator_);
 
     scored_sampling_planner_ = base_local_planner::SimpleScoredSamplingPlanner(generator_list, critics);
+
+    private_nh.param("cheat_factor", cheat_factor_, 1.0);
   }
 
   // used for visualization only, total_costs are not really total costs
@@ -267,7 +269,7 @@ namespace dwa_local_planner {
     goal_front_costs_.setTargetPoses(front_global_plan);
     
     // keeping the nose on the path
-    if (sq_dist > forward_point_distance_ * forward_point_distance_ * 2) {
+    if (sq_dist > forward_point_distance_ * forward_point_distance_ * cheat_factor_) {
       alignment_costs_.setScale(1.0 * ss);
       // costs for robot being aligned with path (nose on path, not ju
       alignment_costs_.setTargetPoses(global_plan_);

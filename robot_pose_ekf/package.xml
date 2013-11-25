@@ -7,9 +7,10 @@
 
     </description>
     <author>Wim Meeussen</author>
-    <maintainer email="contradict@gmail.com">contradict</maintainer>
+    <author>contradict@gmail.com</author>
+    <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
     <license>BSD</license>
-    <url>http://ros.org/wiki/robot_pose_ekf</url>
+    <url>http://wiki.ros.org/robot_pose_ekf</url>
 
     <buildtool_depend>catkin</buildtool_depend>
 
