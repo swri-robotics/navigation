@@ -59,7 +59,7 @@ public:
   bool prepare();
   double scoreTrajectory(Trajectory &traj);
 
-  void setFlags(bool flag1, bool flag2){ super_safe_=flag1; sum_scores_=flag2; }
+  void setSumScores(bool score_sums){ sum_scores_=score_sums; }
 
   void setParams(double max_trans_vel, double max_scaling_factor, double scaling_speed);
   void setFootprint(std::vector<geometry_msgs::Point> footprint_spec);
@@ -80,7 +80,7 @@ private:
   std::vector<geometry_msgs::Point> footprint_spec_;
   base_local_planner::WorldModel* world_model_;
   double max_trans_vel_;
-  bool super_safe_, sum_scores_;
+  bool sum_scores_;
   //footprint scaling with velocity;
   double max_scaling_factor_, scaling_speed_;
 };
