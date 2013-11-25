@@ -145,6 +145,12 @@ namespace dwa_local_planner {
 
     oscillation_costs_.resetOscillationFlags();
 
+    bool flag1, flag2;
+    private_nh.param("super_safe", flag1, false);
+    private_nh.param("sum_scores", flag2, false);
+    obstacle_costs_.setFlags(flag1, flag2);
+
+
     private_nh.param("publish_cost_grid_pc", publish_cost_grid_pc_, false);
     map_viz_.initialize(name, planner_util->getGlobalFrame(), boost::bind(&DWAPlanner::getCellCosts, this, _1, _2, _3, _4, _5, _6));
 
