@@ -72,7 +72,7 @@ namespace dwa_local_planner {
     goal_front_costs_.setScale(resolution * gdist_scale_ * 0.5 * gorient_scale_);
 
     occdist_scale_ = config.occdist_scale;
-    obstacle_costs_.setScale(resolution * occdist_scale_ * config.knockout_occ);
+    obstacle_costs_.setScale(resolution * occdist_scale_);
 
     stop_time_buffer_ = config.stop_time_buffer;
     oscillation_costs_.setOscillationResetDist(config.oscillation_reset_dist, config.oscillation_reset_angle);
