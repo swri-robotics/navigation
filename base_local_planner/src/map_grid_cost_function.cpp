@@ -89,8 +89,10 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
     if(distance_factor_>=0.0)
     {
         double d = sqrt(pow(px-goal_x_,2)+pow(py-goal_y_,2));
-        if(d<xshift){
-            xshift = d *distance_factor_;
+        double shift_d = sqrt(pow(xshift, 2)+pow(yshift,2));
+        if(d<shift_d){
+            xshift = d * distance_factor_;
+            yshift = d * distance_factor_;
         }
     }
 
