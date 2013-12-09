@@ -50,7 +50,7 @@ MapGridCostFunction::MapGridCostFunction(costmap_2d::Costmap2D* costmap,
     xshift_(xshift),
     yshift_(yshift),
     is_local_goal_function_(is_local_goal_function),
-    stop_on_failure_(true), use_distance_to_goal_(false) {}
+    stop_on_failure_(true), distance_factor_(-1.0) {}
 
 void MapGridCostFunction::setTargetPoses(std::vector<geometry_msgs::PoseStamped> target_poses) {
   target_poses_ = target_poses;
@@ -86,11 +86,11 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
 
     double xshift=xshift_, yshift=yshift_;
 
-    if(use_distance_to_goal_)
+    if(distance_factor_>=0.0)
     {
         double d = sqrt(pow(px-goal_x_,2)+pow(py-goal_y_,2));
         if(d<xshift){
-            xshift = d *.9;
+            xshift = d *distance_factor_;
         }
     }
 

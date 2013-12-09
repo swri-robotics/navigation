@@ -119,7 +119,7 @@ public:
   double getCellCosts(unsigned int cx, unsigned int cy);
 
   void setGoal(double x, double y){ goal_x_ = x; goal_y_ = y; }
-  void setUseGoal(bool use_goal){ use_distance_to_goal_= use_goal; }
+  void setForwardDistanceFactor(double factor){ distance_factor_= factor; }
 
 private:
   std::vector<geometry_msgs::PoseStamped> target_poses_;
@@ -137,8 +137,7 @@ private:
   bool is_local_goal_function_;
   bool stop_on_failure_;
 
-  bool use_distance_to_goal_;
-  double goal_x_, goal_y_;
+  double goal_x_, goal_y_, distance_factor_;
 };
 
 } /* namespace base_local_planner */

@@ -176,12 +176,9 @@ namespace dwa_local_planner {
 
     private_nh.param("cheat_factor", cheat_factor_, 1.0);
 
-    bool scaled_path_o, scaled_goal_o;
-    private_nh.param("use_scaled_path_orientation", scaled_path_o, false);
-    private_nh.param("use_scaled_goal_orientation", scaled_goal_o, false);
-    alignment_costs_.setUseGoal(scaled_path_o);
-    goal_front_costs_.setUseGoal(scaled_goal_o);
-
+    double scaled_path_factor;
+    private_nh.param("scaled_path_factor", scaled_path_factor, -1.0);
+    alignment_costs_.setForwardDistanceFactor(scaled_path_factor);
   }
 
   // used for visualization only, total_costs are not really total costs
@@ -258,7 +255,6 @@ namespace dwa_local_planner {
     geometry_msgs::PoseStamped goal_pose = global_plan_.back();
 
     double gx = goal_pose.pose.position.x, gy = goal_pose.pose.position.y;
-    goal_front_costs_.setGoal(gx, gy);
     alignment_costs_.setGoal(gx, gy);
 
     Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
