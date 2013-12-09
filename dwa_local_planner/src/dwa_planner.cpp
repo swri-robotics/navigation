@@ -174,8 +174,6 @@ namespace dwa_local_planner {
 
     scored_sampling_planner_ = base_local_planner::SimpleScoredSamplingPlanner(generator_list, critics);
 
-    private_nh.param("cheat_factor", cheat_factor_, 1.0);
-
     double scaled_path_factor;
     private_nh.param("scaled_path_factor", scaled_path_factor, -1.0);
     alignment_costs_.setForwardDistanceFactor(scaled_path_factor);
@@ -276,16 +274,6 @@ namespace dwa_local_planner {
 
     goal_front_costs_.setTargetPoses(front_global_plan);
     
-    // keeping the nose on the path
-    if (sq_dist > forward_point_distance_ * forward_point_distance_ * cheat_factor_) {
-      double resolution = planner_util_->getCostmap()->getResolution();
-      alignment_costs_.setScale(resolution * pdist_scale_ * 0.5 * porient_scale_);
-      // costs for robot being aligned with path (nose on path, not ju
-      alignment_costs_.setTargetPoses(global_plan_);
-    } else {
-      // once we are close to goal, trying to keep the nose close to anything destabilizes behavior.
-      alignment_costs_.setScale(0.0);
-    }
   }
 
 
