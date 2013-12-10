@@ -50,7 +50,7 @@ MapGridCostFunction::MapGridCostFunction(costmap_2d::Costmap2D* costmap,
     xshift_(xshift),
     yshift_(yshift),
     is_local_goal_function_(is_local_goal_function),
-    stop_on_failure_(true) {}
+    stop_on_failure_(true), distance_factor_(-1.0) {}
 
 void MapGridCostFunction::setTargetPoses(std::vector<geometry_msgs::PoseStamped> target_poses) {
   target_poses_ = target_poses;
@@ -84,15 +84,27 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
   for (unsigned int i = 0; i < traj.getPointsSize(); ++i) {
     traj.getPoint(i, px, py, pth);
 
+    double xshift=xshift_, yshift=yshift_;
+
+    if(distance_factor_>=0.0)
+    {
+        double d = sqrt(pow(px-goal_x_,2)+pow(py-goal_y_,2));
+        double shift_d = sqrt(pow(xshift, 2)+pow(yshift,2));
+        if(d<shift_d){
+            xshift = d * distance_factor_;
+            yshift = d * distance_factor_;
+        }
+    }
+
     // translate point forward if specified
-    if (xshift_ != 0.0) {
-      px = px + xshift_ * cos(pth);
-      py = py + xshift_ * sin(pth);
+    if (xshift != 0.0) {
+      px = px + xshift * cos(pth);
+      py = py + xshift * sin(pth);
     }
     // translate point sideways if specified
-    if (yshift_ != 0.0) {
-      px = px + yshift_ * cos(pth + M_PI_2);
-      py = py + yshift_ * sin(pth + M_PI_2);
+    if (yshift != 0.0) {
+      px = px + yshift * cos(pth + M_PI_2);
+      py = py + yshift * sin(pth + M_PI_2);
     }
 
     //we won't allow trajectories that go off the map... shouldn't happen that often anyways
