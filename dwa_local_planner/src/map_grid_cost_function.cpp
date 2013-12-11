@@ -35,52 +35,72 @@
  * Author: TKruse
  *********************************************************************/
 
-#ifndef TRAJECTORYCOSTFUNCTION_H_
-#define TRAJECTORYCOSTFUNCTION_H_
+#include <dwa_local_planner/map_grid_cost_function.h>
 
-#include <base_local_planner/trajectory.h>
+using base_local_planner::Trajectory;
 
-namespace base_local_planner {
+namespace dwa_local_planner {
 
-/**
- * @class TrajectoryCostFunction
- * @brief Provides an interface for critics of trajectories
- * During each sampling run, a batch of many trajectories will be scored using such a cost function.
- * The prepare method is called before each batch run, and then for each
- * trajectory of the sampling set, score_trajectory may be called.
- */
-class TrajectoryCostFunction {
-public:
+void MapGridCostFunction::initialize(costmap_2d::Costmap2D* costmap, double scale) {
+    stop_on_failure_ = true;
+    TrajectoryCostFunction::initialize(costmap, scale);
 
-  /**
-   *
-   * General updating of context values if required.
-   * Subclasses may overwrite. Return false in case there is any error.
-   */
-  virtual bool prepare() = 0;
-
-  /**
-   * return a score for trajectory traj
-   */
-  virtual double scoreTrajectory(Trajectory &traj) = 0;
-
-  double getScale() {
-    return scale_;
-  }
-
-  void setScale(double scale) {
-    scale_ = scale;
-  }
-
-  virtual ~TrajectoryCostFunction() {}
-
-protected:
-  TrajectoryCostFunction(double scale = 1.0): scale_(scale) {}
-
-private:
-  double scale_;
-};
-
+    //TODO: aggregationType_(aggregationType),
 }
 
-#endif /* TRAJECTORYCOSTFUNCTION_H_ */
+double MapGridCostFunction::getCellCosts(unsigned int px, unsigned int py) {
+  double grid_dist = map_(px, py).target_dist;
+  return grid_dist;
+}
+
+double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
+  double cost = 0.0;
+  if (aggregationType_ == Product) {
+    cost = 1.0;
+  }
+  double px, py, pth;
+  double grid_dist;
+
+  for (unsigned int i = 0; i < traj.getPointsSize(); ++i) {
+    traj.getPoint(i, px, py, pth);
+    grid_dist = scoreCell(px, py, pth);
+    if(stop_on_failure_ && grid_dist<0){
+        return grid_dist;
+    }
+
+    switch( aggregationType_ ) {
+    case Last:
+      cost = grid_dist;
+      break;
+    case Sum:
+      cost += grid_dist;
+      break;
+    case Product:
+      if (cost > 0) {
+        cost *= grid_dist;
+      }
+      break;
+    }
+  }
+  return cost;
+}
+
+double MapGridCostFunction::scoreCell(double px, double py, double pth) {
+    unsigned int cell_x, cell_y;
+    //we won't allow trajectories that go off the map... shouldn't happen that often anyways
+    if ( ! costmap_->worldToMap(px, py, cell_x, cell_y)) {
+      //we're off the map
+      ROS_WARN("Off Map %f, %f", px, py);
+      return -4.0;
+    }
+    return getCellCosts(cell_x, cell_y);
+}
+
+void MapGridCostFunction::setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y)
+{
+    target_poses_ = orig_global_plan;
+    goal_x_ = goal_x;
+    goal_y_ = goal_y;
+}
+
+} /* namespace dwa_local_planner */

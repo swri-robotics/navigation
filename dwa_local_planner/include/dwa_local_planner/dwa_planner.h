@@ -55,10 +55,17 @@
 #include <base_local_planner/local_planner_util.h>
 #include <base_local_planner/simple_trajectory_generator.h>
 
-#include <base_local_planner/oscillation_cost_function.h>
-#include <base_local_planner/map_grid_cost_function.h>
-#include <base_local_planner/obstacle_cost_function.h>
-#include <base_local_planner/simple_scored_sampling_planner.h>
+#include <dwa_local_planner/trajectory_cost_function.h>
+
+//#include <base_local_planner/oscillation_cost_function.h>
+//#include <base_local_planner/obstacle_cost_function.h>
+#include <dwa_local_planner/map_grid_cost_function.h>
+#include <dwa_local_planner/simple_scored_sampling_planner.h>
+
+#include <dwa_local_planner/goal_dist_cost_function.h>
+#include <dwa_local_planner/path_dist_cost_function.h>
+#include <dwa_local_planner/goal_align_cost_function.h>
+#include <dwa_local_planner/path_align_cost_function.h>
 
 #include <nav_msgs/Path.h>
 
@@ -169,14 +176,14 @@ namespace dwa_local_planner {
 
       // see constructor body for explanations
       base_local_planner::SimpleTrajectoryGenerator generator_;
-      base_local_planner::OscillationCostFunction oscillation_costs_;
-      base_local_planner::ObstacleCostFunction obstacle_costs_;
-      base_local_planner::MapGridCostFunction path_costs_;
-      base_local_planner::MapGridCostFunction goal_costs_;
-      base_local_planner::MapGridCostFunction goal_front_costs_;
-      base_local_planner::MapGridCostFunction alignment_costs_;
+      //base_local_planner::OscillationCostFunction oscillation_costs_;
+      //base_local_planner::ObstacleCostFunction obstacle_costs_;
+      PathDistCostFunction path_costs_;
+      GoalDistCostFunction goal_costs_;
+      GoalAlignCostFunction goal_front_costs_;
+      PathAlignCostFunction alignment_costs_;
 
-      base_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
+      dwa_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
   };
 };
 #endif

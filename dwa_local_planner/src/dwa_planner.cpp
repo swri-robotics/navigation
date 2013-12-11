@@ -59,6 +59,7 @@ namespace dwa_local_planner {
         config.use_dwa,
         sim_period_);
 
+    /*
     double resolution = planner_util_->getCostmap()->getResolution();
     pdist_scale_ = config.path_distance_bias;
     // pdistscale used for both path and alignment, set  forward_point_distance to zero to discard alignment
@@ -110,21 +111,16 @@ namespace dwa_local_planner {
     vsamples_[1] = vy_samp;
     vsamples_[2] = vth_samp;
  
-
+    */
   }
 
   DWAPlanner::DWAPlanner(std::string name, base_local_planner::LocalPlannerUtil *planner_util) :
-      planner_util_(planner_util),
-      obstacle_costs_(planner_util->getCostmap()),
-      path_costs_(planner_util->getCostmap()),
-      goal_costs_(planner_util->getCostmap(), 0.0, 0.0, true),
-      goal_front_costs_(planner_util->getCostmap(), 0.0, 0.0, true),
-      alignment_costs_(planner_util->getCostmap())
+      planner_util_(planner_util)
   {
     ros::NodeHandle private_nh("~/" + name);
 
-    goal_front_costs_.setStopOnFailure( false );
-    alignment_costs_.setStopOnFailure( false );
+    //goal_front_costs_.setStopOnFailure( false );
+    //alignment_costs_.setStopOnFailure( false );
 
     //Assuming this planner is being run within the navigation stack, we can
     //just do an upward search for the frequency at which its being run. This
@@ -144,11 +140,11 @@ namespace dwa_local_planner {
     }
     ROS_INFO("Sim period is set to %.2f", sim_period_);
 
-    oscillation_costs_.resetOscillationFlags();
+    //oscillation_costs_.resetOscillationFlags();
 
     bool sum_scores;
     private_nh.param("sum_scores", sum_scores, false);
-    obstacle_costs_.setSumScores(sum_scores);
+    //obstacle_costs_.setSumScores(sum_scores);
 
 
     private_nh.param("publish_cost_grid_pc", publish_cost_grid_pc_, false);
@@ -160,9 +156,9 @@ namespace dwa_local_planner {
 
     // set up all the cost functions that will be applied in order
     // (any function returning negative values will abort scoring, so the order can improve performance)
-    std::vector<base_local_planner::TrajectoryCostFunction*> critics;
-    critics.push_back(&oscillation_costs_); // discards oscillating motions (assisgns cost -1)
-    critics.push_back(&obstacle_costs_); // discards trajectories that move into obstacles
+    std::vector<TrajectoryCostFunction*> critics;
+    //critics.push_back(&oscillation_costs_); // discards oscillating motions (assisgns cost -1)
+    //critics.push_back(&obstacle_costs_); // discards trajectories that move into obstacles
     critics.push_back(&goal_front_costs_); // prefers trajectories that make the nose go towards (local) nose goal
     critics.push_back(&alignment_costs_); // prefers trajectories that keep the robot nose on nose path
     critics.push_back(&path_costs_); // prefers trajectories on global path
@@ -172,15 +168,15 @@ namespace dwa_local_planner {
     std::vector<base_local_planner::TrajectorySampleGenerator*> generator_list;
     generator_list.push_back(&generator_);
 
-    scored_sampling_planner_ = base_local_planner::SimpleScoredSamplingPlanner(generator_list, critics);
+    scored_sampling_planner_ = SimpleScoredSamplingPlanner(generator_list, critics);
 
     private_nh.param("scaled_path_factor", scaled_path_factor_, -1.0);
-    alignment_costs_.setForwardDistanceFactor(scaled_path_factor_);
+    //alignment_costs_.setForwardDistanceFactor(scaled_path_factor_);
   }
 
   // used for visualization only, total_costs are not really total costs
   bool DWAPlanner::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost) {
-
+/*
     path_cost = path_costs_.getCellCosts(cx, cy);
     goal_cost = goal_costs_.getCellCosts(cx, cy);
     occ_cost = planner_util_->getCostmap()->getCost(cx, cy);
@@ -194,12 +190,12 @@ namespace dwa_local_planner {
     total_cost =
         pdist_scale_ * resolution * path_cost +
         gdist_scale_ * resolution * goal_cost +
-        occdist_scale_ * occ_cost;
+        occdist_scale_ * occ_cost;*/
     return true;
   }
 
   bool DWAPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan) {
-    oscillation_costs_.resetOscillationFlags();
+    //oscillation_costs_.resetOscillationFlags();
     return planner_util_->setPlan(orig_global_plan);
   }
 
@@ -211,7 +207,7 @@ namespace dwa_local_planner {
       Eigen::Vector3f pos,
       Eigen::Vector3f vel,
       Eigen::Vector3f vel_samples){
-    oscillation_costs_.resetOscillationFlags();
+    //oscillation_costs_.resetOscillationFlags();
     base_local_planner::Trajectory traj;
     geometry_msgs::PoseStamped goal_pose = global_plan_.back();
     Eigen::Vector3f goal(goal_pose.pose.position.x, goal_pose.pose.position.y, tf::getYaw(goal_pose.pose.orientation));
@@ -241,7 +237,7 @@ namespace dwa_local_planner {
     for (unsigned int i = 0; i < new_plan.size(); ++i) {
       global_plan_[i] = new_plan[i];
     }
-
+    /*
     // costs for going away from path
     path_costs_.setTargetPoses(global_plan_);
 
@@ -284,7 +280,7 @@ namespace dwa_local_planner {
           // once we are close to goal, trying to keep the nose close to anything destabilizes behavior.
           alignment_costs_.setScale(0.0);
         }
-    }
+    }*/
   }
 
 
@@ -297,7 +293,7 @@ namespace dwa_local_planner {
       tf::Stamped<tf::Pose>& drive_velocities,
       std::vector<geometry_msgs::Point> footprint_spec) {
 
-    obstacle_costs_.setFootprint(footprint_spec);
+    //obstacle_costs_.setFootprint(footprint_spec);
 
     //make sure that our configuration doesn't change mid-run
     boost::mutex::scoped_lock l(configuration_mutex_);
@@ -353,7 +349,7 @@ namespace dwa_local_planner {
     }
 
     // debrief stateful scoring functions
-    oscillation_costs_.updateOscillationFlags(pos, &result_traj_, planner_util_->getCurrentLimits().min_trans_vel);
+    //oscillation_costs_.updateOscillationFlags(pos, &result_traj_, planner_util_->getCurrentLimits().min_trans_vel);
 
     //if we don't have a legal trajectory, we'll just command zero
     if (result_traj_.cost_ < 0) {
