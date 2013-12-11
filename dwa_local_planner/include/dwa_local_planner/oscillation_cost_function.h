@@ -38,17 +38,16 @@
 #ifndef OSCILLATION_COST_FUNCTION_H_
 #define OSCILLATION_COST_FUNCTION_H_
 
-#include <base_local_planner/trajectory_cost_function.h>
+#include <dwa_local_planner/trajectory_cost_function.h>
 #include <Eigen/Core>
 
-namespace base_local_planner {
+namespace dwa_local_planner {
 
-class OscillationCostFunction: public base_local_planner::TrajectoryCostFunction {
+class OscillationCostFunction: public dwa_local_planner::TrajectoryCostFunction {
 public:
-  OscillationCostFunction();
   virtual ~OscillationCostFunction();
 
-  double scoreTrajectory(Trajectory &traj);
+  double scoreTrajectory(base_local_planner::Trajectory &traj);
 
   bool prepare() {return true;};
 
@@ -85,5 +84,5 @@ private:
   Eigen::Vector3f prev_stationary_pos_;
 };
 
-} /* namespace base_local_planner */
+} /* namespace dwa_local_planner */
 #endif /* OSCILLATION_COST_FUNCTION_H_ */

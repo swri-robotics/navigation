@@ -50,7 +50,7 @@ public:
 
   virtual ~TrajectoryCostFunction() {}
 
-private:
+protected:
   costmap_2d::Costmap2D* costmap_;
   double scale_;
 };

@@ -49,6 +49,9 @@ add_library(cost_functions
     src/offset_grid_cost_function.cpp
     src/goal_align_cost_function.cpp
     src/path_align_cost_function.cpp
+	src/obstacle_cost_function.cpp
+	src/oscillation_cost_function.cpp
+	src/prefer_forward_cost_function.cpp
 )
 
 add_library(dwa_local_planner src/dwa_planner.cpp src/dwa_planner_ros.cpp)

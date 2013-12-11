@@ -35,14 +35,13 @@
  * Author: TKruse
  *********************************************************************/
 
-#include <base_local_planner/oscillation_cost_function.h>
+#include <dwa_local_planner/oscillation_cost_function.h>
 
 #include <cmath>
 
-namespace base_local_planner {
+using base_local_planner::Trajectory;
 
-OscillationCostFunction::OscillationCostFunction() {
-}
+namespace dwa_local_planner {
 
 OscillationCostFunction::~OscillationCostFunction() {
   prev_stationary_pos_ = Eigen::Vector3f::Zero();
@@ -175,4 +174,4 @@ double OscillationCostFunction::scoreTrajectory(Trajectory &traj) {
   return 0.0;
 }
 
-} /* namespace base_local_planner */
+} /* namespace dwa_local_planner */

@@ -35,18 +35,18 @@
  * Author: TKruse
  *********************************************************************/
 
-#include <base_local_planner/obstacle_cost_function.h>
+#include <dwa_local_planner/obstacle_cost_function.h>
 #include <cmath>
 #include <Eigen/Core>
 #include <ros/console.h>
 
-namespace base_local_planner {
+using base_local_planner::Trajectory;
 
-ObstacleCostFunction::ObstacleCostFunction(costmap_2d::Costmap2D* costmap) 
-    : costmap_(costmap), sum_scores_(false) {
-  if (costmap != NULL) {
+namespace dwa_local_planner {
+
+void ObstacleCostFunction::initialize(costmap_2d::Costmap2D* costmap, double scale) {
+    TrajectoryCostFunction::initialize(costmap, scale);
     world_model_ = new base_local_planner::CostmapModel(*costmap_);
-  }
 }
 
 ObstacleCostFunction::~ObstacleCostFunction() {
@@ -141,4 +141,4 @@ double ObstacleCostFunction::footprintCost (
   return occ_cost;
 }
 
-} /* namespace base_local_planner */
+} /* namespace dwa_local_planner */
