@@ -63,13 +63,10 @@ void ObstacleCostFunction::setParams(double max_trans_vel, double max_scaling_fa
   scaling_speed_ = scaling_speed;
 }
 
-void ObstacleCostFunction::setFootprint(std::vector<geometry_msgs::Point> footprint_spec) {
-  footprint_spec_ = footprint_spec;
-}
-
 bool ObstacleCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,
       std::vector<geometry_msgs::Point> footprint_spec) {
+  footprint_spec_ = footprint_spec;
   return true;
 }
 

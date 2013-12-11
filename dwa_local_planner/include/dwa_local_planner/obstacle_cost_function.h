@@ -64,7 +64,6 @@ public:
   void setSumScores(bool score_sums){ sum_scores_=score_sums; }
 
   void setParams(double max_trans_vel, double max_scaling_factor, double scaling_speed);
-  void setFootprint(std::vector<geometry_msgs::Point> footprint_spec);
 
   // helper functions, made static for easy unit testing
   static double getScalingFactor(base_local_planner::Trajectory &traj, double scaling_speed, double max_trans_vel, double max_scaling_factor);

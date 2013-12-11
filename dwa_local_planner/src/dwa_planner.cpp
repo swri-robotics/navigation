@@ -292,8 +292,6 @@ namespace dwa_local_planner {
       tf::Stamped<tf::Pose>& drive_velocities,
       std::vector<geometry_msgs::Point> footprint_spec) {
 
-    //obstacle_costs_.setFootprint(footprint_spec);
-
     //make sure that our configuration doesn't change mid-run
     boost::mutex::scoped_lock l(configuration_mutex_);
 
