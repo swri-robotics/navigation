@@ -87,13 +87,6 @@ namespace dwa_local_planner {
     double loop_traj_cost, best_traj_cost = -1;
     bool gen_success;
     int count, count_valid;
-    for (std::vector<TrajectoryCostFunction*>::iterator loop_critic = critics_.begin(); loop_critic != critics_.end(); ++loop_critic) {
-      TrajectoryCostFunction* loop_critic_p = *loop_critic;
-      if (loop_critic_p->prepare() == false) {
-        ROS_WARN("A scoring function failed to prepare");
-        return false;
-      }
-    }
 
     for (std::vector<TrajectorySampleGenerator*>::iterator loop_gen = gen_list_.begin(); loop_gen != gen_list_.end(); ++loop_gen) {
       count = 0;

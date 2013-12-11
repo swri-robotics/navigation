@@ -7,7 +7,9 @@ namespace dwa_local_planner {
 
 class PathDistCostFunction: public MapGridCostFunction {
 public:
-  bool prepare();
+  bool prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec);
 };
 
 } /* namespace dwa_local_planner */

@@ -140,7 +140,7 @@ namespace dwa_local_planner {
     }
     ROS_INFO("Sim period is set to %.2f", sim_period_);
 
-    //oscillation_costs_.resetOscillationFlags();
+    oscillation_costs_.reset();
 
     bool sum_scores;
     private_nh.param("sum_scores", sum_scores, false);
@@ -156,19 +156,18 @@ namespace dwa_local_planner {
 
     // set up all the cost functions that will be applied in order
     // (any function returning negative values will abort scoring, so the order can improve performance)
-    std::vector<TrajectoryCostFunction*> critics;
-    critics.push_back(&oscillation_costs_); // discards oscillating motions (assisgns cost -1)
-    critics.push_back(&obstacle_costs_); // discards trajectories that move into obstacles
-    critics.push_back(&goal_front_costs_); // prefers trajectories that make the nose go towards (local) nose goal
-    critics.push_back(&alignment_costs_); // prefers trajectories that keep the robot nose on nose path
-    critics.push_back(&path_costs_); // prefers trajectories on global path
-    critics.push_back(&goal_costs_); // prefers trajectories that go towards (local) goal, based on wave propagation
+    critics_.push_back(&oscillation_costs_); // discards oscillating motions (assisgns cost -1)
+    critics_.push_back(&obstacle_costs_); // discards trajectories that move into obstacles
+    critics_.push_back(&goal_front_costs_); // prefers trajectories that make the nose go towards (local) nose goal
+    critics_.push_back(&alignment_costs_); // prefers trajectories that keep the robot nose on nose path
+    critics_.push_back(&path_costs_); // prefers trajectories on global path
+    critics_.push_back(&goal_costs_); // prefers trajectories that go towards (local) goal, based on wave propagation
 
     // trajectory generators
     std::vector<base_local_planner::TrajectorySampleGenerator*> generator_list;
     generator_list.push_back(&generator_);
 
-    scored_sampling_planner_ = SimpleScoredSamplingPlanner(generator_list, critics);
+    scored_sampling_planner_ = SimpleScoredSamplingPlanner(generator_list, critics_);
 
     private_nh.param("scaled_path_factor", scaled_path_factor_, -1.0);
     //alignment_costs_.setForwardDistanceFactor(scaled_path_factor_);
@@ -195,7 +194,7 @@ namespace dwa_local_planner {
   }
 
   bool DWAPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan) {
-    //oscillation_costs_.resetOscillationFlags();
+    oscillation_costs_.reset();
     return planner_util_->setPlan(orig_global_plan);
   }
 
@@ -207,7 +206,7 @@ namespace dwa_local_planner {
       Eigen::Vector3f pos,
       Eigen::Vector3f vel,
       Eigen::Vector3f vel_samples){
-    //oscillation_costs_.resetOscillationFlags();
+    oscillation_costs_.reset();
     base_local_planner::Trajectory traj;
     geometry_msgs::PoseStamped goal_pose = global_plan_.back();
     Eigen::Vector3f goal(goal_pose.pose.position.x, goal_pose.pose.position.y, tf::getYaw(goal_pose.pose.orientation));
@@ -314,6 +313,13 @@ namespace dwa_local_planner {
     result_traj_.cost_ = -7;
     // find best trajectory by sampling and scoring the samples
     std::vector<base_local_planner::Trajectory> all_explored;
+
+    for (std::vector<TrajectoryCostFunction*>::iterator loop_critic = critics_.begin(); loop_critic != critics_.end(); ++loop_critic) {
+      TrajectoryCostFunction* loop_critic_p = *loop_critic;
+      if (loop_critic_p->prepare(global_pose, global_vel, footprint_spec) == false) {
+        ROS_WARN("A scoring function failed to prepare");
+      }
+    }
     scored_sampling_planner_.findBestTrajectory(result_traj_, &all_explored);
 
     if(publish_traj_pc_)
@@ -349,7 +355,7 @@ namespace dwa_local_planner {
     }
 
     // debrief stateful scoring functions
-    oscillation_costs_.debrief(pos, &result_traj_);
+    oscillation_costs_.debrief(&result_traj_);
 
     //if we don't have a legal trajectory, we'll just command zero
     if (result_traj_.cost_ < 0) {

@@ -28,7 +28,9 @@ public:
    * General updating of context values if required.
    * Subclasses may overwrite. Return false in case there is any error.
    */
-  virtual bool prepare() = 0;
+  virtual bool prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec) = 0;
 
   virtual void reset() {}
 

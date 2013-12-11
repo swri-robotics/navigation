@@ -56,7 +56,9 @@ public:
   ~ObstacleCostFunction();
 
   virtual void initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale);
-  bool prepare();
+  bool prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec);
   double scoreTrajectory(base_local_planner::Trajectory &traj);
 
   void setSumScores(bool score_sums){ sum_scores_=score_sums; }

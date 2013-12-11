@@ -67,7 +67,9 @@ void ObstacleCostFunction::setFootprint(std::vector<geometry_msgs::Point> footpr
   footprint_spec_ = footprint_spec;
 }
 
-bool ObstacleCostFunction::prepare() {
+bool ObstacleCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec) {
   return true;
 }
 

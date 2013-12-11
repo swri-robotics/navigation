@@ -176,6 +176,9 @@ namespace dwa_local_planner {
 
       // see constructor body for explanations
       base_local_planner::SimpleTrajectoryGenerator generator_;
+
+      std::vector<TrajectoryCostFunction*> critics_;
+
       OscillationCostFunction oscillation_costs_;
       ObstacleCostFunction obstacle_costs_;
       PathDistCostFunction path_costs_;

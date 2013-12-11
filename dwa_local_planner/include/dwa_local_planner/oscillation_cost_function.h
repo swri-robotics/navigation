@@ -49,7 +49,9 @@ public:
 
   double scoreTrajectory(base_local_planner::Trajectory &traj);
 
-  bool prepare() {return true;};
+  bool prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec);
 
   /**
    * @brief  Reset the oscillation flags for the local planner
@@ -81,7 +83,7 @@ private:
   // param
   double oscillation_reset_dist_, oscillation_reset_angle_;
 
-  Eigen::Vector3f prev_stationary_pos_;
+  Eigen::Vector3f pos_, prev_stationary_pos_;
 };
 
 } /* namespace dwa_local_planner */

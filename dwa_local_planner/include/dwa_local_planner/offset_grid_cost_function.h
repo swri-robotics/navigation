@@ -8,7 +8,9 @@ namespace dwa_local_planner {
 class OffsetGridCostFunction: public MapGridCostFunction {
 public:
   OffsetGridCostFunction(){ stop_on_failure_ = false; }
-  virtual bool prepare();
+  virtual bool prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec);
   double scoreCell(double px, double py, double pth);
 protected:
     double xshift_, yshift_, scale_offset_;
