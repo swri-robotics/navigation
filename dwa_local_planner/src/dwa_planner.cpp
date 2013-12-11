@@ -59,27 +59,25 @@ namespace dwa_local_planner {
         config.use_dwa,
         sim_period_);
 
-    /*
-    double resolution = planner_util_->getCostmap()->getResolution();
     pdist_scale_ = config.path_distance_bias;
     // pdistscale used for both path and alignment, set  forward_point_distance to zero to discard alignment
-    path_costs_.setScale(resolution * pdist_scale_ * 0.5);
+    path_costs_.setScale(pdist_scale_ * 0.5);
     porient_scale_ = config.path_orientation_bias;
-    alignment_costs_.setScale(resolution * pdist_scale_ * 0.5 * porient_scale_);
+    alignment_costs_.setScale(pdist_scale_ * 0.5 * porient_scale_);
 
     gdist_scale_ = config.goal_distance_bias;
-    goal_costs_.setScale(resolution * gdist_scale_ * 0.5);
+    goal_costs_.setScale(gdist_scale_ * 0.5);
     gorient_scale_ = config.goal_orientation_bias;
-    goal_front_costs_.setScale(resolution * gdist_scale_ * 0.5 * gorient_scale_);
+    goal_front_costs_.setScale(gdist_scale_ * 0.5 * gorient_scale_);
 
     occdist_scale_ = config.occdist_scale;
-    obstacle_costs_.setScale(resolution * occdist_scale_);
+    obstacle_costs_.setScale(occdist_scale_);
 
     stop_time_buffer_ = config.stop_time_buffer;
     oscillation_costs_.setOscillationResetDist(config.oscillation_reset_dist, config.oscillation_reset_angle);
     forward_point_distance_ = config.forward_point_distance;
-    goal_front_costs_.setXShift(forward_point_distance_);
-    alignment_costs_.setXShift(forward_point_distance_);
+    //goal_front_costs_.setXShift(forward_point_distance_);
+    //alignment_costs_.setXShift(forward_point_distance_);
  
     // obstacle costs can vary due to scaling footprint feature
     obstacle_costs_.setParams(config.max_trans_vel, config.max_scaling_factor, config.scaling_speed);
@@ -111,7 +109,7 @@ namespace dwa_local_planner {
     vsamples_[1] = vy_samp;
     vsamples_[2] = vth_samp;
  
-    */
+    
   }
 
   DWAPlanner::DWAPlanner(std::string name, base_local_planner::LocalPlannerUtil *planner_util) :
@@ -184,8 +182,8 @@ namespace dwa_local_planner {
 
     double resolution = planner_util_->getCostmap()->getResolution();
     total_cost =
-        pdist_scale_ * resolution * path_cost +
-        gdist_scale_ * resolution * goal_cost +
+        pdist_scale_ * path_cost +
+        gdist_scale_ * goal_cost +
         occdist_scale_ * occ_cost;
     return true;
   }

@@ -95,7 +95,7 @@ double ObstacleCostFunction::scoreTrajectory(Trajectory &traj) {
     else
         cost = f_cost;
   }
-  return cost;
+  return cost * costmap_->getResolution();
 }
 
 double ObstacleCostFunction::getScalingFactor(Trajectory &traj, double scaling_speed, double max_trans_vel, double max_scaling_factor) {
