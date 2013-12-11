@@ -54,10 +54,10 @@ public:
   /**
    * @brief  Reset the oscillation flags for the local planner
    */
-  void resetOscillationFlags();
+  virtual void reset();
 
 
-  void updateOscillationFlags(Eigen::Vector3f pos, base_local_planner::Trajectory* traj, double min_vel_trans);
+  void debrief(base_local_planner::Trajectory* traj);
 
   void setOscillationResetDist(double dist, double angle);
 

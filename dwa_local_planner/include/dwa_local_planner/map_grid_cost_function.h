@@ -73,7 +73,7 @@ enum CostAggregationType { Last, Sum, Product};
 class MapGridCostFunction: public dwa_local_planner::TrajectoryCostFunction {
 public:
 
-  void initialize(costmap_2d::Costmap2D* costmap, double scale);
+  void initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale);
   virtual bool prepare();
 
   double scoreTrajectory(base_local_planner::Trajectory &traj);

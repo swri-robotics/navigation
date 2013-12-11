@@ -55,7 +55,7 @@ class ObstacleCostFunction : public TrajectoryCostFunction {
 public:
   ~ObstacleCostFunction();
 
-  virtual void initialize(costmap_2d::Costmap2D* costmap, double scale);
+  virtual void initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale);
   bool prepare();
   double scoreTrajectory(base_local_planner::Trajectory &traj);
 

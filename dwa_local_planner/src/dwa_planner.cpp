@@ -157,8 +157,8 @@ namespace dwa_local_planner {
     // set up all the cost functions that will be applied in order
     // (any function returning negative values will abort scoring, so the order can improve performance)
     std::vector<TrajectoryCostFunction*> critics;
-    //critics.push_back(&oscillation_costs_); // discards oscillating motions (assisgns cost -1)
-    //critics.push_back(&obstacle_costs_); // discards trajectories that move into obstacles
+    critics.push_back(&oscillation_costs_); // discards oscillating motions (assisgns cost -1)
+    critics.push_back(&obstacle_costs_); // discards trajectories that move into obstacles
     critics.push_back(&goal_front_costs_); // prefers trajectories that make the nose go towards (local) nose goal
     critics.push_back(&alignment_costs_); // prefers trajectories that keep the robot nose on nose path
     critics.push_back(&path_costs_); // prefers trajectories on global path
@@ -349,7 +349,7 @@ namespace dwa_local_planner {
     }
 
     // debrief stateful scoring functions
-    //oscillation_costs_.updateOscillationFlags(pos, &result_traj_, planner_util_->getCurrentLimits().min_trans_vel);
+    oscillation_costs_.debrief(pos, &result_traj_);
 
     //if we don't have a legal trajectory, we'll just command zero
     if (result_traj_.cost_ < 0) {

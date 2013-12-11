@@ -2,6 +2,7 @@
 #define DWA_TRAJECTORYCOSTFUNCTION_H_
 
 #include <base_local_planner/trajectory.h>
+#include <base_local_planner/local_planner_util.h>
 #include <costmap_2d/costmap_2d.h>
 #include <geometry_msgs/PoseStamped.h>
 
@@ -17,7 +18,8 @@ namespace dwa_local_planner {
 class TrajectoryCostFunction {
 public:
 
-  void initialize(costmap_2d::Costmap2D* costmap, double scale) {
+  void initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale) {
+    planner_util_ = planner_util;
     costmap_ = costmap;
     scale_ = scale;
   }
@@ -27,6 +29,8 @@ public:
    * Subclasses may overwrite. Return false in case there is any error.
    */
   virtual bool prepare() = 0;
+
+  virtual void reset() {}
 
   /**
    * Set Global Plan with plan transformed and cropped into local costmap frame
@@ -38,7 +42,7 @@ public:
    */
   virtual double scoreTrajectory(base_local_planner::Trajectory &traj) = 0;
 
-  virtual void postUpdate(base_local_planner::Trajectory &result) {}
+  virtual void debrief(base_local_planner::Trajectory &result) {}
 
   double getScale() {
     return scale_;
@@ -51,6 +55,7 @@ public:
   virtual ~TrajectoryCostFunction() {}
 
 protected:
+  base_local_planner::LocalPlannerUtil *planner_util_;
   costmap_2d::Costmap2D* costmap_;
   double scale_;
 };

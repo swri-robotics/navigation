@@ -44,8 +44,8 @@ using base_local_planner::Trajectory;
 
 namespace dwa_local_planner {
 
-void ObstacleCostFunction::initialize(costmap_2d::Costmap2D* costmap, double scale) {
-    TrajectoryCostFunction::initialize(costmap, scale);
+void ObstacleCostFunction::initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale) {
+    TrajectoryCostFunction::initialize(costmap, planner_util, scale);
     world_model_ = new base_local_planner::CostmapModel(*costmap_);
 }
 

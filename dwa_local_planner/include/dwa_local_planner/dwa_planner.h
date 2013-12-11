@@ -57,8 +57,8 @@
 
 #include <dwa_local_planner/trajectory_cost_function.h>
 
-//#include <base_local_planner/oscillation_cost_function.h>
-//#include <base_local_planner/obstacle_cost_function.h>
+#include <dwa_local_planner/oscillation_cost_function.h>
+#include <dwa_local_planner/obstacle_cost_function.h>
 #include <dwa_local_planner/map_grid_cost_function.h>
 #include <dwa_local_planner/simple_scored_sampling_planner.h>
 
@@ -176,8 +176,8 @@ namespace dwa_local_planner {
 
       // see constructor body for explanations
       base_local_planner::SimpleTrajectoryGenerator generator_;
-      //base_local_planner::OscillationCostFunction oscillation_costs_;
-      //base_local_planner::ObstacleCostFunction obstacle_costs_;
+      OscillationCostFunction oscillation_costs_;
+      ObstacleCostFunction obstacle_costs_;
       PathDistCostFunction path_costs_;
       GoalDistCostFunction goal_costs_;
       GoalAlignCostFunction goal_front_costs_;

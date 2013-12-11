@@ -41,9 +41,9 @@ using base_local_planner::Trajectory;
 
 namespace dwa_local_planner {
 
-void MapGridCostFunction::initialize(costmap_2d::Costmap2D* costmap, double scale) {
+void MapGridCostFunction::initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale) {
     stop_on_failure_ = true;
-    TrajectoryCostFunction::initialize(costmap, scale);
+    TrajectoryCostFunction::initialize(costmap, planner_util, scale);
 
     //TODO: aggregationType_(aggregationType),
 }
