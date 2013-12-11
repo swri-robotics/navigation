@@ -82,7 +82,9 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
       break;
     }
   }
-  return cost;
+
+  double factor = costmap_->getResolution() * 0.5;
+  return cost * factor;
 }
 
 double MapGridCostFunction::scoreCell(double px, double py, double pth) {

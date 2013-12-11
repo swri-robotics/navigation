@@ -119,9 +119,6 @@ namespace dwa_local_planner {
   {
     ros::NodeHandle private_nh("~/" + name);
 
-    //goal_front_costs_.setStopOnFailure( false );
-    //alignment_costs_.setStopOnFailure( false );
-
     //Assuming this planner is being run within the navigation stack, we can
     //just do an upward search for the frequency at which its being run. This
     //also allows the frequency to be overwritten locally.
@@ -175,21 +172,21 @@ namespace dwa_local_planner {
 
   // used for visualization only, total_costs are not really total costs
   bool DWAPlanner::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost) {
-/*
+
     path_cost = path_costs_.getCellCosts(cx, cy);
     goal_cost = goal_costs_.getCellCosts(cx, cy);
     occ_cost = planner_util_->getCostmap()->getCost(cx, cy);
-    if (path_cost == path_costs_.obstacleCosts() ||
+    /* TODO: if (path_cost == path_costs_.obstacleCosts() ||
         path_cost == path_costs_.unreachableCellCosts() ||
         occ_cost >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE) {
       return false;
-    }
+    }*/
 
     double resolution = planner_util_->getCostmap()->getResolution();
     total_cost =
         pdist_scale_ * resolution * path_cost +
         gdist_scale_ * resolution * goal_cost +
-        occdist_scale_ * occ_cost;*/
+        occdist_scale_ * occ_cost;
     return true;
   }
 
@@ -236,50 +233,14 @@ namespace dwa_local_planner {
     for (unsigned int i = 0; i < new_plan.size(); ++i) {
       global_plan_[i] = new_plan[i];
     }
-    /*
-    // costs for going away from path
-    path_costs_.setTargetPoses(global_plan_);
-
-    // costs for not going towards the local goal as much as possible
-    goal_costs_.setTargetPoses(global_plan_);
-
-    // alignment costs
     geometry_msgs::PoseStamped goal_pose = global_plan_.back();
 
     double gx = goal_pose.pose.position.x, gy = goal_pose.pose.position.y;
-    alignment_costs_.setGoal(gx, gy);
 
-    Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
-    double sq_dist =
-        (pos[0] - gx) * (pos[0] - gx) +
-        (pos[1] - gy) * (pos[1] - gy);
-
-    // we want the robot nose to be drawn to its final position
-    // (before robot turns towards goal orientation), not the end of the
-    // path for the robot center. Choosing the final position after
-    // turning towards goal orientation causes instability when the
-    // robot needs to make a 180 degree turn at the end
-    std::vector<geometry_msgs::PoseStamped> front_global_plan = global_plan_;
-    double angle_to_goal = atan2(gy - pos[1], gx - pos[0]);
-    front_global_plan.back().pose.position.x = front_global_plan.back().pose.position.x +
-      forward_point_distance_ * cos(angle_to_goal);
-    front_global_plan.back().pose.position.y = front_global_plan.back().pose.position.y + forward_point_distance_ *
-      sin(angle_to_goal);
-
-    goal_front_costs_.setTargetPoses(front_global_plan);
-    
-    if(scaled_path_factor_ < 0)
-    {
-        // keeping the nose on the path
-        if (sq_dist > forward_point_distance_ * forward_point_distance_) {
-          alignment_costs_.setScale(1.0 * porient_scale_);
-          // costs for robot being aligned with path (nose on path, not ju
-          alignment_costs_.setTargetPoses(global_plan_);
-        } else {
-          // once we are close to goal, trying to keep the nose close to anything destabilizes behavior.
-          alignment_costs_.setScale(0.0);
-        }
-    }*/
+    path_costs_.setGlobalPlan(global_plan_, gx, gy);
+    goal_costs_.setGlobalPlan(global_plan_, gx, gy);
+    alignment_costs_.setGlobalPlan(global_plan_, gx, gy);
+    goal_front_costs_.setGlobalPlan(global_plan_, gx, gy);
   }
 
 

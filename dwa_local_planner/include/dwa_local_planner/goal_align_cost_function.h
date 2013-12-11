@@ -10,6 +10,12 @@ public:
   bool prepare(tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,
       std::vector<geometry_msgs::Point> footprint_spec);
+
+  virtual void setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y);
+
+private:
+    tf::Stamped<tf::Pose> global_pose_;
+
 };
 
 } /* namespace dwa_local_planner */
