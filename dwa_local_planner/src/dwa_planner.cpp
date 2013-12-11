@@ -116,6 +116,13 @@ namespace dwa_local_planner {
       planner_util_(planner_util)
   {
     ros::NodeHandle private_nh("~/" + name);
+    costmap_2d::Costmap2D* costmap = planner_util->getCostmap();
+    oscillation_costs_.initialize(costmap, planner_util, 1.0);
+    obstacle_costs_.initialize(costmap, planner_util, 1.0);
+    path_costs_.initialize(costmap, planner_util, 1.0);
+    goal_costs_.initialize(costmap, planner_util, 1.0);
+    goal_front_costs_.initialize(costmap, planner_util, 1.0);
+    alignment_costs_.initialize(costmap, planner_util, 1.0);
 
     //Assuming this planner is being run within the navigation stack, we can
     //just do an upward search for the frequency at which its being run. This
