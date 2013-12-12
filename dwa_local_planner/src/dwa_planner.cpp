@@ -46,7 +46,34 @@
 
 #include <ros/ros.h>
 
+class XmlArray :public XmlRpc::XmlRpcValue
+{
+public:
+
+  void setArray(std::vector<XmlRpc::XmlRpcValue>* a)
+  {
+    _type = TypeArray;
+    _value.asArray = new std::vector<XmlRpc::XmlRpcValue>(*a);
+  }
+};
+
 namespace dwa_local_planner {
+void move_parameter(ros::NodeHandle& nh, std::string old_name, std::string name, double default_value, bool should_delete=true)
+{
+  XmlRpc::XmlRpcValue value;
+  if (nh.hasParam(old_name))
+  {
+    nh.getParam(old_name, value);
+    if(should_delete) nh.deleteParam(old_name);
+  }
+  else
+    value = default_value;
+
+  nh.setParam(name, value);
+  
+}
+
+
   void DWAPlanner::reconfigure(DWAPlannerConfig &config)
   {
 
@@ -59,28 +86,8 @@ namespace dwa_local_planner {
         config.use_dwa,
         sim_period_);
 
-    pdist_scale_ = config.path_distance_bias;
-    // pdistscale used for both path and alignment, set  forward_point_distance to zero to discard alignment
-    path_costs_.setScale(pdist_scale_);
-    porient_scale_ = config.path_orientation_bias;
-    alignment_costs_.setScale(pdist_scale_ * porient_scale_);
-
-    gdist_scale_ = config.goal_distance_bias;
-    goal_costs_.setScale(gdist_scale_);
-    gorient_scale_ = config.goal_orientation_bias;
-    goal_front_costs_.setScale(gdist_scale_ * gorient_scale_);
-
-    occdist_scale_ = config.occdist_scale;
-    obstacle_costs_.setScale(occdist_scale_);
-
     stop_time_buffer_ = config.stop_time_buffer;
-    oscillation_costs_.setOscillationResetDist(config.oscillation_reset_dist, config.oscillation_reset_angle);
     forward_point_distance_ = config.forward_point_distance;
-    //goal_front_costs_.setXShift(forward_point_distance_);
-    //alignment_costs_.setXShift(forward_point_distance_);
- 
-    // obstacle costs can vary due to scaling footprint feature
-    obstacle_costs_.setParams(config.max_trans_vel, config.max_scaling_factor, config.scaling_speed);
 
     int vx_samp, vy_samp, vth_samp;
     vx_samp = config.vx_samples;
@@ -113,17 +120,9 @@ namespace dwa_local_planner {
   }
 
   DWAPlanner::DWAPlanner(std::string name, base_local_planner::LocalPlannerUtil *planner_util) :
-      planner_util_(planner_util)
+      planner_util_(planner_util), plugin_loader_("dwa_local_planner", "dwa_local_planner::TrajectoryCostFunction")
   {
     ros::NodeHandle private_nh("~/" + name);
-    costmap_2d::Costmap2D* costmap = planner_util->getCostmap();
-
-    oscillation_costs_.initialize(costmap, planner_util, 1.0);
-    obstacle_costs_.initialize(costmap, planner_util, .01);
-    path_costs_.initialize(costmap, planner_util, 20.0);
-    goal_costs_.initialize(costmap, planner_util, 40.0);
-    goal_front_costs_.initialize(costmap, planner_util, 40.0);
-    alignment_costs_.initialize(costmap, planner_util, 20.0);
 
     //Assuming this planner is being run within the navigation stack, we can
     //just do an upward search for the frequency at which its being run. This
@@ -143,12 +142,7 @@ namespace dwa_local_planner {
     }
     ROS_INFO("Sim period is set to %.2f", sim_period_);
 
-    oscillation_costs_.reset();
-
-    bool sum_scores;
-    private_nh.param("sum_scores", sum_scores, false);
-    //obstacle_costs_.setSumScores(sum_scores);
-
+    reset();
 
     private_nh.param("publish_cost_grid_pc", publish_cost_grid_pc_, false);
     map_viz_.initialize(name, planner_util->getGlobalFrame(), boost::bind(&DWAPlanner::getCellCosts, this, _1, _2, _3, _4, _5, _6));
@@ -157,27 +151,84 @@ namespace dwa_local_planner {
     traj_cloud_pub_.advertise(private_nh, "trajectory_cloud", 1);
     private_nh.param("publish_traj_pc", publish_traj_pc_, false);
 
-    // set up all the cost functions that will be applied in order
-    // (any function returning negative values will abort scoring, so the order can improve performance)
-    critics_.push_back(&oscillation_costs_); // discards oscillating motions (assisgns cost -1)
-    critics_.push_back(&obstacle_costs_); // discards trajectories that move into obstacles
-    critics_.push_back(&goal_front_costs_); // prefers trajectories that make the nose go towards (local) nose goal
-    critics_.push_back(&alignment_costs_); // prefers trajectories that keep the robot nose on nose path
-    critics_.push_back(&path_costs_); // prefers trajectories on global path
-    critics_.push_back(&goal_costs_); // prefers trajectories that go towards (local) goal, based on wave propagation
+    if (!private_nh.hasParam("critics"))
+    {
+        resetOldParameters(private_nh);
+    }
+
+    if (private_nh.hasParam("critics"))
+    {
+        XmlRpc::XmlRpcValue my_list;
+        private_nh.getParam("critics", my_list);
+        for (int32_t i = 0; i < my_list.size(); ++i)
+        {
+          std::string pname, type;
+
+          if(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeStruct){
+              pname = static_cast<std::string>(my_list[i]["name"]);
+              type = static_cast<std::string>(my_list[i]["type"]);
+          }else{
+              pname = static_cast<std::string>(my_list[i]);
+              type = pname;
+          }
+
+          if(type.find("CostFunction") == std::string::npos)
+          {
+              type = type + "CostFunction";
+          }
+
+
+          ROS_INFO("Using critic \"%s\"", pname.c_str());
+
+          CostFunctionPointer plugin = plugin_loader_.createInstance(type);
+          critics_.push_back(plugin);
+          plugin->initialize(pname, planner_util); 
+        }
+    }
 
     // trajectory generators
     std::vector<base_local_planner::TrajectorySampleGenerator*> generator_list;
     generator_list.push_back(&generator_);
 
     scored_sampling_planner_ = SimpleScoredSamplingPlanner(generator_list, critics_);
-
-    private_nh.param("scaled_path_factor", scaled_path_factor_, -1.0);
-    //alignment_costs_.setForwardDistanceFactor(scaled_path_factor_);
   }
+
+  void DWAPlanner::resetOldParameters(ros::NodeHandle& nh)
+  {
+    ROS_INFO("Loading from pre-hydro parameter style");
+    std::vector < XmlRpc::XmlRpcValue > plugins;
+    plugins.resize(6);
+    plugins[0] = "Oscillation"; // discards oscillating motions (assisgns cost -1)
+    plugins[1] = "Obstacle";    // discards trajectories that move into obstacles
+    plugins[2] = "GoalAlign";   // prefers trajectories that make the nose go towards (local) nose goal
+    plugins[3] = "PathAlign";   // prefers trajectories that keep the robot nose on nose path
+    plugins[4] = "PathDist";    // prefers trajectories on global path
+    plugins[5] = "GoalDist";    // prefers trajectories that go towards (local) goal, based on wave propagation
+
+    XmlArray critics;
+    critics.setArray(&plugins);
+    nh.setParam("critics", critics);
+
+    move_parameter(nh, "path_distance_bias", "PathAlign/scale", 32.0, false);
+    move_parameter(nh, "goal_distance_bias", "GoalAlign/scale", 24.0, false);
+    move_parameter(nh, "path_distance_bias", "PathDist/scale", 32.0);
+    move_parameter(nh, "goal_distance_bias", "GoalDist/scale", 24.0);
+    move_parameter(nh, "occdist_scale",      "Obstacle/scale", 0.01);
+
+}
+
 
   // used for visualization only, total_costs are not really total costs
   bool DWAPlanner::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost) {
+    /*
+  for (std::vector<boost::shared_ptr<costmap_2d::Layer> >::iterator pluginp = plugins->begin(); pluginp != plugins->end(); ++pluginp) {
+    boost::shared_ptr<costmap_2d::Layer> plugin = *pluginp;
+    if(plugin->getName().find(layer_search_string_)!=std::string::npos){
+      boost::shared_ptr<costmap_2d::ObstacleLayer> costmap;
+      costmap = boost::static_pointer_cast<costmap_2d::ObstacleLayer>(plugin);
+      clearMap(costmap, x, y);
+    }
+  }
 
     path_cost = path_costs_.getCellCosts(cx, cy);
     goal_cost = goal_costs_.getCellCosts(cx, cy);
@@ -191,12 +242,12 @@ namespace dwa_local_planner {
     total_cost =
         pdist_scale_ * path_cost +
         gdist_scale_ * goal_cost +
-        occdist_scale_ * occ_cost;
+        occdist_scale_ * occ_cost;*/
     return true;
   }
 
   bool DWAPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan) {
-    oscillation_costs_.reset();
+    reset();
     return planner_util_->setPlan(orig_global_plan);
   }
 
@@ -208,7 +259,7 @@ namespace dwa_local_planner {
       Eigen::Vector3f pos,
       Eigen::Vector3f vel,
       Eigen::Vector3f vel_samples){
-    oscillation_costs_.reset();
+    reset();
     base_local_planner::Trajectory traj;
     geometry_msgs::PoseStamped goal_pose = global_plan_.back();
     Eigen::Vector3f goal(goal_pose.pose.position.x, goal_pose.pose.position.y, tf::getYaw(goal_pose.pose.orientation));
@@ -242,10 +293,10 @@ namespace dwa_local_planner {
 
     double gx = goal_pose.pose.position.x, gy = goal_pose.pose.position.y;
 
-    path_costs_.setGlobalPlan(global_plan_, gx, gy);
-    goal_costs_.setGlobalPlan(global_plan_, gx, gy);
-    alignment_costs_.setGlobalPlan(global_plan_, gx, gy);
-    goal_front_costs_.setGlobalPlan(global_plan_, gx, gy);
+
+    COST_ITERATOR(critic, critics_){
+        (*critic)->setGlobalPlan(global_plan_, gx, gy);
+    }
   }
 
 
@@ -278,9 +329,8 @@ namespace dwa_local_planner {
     // find best trajectory by sampling and scoring the samples
     std::vector<base_local_planner::Trajectory> all_explored;
 
-    for (std::vector<TrajectoryCostFunction*>::iterator loop_critic = critics_.begin(); loop_critic != critics_.end(); ++loop_critic) {
-      TrajectoryCostFunction* loop_critic_p = *loop_critic;
-      if (loop_critic_p->prepare(global_pose, global_vel, footprint_spec) == false) {
+    COST_ITERATOR(critic, critics_){
+      if ((*critic)->prepare(global_pose, global_vel, footprint_spec) == false) {
         ROS_WARN("A scoring function failed to prepare");
       }
     }
@@ -319,7 +369,9 @@ namespace dwa_local_planner {
     }
 
     // debrief stateful scoring functions
-    oscillation_costs_.debrief(&result_traj_);
+    COST_ITERATOR(critic, critics_){
+        (*critic)->debrief(result_traj_);
+    }
 
     //if we don't have a legal trajectory, we'll just command zero
     if (result_traj_.cost_ < 0) {

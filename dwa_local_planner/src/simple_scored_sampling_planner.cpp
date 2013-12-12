@@ -44,7 +44,7 @@ using base_local_planner::TrajectorySampleGenerator;
 
 namespace dwa_local_planner {
   
-  SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples) {
+  SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<CostFunctionPointer >& critics, int max_samples) {
     max_samples_ = max_samples;
     gen_list_ = gen_list;
     critics_ = critics;
@@ -53,19 +53,18 @@ namespace dwa_local_planner {
   double SimpleScoredSamplingPlanner::scoreTrajectory(Trajectory& traj, double best_traj_cost) {
     double traj_cost = 0;
     int gen_id = 0;
-    for(std::vector<TrajectoryCostFunction*>::iterator score_function = critics_.begin(); score_function != critics_.end(); ++score_function) {
-      TrajectoryCostFunction* score_function_p = *score_function;
-      if (score_function_p->getScale() == 0) {
+    COST_ITERATOR(score_function, critics_) { 
+      if ((*score_function)->getScale() == 0) {
         continue;
       }
-      double cost = score_function_p->scoreTrajectory(traj);
+      double cost = (*score_function)->scoreTrajectory(traj);
       if (cost < 0) {
         ROS_DEBUG("Velocity %.3lf, %.3lf, %.3lf discarded by cost function  %d with cost: %f", traj.xv_, traj.yv_, traj.thetav_, gen_id, cost);
         traj_cost = cost;
         break;
       }
       if (cost != 0) {
-        cost *= score_function_p->getScale();
+        cost *= (*score_function)->getScale();
       }
       traj_cost += cost;
       if (best_traj_cost > 0) {

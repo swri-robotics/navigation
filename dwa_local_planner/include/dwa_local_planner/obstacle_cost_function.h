@@ -55,15 +55,11 @@ class ObstacleCostFunction : public TrajectoryCostFunction {
 public:
   ~ObstacleCostFunction();
 
-  virtual void initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale);
+  virtual void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
   bool prepare(tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,
       std::vector<geometry_msgs::Point> footprint_spec);
   double scoreTrajectory(base_local_planner::Trajectory &traj);
-
-  void setSumScores(bool score_sums){ sum_scores_=score_sums; }
-
-  void setParams(double max_trans_vel, double max_scaling_factor, double scaling_speed);
 
   // helper functions, made static for easy unit testing
   static double getScalingFactor(base_local_planner::Trajectory &traj, double scaling_speed, double max_trans_vel, double max_scaling_factor);

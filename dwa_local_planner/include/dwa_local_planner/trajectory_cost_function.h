@@ -1,10 +1,13 @@
 #ifndef DWA_TRAJECTORYCOSTFUNCTION_H_
 #define DWA_TRAJECTORYCOSTFUNCTION_H_
 
+#define COST_ITERATOR(X, Y)  for(std::vector<CostFunctionPointer >::iterator X = Y.begin(); X != Y.end(); ++X)
+
 #include <base_local_planner/trajectory.h>
 #include <base_local_planner/local_planner_util.h>
 #include <costmap_2d/costmap_2d.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <pluginlib/class_list_macros.h>
 
 namespace dwa_local_planner {
 
@@ -18,10 +21,11 @@ namespace dwa_local_planner {
 class TrajectoryCostFunction {
 public:
 
-  void initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale) {
+  void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util) {
+    name_ = name;
     planner_util_ = planner_util;
-    costmap_ = costmap;
-    scale_ = scale;
+    costmap_ = planner_util->getCostmap();
+    scale_ = 1.0; // TODO: Dynamically load scale
   }
 
   /**
@@ -57,11 +61,15 @@ public:
   virtual ~TrajectoryCostFunction() {}
 
 protected:
+  std::string name_;
   base_local_planner::LocalPlannerUtil *planner_util_;
-  costmap_2d::Costmap2D* costmap_;
+  costmap_2d::Costmap2D* costmap_; 
   double scale_;
 };
 
 }
+
+
+typedef boost::shared_ptr<dwa_local_planner::TrajectoryCostFunction> CostFunctionPointer;
 
 #endif /* TRAJECTORYCOSTFUNCTION_H_ */

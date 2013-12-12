@@ -40,13 +40,19 @@
 #include <Eigen/Core>
 #include <ros/console.h>
 
+PLUGINLIB_EXPORT_CLASS(dwa_local_planner::ObstacleCostFunction, dwa_local_planner::TrajectoryCostFunction)
+
 using base_local_planner::Trajectory;
 
 namespace dwa_local_planner {
 
-void ObstacleCostFunction::initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale) {
-    TrajectoryCostFunction::initialize(costmap, planner_util, scale);
+void ObstacleCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util) {
+    TrajectoryCostFunction::initialize(name, planner_util);
     world_model_ = new base_local_planner::CostmapModel(*costmap_);
+    // SCALE
+    //double max_trans_vel_;
+    //bool sum_scores_;
+    //double max_scaling_factor_, scaling_speed_;
 }
 
 ObstacleCostFunction::~ObstacleCostFunction() {
@@ -55,13 +61,6 @@ ObstacleCostFunction::~ObstacleCostFunction() {
   }
 }
 
-
-void ObstacleCostFunction::setParams(double max_trans_vel, double max_scaling_factor, double scaling_speed) {
-  // TODO: move this to prepare if possible
-  max_trans_vel_ = max_trans_vel;
-  max_scaling_factor_ = max_scaling_factor;
-  scaling_speed_ = scaling_speed;
-}
 
 bool ObstacleCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,

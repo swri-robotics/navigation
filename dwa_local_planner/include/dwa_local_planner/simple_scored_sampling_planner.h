@@ -71,7 +71,8 @@ public:
    * passing max_samples = -1 (default): Each Sampling planner will continue to call
    * generator until generator runs out of samples (or forever if that never happens)
    */
-  SimpleScoredSamplingPlanner(std::vector<base_local_planner::TrajectorySampleGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples = -1);
+  SimpleScoredSamplingPlanner(std::vector<base_local_planner::TrajectorySampleGenerator*> gen_list, 
+                              std::vector<CostFunctionPointer >& critics, int max_samples = -1);
 
   /**
    * runs all scoring functions over the trajectory creating a weigthed sum
@@ -96,7 +97,7 @@ public:
 
 private:
   std::vector<base_local_planner::TrajectorySampleGenerator*> gen_list_;
-  std::vector<TrajectoryCostFunction*> critics_;
+  std::vector<CostFunctionPointer > critics_;
 
   int max_samples_;
 };

@@ -45,6 +45,7 @@ namespace dwa_local_planner {
 
 class OscillationCostFunction: public dwa_local_planner::TrajectoryCostFunction {
 public:
+  void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
   virtual ~OscillationCostFunction();
 
   double scoreTrajectory(base_local_planner::Trajectory &traj);
@@ -60,8 +61,6 @@ public:
 
 
   void debrief(base_local_planner::Trajectory* traj);
-
-  void setOscillationResetDist(double dist, double angle);
 
 private:
 

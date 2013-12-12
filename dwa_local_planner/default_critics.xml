@@ -1,0 +1,24 @@
+<class_libraries>
+  <library path="libcost_functions">
+    <class type="dwa_local_planner::OscillationCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
+      <description></description>
+    </class>
+    <class type="dwa_local_planner::ObstacleCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
+      <description></description>
+    </class>
+    <class type="dwa_local_planner::PathDistCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
+      <description></description>
+    </class>
+    <class type="dwa_local_planner::PathAlignCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
+      <description></description>
+    </class>
+    <class type="dwa_local_planner::GoalDistCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
+      <description></description>
+    </class>
+    <class type="dwa_local_planner::GoalCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
+      <description></description>
+    </class>
+
+  </library>
+</class_libraries>
+

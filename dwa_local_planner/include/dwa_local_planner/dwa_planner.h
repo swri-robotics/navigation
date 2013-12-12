@@ -68,6 +68,7 @@
 #include <dwa_local_planner/path_align_cost_function.h>
 
 #include <nav_msgs/Path.h>
+#include <pluginlib/class_loader.h>
 
 namespace dwa_local_planner {
   /**
@@ -150,6 +151,11 @@ namespace dwa_local_planner {
       bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
 
     private:
+      void reset() { 
+        COST_ITERATOR(critic, critics_){ (*critic)->reset(); }
+      }
+
+      void resetOldParameters(ros::NodeHandle& nh);
 
       base_local_planner::LocalPlannerUtil *planner_util_;
 
@@ -177,14 +183,8 @@ namespace dwa_local_planner {
       // see constructor body for explanations
       base_local_planner::SimpleTrajectoryGenerator generator_;
 
-      std::vector<TrajectoryCostFunction*> critics_;
-
-      OscillationCostFunction oscillation_costs_;
-      ObstacleCostFunction obstacle_costs_;
-      PathDistCostFunction path_costs_;
-      GoalDistCostFunction goal_costs_;
-      GoalAlignCostFunction goal_front_costs_;
-      PathAlignCostFunction alignment_costs_;
+      pluginlib::ClassLoader<TrajectoryCostFunction> plugin_loader_;
+      std::vector<CostFunctionPointer > critics_;
 
       dwa_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
   };

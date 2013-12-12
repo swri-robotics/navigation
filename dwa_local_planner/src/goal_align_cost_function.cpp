@@ -2,7 +2,17 @@
 
 using base_local_planner::Trajectory;
 
+PLUGINLIB_EXPORT_CLASS(dwa_local_planner::GoalAlignCostFunction, dwa_local_planner::TrajectoryCostFunction)
+
 namespace dwa_local_planner {
+
+void GoalAlignCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util)
+{
+    MapGridCostFunction::initialize(name, planner_util);
+    stop_on_failure_ = false;
+    // TODO: Load xshift
+    scale_offset_ = 0.75; // TODO: Load this dynamically
+}
 
 bool GoalAlignCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,

@@ -4,11 +4,8 @@ using base_local_planner::Trajectory;
 
 namespace dwa_local_planner {
 
-
 double OffsetGridCostFunction::scoreCell(double px, double py, double pth)
 {
-  xshift_ = 0.325;
-  yshift_ = 0.0;
     double xshift=xshift_, yshift=yshift_;
 
     if(scale_offset_>=0.0)

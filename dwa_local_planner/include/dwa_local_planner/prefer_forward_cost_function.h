@@ -45,8 +45,9 @@ namespace dwa_local_planner {
 class PreferForwardCostFunction: public dwa_local_planner::TrajectoryCostFunction {
 public:
 
-  PreferForwardCostFunction(double penalty) : penalty_(penalty) {}
   ~PreferForwardCostFunction() {}
+
+  void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
 
   double scoreTrajectory(base_local_planner::Trajectory &traj);
 

@@ -9,9 +9,18 @@
 
 #include <math.h>
 
+PLUGINLIB_EXPORT_CLASS(dwa_local_planner::PreferForwardCostFunction, dwa_local_planner::TrajectoryCostFunction)
+
+
 using base_local_planner::Trajectory;
 
 namespace dwa_local_planner {
+
+void PreferForwardCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util)
+{
+    TrajectoryCostFunction::initialize(name, planner_util);
+    penalty_ = 1.0;
+}
 
 
 double PreferForwardCostFunction::scoreTrajectory(Trajectory &traj) {

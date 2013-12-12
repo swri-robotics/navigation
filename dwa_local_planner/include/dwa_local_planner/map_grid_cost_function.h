@@ -72,7 +72,10 @@ enum CostAggregationType { Last, Sum, Product};
  */
 class MapGridCostFunction: public dwa_local_planner::TrajectoryCostFunction {
 public:
-  void initialize(costmap_2d::Costmap2D* costmap, base_local_planner::LocalPlannerUtil *planner_util, double scale);
+
+  MapGridCostFunction() : stop_on_failure_(true), aggregationType_(Last) {}
+
+  void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
   virtual bool prepare(tf::Stamped<tf::Pose> global_pose,
 		       tf::Stamped<tf::Pose> global_vel,
 		       std::vector<geometry_msgs::Point> footprint_spec) = 0;
@@ -93,7 +96,6 @@ public:
 protected:
   std::vector<geometry_msgs::PoseStamped> target_poses_;
   double goal_x_, goal_y_;
-  costmap_2d::Costmap2D* costmap_;
   bool stop_on_failure_;
 
   base_local_planner::MapGrid map_;
