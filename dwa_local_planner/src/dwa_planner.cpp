@@ -117,12 +117,13 @@ namespace dwa_local_planner {
   {
     ros::NodeHandle private_nh("~/" + name);
     costmap_2d::Costmap2D* costmap = planner_util->getCostmap();
+
     oscillation_costs_.initialize(costmap, planner_util, 1.0);
-    obstacle_costs_.initialize(costmap, planner_util, 1.0);
-    path_costs_.initialize(costmap, planner_util, 1.0);
-    goal_costs_.initialize(costmap, planner_util, 1.0);
-    goal_front_costs_.initialize(costmap, planner_util, 1.0);
-    alignment_costs_.initialize(costmap, planner_util, 1.0);
+    obstacle_costs_.initialize(costmap, planner_util, .01);
+    path_costs_.initialize(costmap, planner_util, 20.0);
+    goal_costs_.initialize(costmap, planner_util, 40.0);
+    goal_front_costs_.initialize(costmap, planner_util, 40.0);
+    alignment_costs_.initialize(costmap, planner_util, 20.0);
 
     //Assuming this planner is being run within the navigation stack, we can
     //just do an upward search for the frequency at which its being run. This
@@ -177,7 +178,10 @@ namespace dwa_local_planner {
 
   // used for visualization only, total_costs are not really total costs
   bool DWAPlanner::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost) {
-
+    total_cost = cx;
+    if(total_cost>=-1e30)
+      return true;
+    ROS_INFO("DEATH!");
     path_cost = path_costs_.getCellCosts(cx, cy);
     goal_cost = goal_costs_.getCellCosts(cx, cy);
     occ_cost = planner_util_->getCostmap()->getCost(cx, cy);
