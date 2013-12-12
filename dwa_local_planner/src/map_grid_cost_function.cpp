@@ -44,8 +44,16 @@ namespace dwa_local_planner {
 void MapGridCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util) {
     TrajectoryCostFunction::initialize(name, planner_util);
     stop_on_failure_ = true;
-    aggregationType_ = Last;
-    //TODO: aggregationType_(aggregationType),
+
+    ros::NodeHandle nh("~/" + name_);
+    std::string aggro_str;
+    nh.param("aggregation_type", aggro_str, std::string("last"));
+    if(aggro_str=="last") 
+        aggregationType_ = Last;
+    else if(aggro_str=="sum")
+        aggregationType_ = Sum;
+    else if(aggro_str=="product")
+        aggregationType_ = Product;
 }
 
 double MapGridCostFunction::getCellCosts(unsigned int px, unsigned int py) {

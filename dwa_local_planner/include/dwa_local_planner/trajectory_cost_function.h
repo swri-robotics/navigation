@@ -25,7 +25,10 @@ public:
     name_ = name;
     planner_util_ = planner_util;
     costmap_ = planner_util->getCostmap();
-    scale_ = 1.0; // TODO: Dynamically load scale
+
+    ros::NodeHandle nh("~/" + name_);
+    nh.param("scale", scale_, 1.0);
+
   }
 
   /**

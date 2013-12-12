@@ -49,10 +49,11 @@ namespace dwa_local_planner {
 void ObstacleCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util) {
     TrajectoryCostFunction::initialize(name, planner_util);
     world_model_ = new base_local_planner::CostmapModel(*costmap_);
-    // SCALE
-    //double max_trans_vel_;
-    //bool sum_scores_;
-    //double max_scaling_factor_, scaling_speed_;
+
+    ros::NodeHandle nh("~/" + name_);
+    nh.param("sum_scores", sum_scores_, false);
+    nh.param("max_scaling_factor", max_scaling_factor_, 0.2);
+    nh.param("scaling_speed", scaling_speed_, 0.25);
 }
 
 ObstacleCostFunction::~ObstacleCostFunction() {
@@ -71,7 +72,8 @@ bool ObstacleCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
 
 double ObstacleCostFunction::scoreTrajectory(Trajectory &traj) {
   double cost = 0;
-  double scale = getScalingFactor(traj, scaling_speed_, max_trans_vel_, max_scaling_factor_);
+  double max_trans_vel = planner_util_->getCurrentLimits().max_trans_vel;
+  double scale = getScalingFactor(traj, scaling_speed_, max_trans_vel, max_scaling_factor_);
   double px, py, pth;
   if (footprint_spec_.size() == 0) {
     // Bug, should never happen

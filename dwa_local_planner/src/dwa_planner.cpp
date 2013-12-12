@@ -182,7 +182,7 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name, std::string name,
 
           CostFunctionPointer plugin = plugin_loader_.createInstance(type);
           critics_.push_back(plugin);
-          plugin->initialize(pname, planner_util); 
+          plugin->initialize(name + "/" + pname, planner_util); 
         }
     }
 
@@ -214,6 +214,9 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name, std::string name,
     move_parameter(nh, "path_distance_bias", "PathDist/scale", 32.0);
     move_parameter(nh, "goal_distance_bias", "GoalDist/scale", 24.0);
     move_parameter(nh, "occdist_scale",      "Obstacle/scale", 0.01);
+
+    move_parameter(nh, "max_scaling_factor", "Obstacle/max_scaling_factor", 0.2);
+    move_parameter(nh, "scaling_speed",      "Obstacle/scaling_speed", 0.25);
 
 }
 
