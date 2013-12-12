@@ -85,6 +85,11 @@ public:
 
   virtual void setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y);
 
+  inline bool isValidCost(double cost)
+  {
+    return cost!=map_.obstacleCosts() && cost!=map_.unreachableCellCosts();
+  }
+
 protected:
   std::vector<geometry_msgs::PoseStamped> target_poses_;
   double goal_x_, goal_y_;

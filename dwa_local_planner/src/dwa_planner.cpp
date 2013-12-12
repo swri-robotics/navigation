@@ -61,14 +61,14 @@ namespace dwa_local_planner {
 
     pdist_scale_ = config.path_distance_bias;
     // pdistscale used for both path and alignment, set  forward_point_distance to zero to discard alignment
-    path_costs_.setScale(pdist_scale_ * 0.5);
+    path_costs_.setScale(pdist_scale_);
     porient_scale_ = config.path_orientation_bias;
-    alignment_costs_.setScale(pdist_scale_ * 0.5 * porient_scale_);
+    alignment_costs_.setScale(pdist_scale_ * porient_scale_);
 
     gdist_scale_ = config.goal_distance_bias;
-    goal_costs_.setScale(gdist_scale_ * 0.5);
+    goal_costs_.setScale(gdist_scale_);
     gorient_scale_ = config.goal_orientation_bias;
-    goal_front_costs_.setScale(gdist_scale_ * 0.5 * gorient_scale_);
+    goal_front_costs_.setScale(gdist_scale_ * gorient_scale_);
 
     occdist_scale_ = config.occdist_scale;
     obstacle_costs_.setScale(occdist_scale_);
@@ -178,18 +178,14 @@ namespace dwa_local_planner {
 
   // used for visualization only, total_costs are not really total costs
   bool DWAPlanner::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost) {
-    total_cost = cx;
-    if(total_cost>=-1e30)
-      return true;
-    ROS_INFO("DEATH!");
+
     path_cost = path_costs_.getCellCosts(cx, cy);
     goal_cost = goal_costs_.getCellCosts(cx, cy);
     occ_cost = planner_util_->getCostmap()->getCost(cx, cy);
-    /* TODO: if (path_cost == path_costs_.obstacleCosts() ||
-        path_cost == path_costs_.unreachableCellCosts() ||
+    if (!path_costs_.isValidCost(path_cost) || 
         occ_cost >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE) {
       return false;
-    }*/
+    }
 
     double resolution = planner_util_->getCostmap()->getResolution();
     total_cost =

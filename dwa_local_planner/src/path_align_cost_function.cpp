@@ -9,6 +9,7 @@ bool PathAlignCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
       std::vector<geometry_msgs::Point> footprint_spec) {
   map_.resetPathDist();
   map_.setTargetCells(*costmap_, target_poses_);
+  scale_offset_ = 0.75;
   return true;
 }
 

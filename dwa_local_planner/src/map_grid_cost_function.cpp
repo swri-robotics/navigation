@@ -46,7 +46,7 @@ void MapGridCostFunction::initialize(costmap_2d::Costmap2D* costmap, base_local_
     costmap_=costmap;
     planner_util_=planner_util;
     scale_=scale;
-
+    aggregationType_ = Last;
     //TODO: aggregationType_(aggregationType),
 }
 
@@ -66,8 +66,12 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
   for (unsigned int i = 0; i < traj.getPointsSize(); ++i) {
     traj.getPoint(i, px, py, pth);
     grid_dist = scoreCell(px, py, pth);
-    if(stop_on_failure_ && grid_dist<0){
-        return grid_dist;
+    if(stop_on_failure_){
+      if (grid_dist == map_.obstacleCosts()) {
+        return -3.0;
+      } else if (grid_dist == map_.unreachableCellCosts()) {
+        return -2.0;
+      }
     }
 
     switch( aggregationType_ ) {

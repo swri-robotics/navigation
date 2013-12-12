@@ -10,6 +10,7 @@ bool GoalAlignCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
   map_.resetPathDist();
   map_.setLocalGoal(*costmap_, target_poses_);
   global_pose_ = global_pose;
+  scale_offset_ = -1.0;
   return true;
 }
 
