@@ -176,6 +176,12 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name, std::string name,
           {
               type = type + "CostFunction";
           }
+	  
+	  if(type.find("::") == std::string::npos)
+	  {
+     	      type = "dwa_local_planner::" + type;
+	  }
+
 
 
           ROS_INFO("Using critic \"%s\"", pname.c_str());

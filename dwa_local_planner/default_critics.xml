@@ -15,10 +15,9 @@
     <class type="dwa_local_planner::GoalDistCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
       <description></description>
     </class>
-    <class type="dwa_local_planner::GoalCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
+    <class type="dwa_local_planner::GoalAlignCostFunction"  base_class_type="dwa_local_planner::TrajectoryCostFunction">
       <description></description>
     </class>
-
   </library>
 </class_libraries>
 
