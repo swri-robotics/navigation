@@ -70,7 +70,7 @@ public:
    * This unsubscribes from the old topic (if any) and subscribes to the new one (if any).
    *
    * If odom_topic is the empty string, this just unsubscribes from the previous topic. */
-  void setOdomTopic(std::string odom_topic);
+  void setOdomTopic(std::string odom_topic) { odom_topic_ = odom_topic; }
 
   /** @brief Return the current odometry topic. */
   std::string getOdomTopic() const { return odom_topic_; }
