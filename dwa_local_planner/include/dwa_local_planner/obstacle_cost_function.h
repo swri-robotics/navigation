@@ -71,6 +71,7 @@ public:
       std::vector<geometry_msgs::Point> footprint_spec,
       costmap_2d::Costmap2D* costmap,
       base_local_planner::WorldModel* world_model);
+  virtual float getCost(unsigned int cx, unsigned int cy){ return costmap_->getCost(cx, cy); }
 
 private:
   std::vector<geometry_msgs::Point> footprint_spec_;

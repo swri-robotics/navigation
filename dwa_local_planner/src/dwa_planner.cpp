@@ -229,30 +229,23 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name, std::string name,
 
   // used for visualization only, total_costs are not really total costs
   bool DWAPlanner::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost) {
-    /*
-  for (std::vector<boost::shared_ptr<costmap_2d::Layer> >::iterator pluginp = plugins->begin(); pluginp != plugins->end(); ++pluginp) {
-    boost::shared_ptr<costmap_2d::Layer> plugin = *pluginp;
-    if(plugin->getName().find(layer_search_string_)!=std::string::npos){
-      boost::shared_ptr<costmap_2d::ObstacleLayer> costmap;
-      costmap = boost::static_pointer_cast<costmap_2d::ObstacleLayer>(plugin);
-      clearMap(costmap, x, y);
-    }
-  }
-
-    path_cost = path_costs_.getCellCosts(cx, cy);
-    goal_cost = goal_costs_.getCellCosts(cx, cy);
-    occ_cost = planner_util_->getCostmap()->getCost(cx, cy);
-    if (!path_costs_.isValidCost(path_cost) || 
-        occ_cost >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE) {
-      return false;
+    total_cost = 0.0;
+    COST_ITERATOR(critic, critics_){
+        CostFunctionPointer cp = *critic;
+        std::string name = cp->getName();
+        if(name=="Obstacle"){
+            occ_cost = cp->getCost(cx, cy);
+            total_cost += occ_cost * cp->getScale();
+        }else if(name=="PathDist"){
+            path_cost = cp->getCost(cx, cy);
+            total_cost += path_cost * cp->getScale();
+        }else if(name=="GoalDist"){
+            goal_cost = cp->getCost(cx, cy);
+            total_cost += goal_cost * cp->getScale();
+        }
     }
 
-    double resolution = planner_util_->getCostmap()->getResolution();
-    total_cost =
-        pdist_scale_ * path_cost +
-        gdist_scale_ * goal_cost +
-        occdist_scale_ * occ_cost;*/
-    return true;
+    return occ_cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE;
   }
 
   bool DWAPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan) {

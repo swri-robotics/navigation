@@ -61,6 +61,13 @@ public:
     scale_ = scale;
   }
 
+  std::string getName() {
+    return name_;
+  }
+
+  /* Only returns a value for grid based functions */
+  virtual float getCost(unsigned int cx, unsigned int cy){ return 0.0; }
+
   virtual ~TrajectoryCostFunction() {}
 
 protected:

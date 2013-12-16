@@ -56,7 +56,7 @@ void MapGridCostFunction::initialize(std::string name, base_local_planner::Local
         aggregationType_ = Product;
 }
 
-double MapGridCostFunction::getCellCosts(unsigned int px, unsigned int py) {
+double MapGridCostFunction::getCosts(unsigned int px, unsigned int py) {
   double grid_dist = map_(px, py).target_dist;
   return grid_dist;
 }
@@ -107,7 +107,7 @@ double MapGridCostFunction::scoreCell(double px, double py, double pth) {
       ROS_WARN("Off Map %f, %f", px, py);
       return -4.0;
     }
-    return getCellCosts(cell_x, cell_y);
+    return getCosts(cell_x, cell_y);
 }
 
 void MapGridCostFunction::setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y)
