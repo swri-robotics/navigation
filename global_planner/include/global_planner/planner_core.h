@@ -63,12 +63,12 @@ class GridPath;
  * @brief Provides a ROS wrapper for the global_planner planner which runs a fast, interpolated navigation function on a costmap.
  */
 
-class PlannerCore : public nav_core::BaseGlobalPlanner {
+class GlobalPlanner : public nav_core::BaseGlobalPlanner {
     public:
         /**
          * @brief  Default constructor for the PlannerCore object
          */
-        PlannerCore();
+        GlobalPlanner();
 
         /**
          * @brief  Constructor for the PlannerCore object
@@ -76,7 +76,7 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
          * @param  costmap A pointer to the costmap to use
          * @param  frame_id Frame of the costmap
          */
-        PlannerCore(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
+        GlobalPlanner(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
 
         /**
          * @brief  Initialization function for the PlannerCore object
@@ -152,7 +152,7 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
          */
         void publishPlan(const std::vector<geometry_msgs::PoseStamped>& path);
 
-        ~PlannerCore() {
+        ~GlobalPlanner() {
         }
 
         bool makePlanService(nav_msgs::GetPlan::Request& req, nav_msgs::GetPlan::Response& resp);
