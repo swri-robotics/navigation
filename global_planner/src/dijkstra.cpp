@@ -113,9 +113,9 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
         push_cur(k+nx_);
     }
 
-    int nwv = 0;			// max priority block size
-    int nc = 0;			// number of cells put into priority blocks
-    int cycle = 0;		// which cycle we're on
+    int nwv = 0;            // max priority block size
+    int nc = 0;            // number of cells put into priority blocks
+    int cycle = 0;        // which cycle we're on
 
     // set up start cell
     int startCell = toIndex(end_x, end_y);
@@ -146,16 +146,16 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
         // swap priority blocks currentBuffer_ <=> nextBuffer_
         currentEnd_ = nextEnd_;
         nextEnd_ = 0;
-        pb = currentBuffer_;		// swap buffers
+        pb = currentBuffer_;        // swap buffers
         currentBuffer_ = nextBuffer_;
         nextBuffer_ = pb;
 
         // see if we're done with this priority level
         if (currentEnd_ == 0) {
-            threshold_ += priorityIncrement_;	// increment priority threshold
-            currentEnd_ = overEnd_;	// set current to overflow block
+            threshold_ += priorityIncrement_;    // increment priority threshold
+            currentEnd_ = overEnd_;    // set current to overflow block
             overEnd_ = 0;
-            pb = currentBuffer_;		// swap buffers
+            pb = currentBuffer_;        // swap buffers
             currentBuffer_ = overBuffer_;
             overBuffer_ = pb;
         }
@@ -186,7 +186,7 @@ inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential
 
     // do planar wave update
     float c = getCost(costs, n);
-    if (c >= lethal_cost_)	// don't propagate into obstacles
+    if (c >= lethal_cost_)    // don't propagate into obstacles
         return;
 
     float pot = p_calc_->calculatePotential(potential, c, n);
@@ -199,7 +199,7 @@ inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential
         float de = INVSQRT2 * (float)getCost(costs, n + nx_);
         potential[n] = pot;
         //ROS_INFO("UPDATE %d %d %d %f", n, n%nx, n/nx, potential[n]);
-        if (pot < threshold_)	// low-cost buffer block
+        if (pot < threshold_)    // low-cost buffer block
                 {
             if (potential[n - 1] > pot + le)
                 push_next(n-1);
@@ -209,7 +209,7 @@ inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential
                 push_next(n-nx_);
             if (potential[n + nx_] > pot + de)
                 push_next(n+nx_);
-        } else			// overflow block
+        } else            // overflow block
         {
             if (potential[n - 1] > pot + le)
                 push_over(n-1);

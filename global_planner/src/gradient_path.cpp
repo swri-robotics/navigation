@@ -228,7 +228,7 @@ bool GradientPath::getPath(float* potential, double start_x, double start_y, dou
         }
 
         //printf("[Path] Pot: %0.1f  grad: %0.1f,%0.1f  pos: %0.1f,%0.1f\n",
-        //	     potential[stc], dx, dy, path[npath-1].first, path[npath-1].second);
+        //         potential[stc], dx, dy, path[npath-1].first, path[npath-1].second);
     }
 
     return false;
@@ -251,10 +251,10 @@ bool GradientPath::getPath(float* potential, double start_x, double start_y, dou
 
  }
 
- //  return npath;			// out of cycles, return failure
+ //  return npath;            // out of cycles, return failure
  ROS_DEBUG("[PathCalc] No path found, path too long");
  //savemap("navfn_pathlong");
- return 0;			// out of cycles, return failure
+ return 0;            // out of cycles, return failure
  }
  */
 
@@ -264,10 +264,10 @@ bool GradientPath::getPath(float* potential, double start_x, double start_y, dou
 // calculate gradient at a cell
 // positive value are to the right and down
 float GradientPath::gradCell(float* potential, int n) {
-    if (gradx_[n] + grady_[n] > 0.0)	// check this cell
+    if (gradx_[n] + grady_[n] > 0.0)    // check this cell
         return 1.0;
 
-    if (n < xs_ || n > xs_ * ys_ - xs_)	// would be out of bounds
+    if (n < xs_ || n > xs_ * ys_ - xs_)    // would be out of bounds
         return 0.0;
     float cv = potential[n];
     float dx = 0.0;
@@ -286,7 +286,7 @@ float GradientPath::gradCell(float* potential, int n) {
             dy = lethal_cost_;
     }
 
-    else				// not in an obstacle
+    else                // not in an obstacle
     {
         // dx calc, average to sides
         if (potential[n - 1] < POT_HIGH)

@@ -52,7 +52,7 @@
 #include <global_planner/traceback.h>
 #include <global_planner/GlobalPlannerConfig.h>
 
-#define POT_HIGH 1.0e10		// unassigned cell potential
+#define POT_HIGH 1.0e10        // unassigned cell potential
 namespace global_planner {
 
 class Expander;
@@ -123,7 +123,7 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
          */
         bool getPlanFromPotential(double start_x, double start_y, double end_x, double end_y,
                                   const geometry_msgs::PoseStamped& goal,
-							      std::vector<geometry_msgs::PoseStamped>& plan);
+                                  std::vector<geometry_msgs::PoseStamped>& plan);
 
         /**
          * @brief Get the potential, or naviagation cost, at a given point in the world (Note: You should call computePotential first)
