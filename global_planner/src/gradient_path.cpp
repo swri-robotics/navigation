@@ -65,15 +65,13 @@ void GradientPath::setSize(int xs, int ys) {
     grady_ = new float[xs * ys];
 }
 
-bool GradientPath::getPath(float* potential, int end_x, int end_y, std::vector<std::pair<float, float> >& path) {
+bool GradientPath::getPath(float* potential, double end_x, double end_y, std::vector<std::pair<float, float> >& path) {
     std::pair<float, float> current;
-    current.first = end_x;
-    current.second = end_y;
     int stc = getIndex(end_x, end_y);
 
     // set up offset
-    float dx = 0;
-    float dy = 0;
+    float dx = end_x - (int)end_x;
+    float dy = end_y - (int)end_y;
     int ns = xs_ * ys_;
     memset(gradx_, 0, ns * sizeof(float));
     memset(grady_, 0, ns * sizeof(float));

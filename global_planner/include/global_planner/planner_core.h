@@ -168,6 +168,7 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
 
     private:
         void mapToWorld(double mx, double my, double& wx, double& wy);
+        bool worldToMap(double wx, double wy, double& mx, double& my);
         void clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my);
         void publishPotential(float* potential);
 
@@ -188,6 +189,9 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
         unsigned char* cost_array_;
         float* potential_array_;
         unsigned int start_x_, start_y_, end_x_, end_y_;
+
+        bool old_navfn_behavior_;
+        float convert_offset_;
 
         dynamic_reconfigure::Server<global_planner::GlobalPlannerConfig> *dsrv_;
         void reconfigureCB(global_planner::GlobalPlannerConfig &config, uint32_t level);

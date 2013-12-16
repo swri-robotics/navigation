@@ -85,6 +85,36 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, int start_x, i
 
     // set goal
     int k = toIndex(start_x, start_y);
+
+    /* TODO:
+    double dx = start_x - (int)start_x, dy = start_y - (int)start_y;
+    dx = floorf(dx * 100 + 0.5) / 100;
+    dy = floorf(dy * 100 + 0.5) / 100;
+    ROS_INFO("%f %f", dx, dy);
+    potential[k] = neutral_cost_ * 2 * dx * dy;
+    potential[k+1] = neutral_cost_ * 2 * (1-dx)*dy;
+    potential[k+nx_] = neutral_cost_*2*dx*(1-dy);
+    potential[k+nx_+1] = neutral_cost_*2*(1-dx)*(1-dy);//*/
+
+    //ROS_INFO("%f %f %f %f", potential[k], potential[k+1], potential[k+nx_], potential[k+nx_+1]);
+
+    /*potential[k] = neutral_cost_ / 2;
+    potential[k+1] = neutral_cost_ / 2;
+    potential[k+nx_] = neutral_cost_ / 2;
+    potential[k+nx_+1] = neutral_cost_ / 2;
+    ROS_INFO("%f %f %f %f", potential[k], potential[k+1], potential[k+nx_], potential[k+nx_+1]);//*/
+
+    /*
+    push_cur(k+2);
+    push_cur(k-1);
+    push_cur(k+nx_-1);
+    push_cur(k+nx_+2);
+
+    push_cur(k-nx_);
+    push_cur(k-nx_+1);
+    push_cur(k+nx_*2);
+    push_cur(k+nx_*2+1);*/
+
     potential[k] = 0;
     push_cur(k+1);
     push_cur(k-1);

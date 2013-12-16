@@ -110,6 +110,12 @@ void PlannerCore::initialize(std::string name, costmap_2d::Costmap2D* costmap, s
         else
             path_maker_ = new GradientPath(p_calc_);
 
+        private_nh.param("old_navfn_behavior", old_navfn_behavior_, false);
+        if(!old_navfn_behavior_)
+            convert_offset_ = 0.5;
+        else
+            convert_offset_ = 0.0;
+
         plan_pub_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
         potential_pub_ = private_nh.advertise<nav_msgs::OccupancyGrid>("potential", 1);
 
@@ -169,8 +175,24 @@ bool PlannerCore::makePlanService(nav_msgs::GetPlan::Request& req, nav_msgs::Get
 }
 
 void PlannerCore::mapToWorld(double mx, double my, double& wx, double& wy) {
-    wx = costmap_->getOriginX() + mx * costmap_->getResolution();
-    wy = costmap_->getOriginY() + my * costmap_->getResolution();
+    wx = costmap_->getOriginX() + (mx+convert_offset_) * costmap_->getResolution();
+    wy = costmap_->getOriginY() + (my+convert_offset_) * costmap_->getResolution();
+}
+
+bool PlannerCore::worldToMap(double wx, double wy, double& mx, double& my) {
+    double origin_x = costmap_->getOriginX(), origin_y = costmap_->getOriginY();
+    double resolution = costmap_->getResolution();
+
+    if (wx < origin_x || wy < origin_y)
+        return false;
+
+    mx = (wx - origin_x) / resolution - convert_offset_;
+    my = (wy - origin_y) / resolution - convert_offset_;
+
+    if (mx < costmap_->getSizeInCellsX() && my < costmap_->getSizeInCellsY())
+        return true;
+
+    return false;
 }
 
 bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
@@ -209,9 +231,9 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
     double wx = start.pose.position.x;
     double wy = start.pose.position.y;
 
-    unsigned int start_x, start_y, goal_x, goal_y;
+    unsigned int start_x_i, start_y_i, goal_x, goal_y;
 
-    if (!costmap_->worldToMap(wx, wy, start_x, start_y)) {
+    if (!costmap_->worldToMap(wx, wy, start_x_i, start_y_i)) {
         ROS_WARN(
                 "The robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?");
         return false;
@@ -229,7 +251,7 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
     //clear the starting cell within the costmap because we know it can't be an obstacle
     tf::Stamped<tf::Pose> start_pose;
     tf::poseStampedMsgToTF(start, start_pose);
-    clearRobotCell(start_pose, start_x, start_y);
+    clearRobotCell(start_pose, start_x_i, start_y_i);
 
     int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
 
@@ -241,9 +263,20 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
 
     outlineMap(costmap_->getCharMap(), nx, ny, 254);
 
+    double start_x, start_y;
+    if(old_navfn_behavior_ || true){
+        start_x = start_x_i;
+        start_y = start_y_i;
+    }else if(!worldToMap(start.pose.position.x, start.pose.position.y, start_x, start_y)) {
+        ROS_INFO("This error will never happen.</hubris>");
+		//TODO: Fix this side
+    }
+
     bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), start_x, start_y, goal_x, goal_y,
                                                     nx * ny * 2, potential_array_);
 
+	if(!old_navfn_behavior_)
+        planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x, goal_y, 2);
     if(publish_potential_)
         publishPotential(potential_array_);
 
@@ -312,8 +345,18 @@ bool PlannerCore::getPlanFromPotential(const geometry_msgs::PoseStamped& goal,
         return false;
     }
 
-    unsigned int goal_x, goal_y;
-    if (!costmap_->worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x, goal_y)) {
+    double goal_x, goal_y;
+
+    if(old_navfn_behavior_){
+        unsigned int goal_x_i, goal_y_i;
+        if (!costmap_->worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x_i, goal_y_i)) {
+            ROS_WARN(
+                    "The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal.");
+            return false;
+        }
+        goal_x = goal_x_i;
+        goal_y = goal_y_i;
+    }else if (!worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x, goal_y)) {
         ROS_WARN(
                 "The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal.");
         return false;
@@ -326,7 +369,7 @@ bool PlannerCore::getPlanFromPotential(const geometry_msgs::PoseStamped& goal,
     }
 
     ros::Time plan_time = ros::Time::now();
-    for (unsigned int i = 0; i < path.size(); i++) {
+    for (int i = path.size() -1; i>=0; i--) {
         std::pair<float, float> point = path[i];
         //convert the plan to world coordinates
         double world_x, world_y;
@@ -344,6 +387,7 @@ bool PlannerCore::getPlanFromPotential(const geometry_msgs::PoseStamped& goal,
         pose.pose.orientation.w = 1.0;
         plan.push_back(pose);
     }
+        plan.push_back(goal);
 
     //publish the plan for visualization purposes
     publishPlan(plan, 0.0, 1.0, 0.0, 0.0);

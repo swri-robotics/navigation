@@ -40,7 +40,7 @@
 #include <stdio.h>
 namespace global_planner {
 
-bool GridPath::getPath(float* potential, int end_x, int end_y, std::vector<std::pair<float, float> >& path) {
+bool GridPath::getPath(float* potential, double end_x, double end_y, std::vector<std::pair<float, float> >& path) {
     std::pair<float, float> current;
     current.first = end_x;
     current.second = end_y;

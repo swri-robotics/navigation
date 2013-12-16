@@ -73,6 +73,18 @@ class Expander {
             unknown_ = unknown;
         }
 
+        void clearEndpoint(unsigned char* costs, float* potential, int gx, int gy, int s){
+            int startCell = toIndex(gx, gy);
+            for(int i=-s;i<=s;i++){
+            for(int j=-s;j<=s;j++){
+                int n = startCell+i+nx_*j;
+                float c = costs[n]+neutral_cost_;
+                float pot = p_calc_->calculatePotential(potential, c, n);
+                potential[n] = pot;
+            }
+            }
+        }
+
     protected:
         inline int toIndex(int x, int y) {
             return x + nx_ * y;
