@@ -280,7 +280,7 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
     path_maker_->setSize(nx, ny);
     potential_array_ = new float[nx * ny];
 
-    outlineMap(costmap_->getCharMap(), nx, ny, 254);
+    outlineMap(costmap_->getCharMap(), nx, ny, costmap_2d::LETHAL_OBSTACLE);
 
     bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), start_x, start_y, goal_x, goal_y,
                                                     nx * ny * 2, potential_array_);
