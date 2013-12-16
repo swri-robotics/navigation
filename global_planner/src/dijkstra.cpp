@@ -40,7 +40,7 @@
 namespace global_planner {
 
 DijkstraExpansion::DijkstraExpansion(PotentialCalculator* p_calc, int nx, int ny) :
-        Expander(p_calc, nx, ny), pending_(NULL) {
+        Expander(p_calc, nx, ny), pending_(NULL), precise_(false) {
     // priority buffers
     buffer1_ = new int[PRIORITYBUFSIZE];
     buffer2_ = new int[PRIORITYBUFSIZE];
@@ -69,7 +69,7 @@ void DijkstraExpansion::setSize(int xs, int ys) {
 //   or until the Start cell is found (atStart = true)
 //
 
-bool DijkstraExpansion::calculatePotentials(unsigned char* costs, int start_x, int start_y, int end_x, int end_y,
+bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y,
                                            int cycles, float* potential) {
     cells_visited_ = 0;
     // priority buffers
@@ -86,40 +86,32 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, int start_x, i
     // set goal
     int k = toIndex(start_x, start_y);
 
-    /* TODO:
-    double dx = start_x - (int)start_x, dy = start_y - (int)start_y;
-    dx = floorf(dx * 100 + 0.5) / 100;
-    dy = floorf(dy * 100 + 0.5) / 100;
-    ROS_INFO("%f %f", dx, dy);
-    potential[k] = neutral_cost_ * 2 * dx * dy;
-    potential[k+1] = neutral_cost_ * 2 * (1-dx)*dy;
-    potential[k+nx_] = neutral_cost_*2*dx*(1-dy);
-    potential[k+nx_+1] = neutral_cost_*2*(1-dx)*(1-dy);//*/
+    if(precise_)
+    {
+        double dx = start_x - (int)start_x, dy = start_y - (int)start_y;
+        dx = floorf(dx * 100 + 0.5) / 100;
+        dy = floorf(dy * 100 + 0.5) / 100;
+        potential[k] = neutral_cost_ * 2 * dx * dy;
+        potential[k+1] = neutral_cost_ * 2 * (1-dx)*dy;
+        potential[k+nx_] = neutral_cost_*2*dx*(1-dy);
+        potential[k+nx_+1] = neutral_cost_*2*(1-dx)*(1-dy);//*/
 
-    //ROS_INFO("%f %f %f %f", potential[k], potential[k+1], potential[k+nx_], potential[k+nx_+1]);
+        push_cur(k+2);
+        push_cur(k-1);
+        push_cur(k+nx_-1);
+        push_cur(k+nx_+2);
 
-    /*potential[k] = neutral_cost_ / 2;
-    potential[k+1] = neutral_cost_ / 2;
-    potential[k+nx_] = neutral_cost_ / 2;
-    potential[k+nx_+1] = neutral_cost_ / 2;
-    ROS_INFO("%f %f %f %f", potential[k], potential[k+1], potential[k+nx_], potential[k+nx_+1]);//*/
-
-    /*
-    push_cur(k+2);
-    push_cur(k-1);
-    push_cur(k+nx_-1);
-    push_cur(k+nx_+2);
-
-    push_cur(k-nx_);
-    push_cur(k-nx_+1);
-    push_cur(k+nx_*2);
-    push_cur(k+nx_*2+1);*/
-
-    potential[k] = 0;
-    push_cur(k+1);
-    push_cur(k-1);
-    push_cur(k-nx_);
-    push_cur(k+nx_);
+        push_cur(k-nx_);
+        push_cur(k-nx_+1);
+        push_cur(k+nx_*2);
+        push_cur(k+nx_*2+1);
+    }else{
+        potential[k] = 0;
+        push_cur(k+1);
+        push_cur(k-1);
+        push_cur(k-nx_);
+        push_cur(k+nx_);
+    }
 
     int nwv = 0;			// max priority block size
     int nc = 0;			// number of cells put into priority blocks

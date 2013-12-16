@@ -89,6 +89,12 @@ void PlannerCore::initialize(std::string name, costmap_2d::Costmap2D* costmap, s
 
         unsigned int cx = costmap->getSizeInCellsX(), cy = costmap->getSizeInCellsY();
 
+        private_nh.param("old_navfn_behavior", old_navfn_behavior_, false);
+        if(!old_navfn_behavior_)
+            convert_offset_ = 0.5;
+        else
+            convert_offset_ = 0.0;
+
         bool use_quadratic;
         private_nh.param("use_quadratic", use_quadratic, true);
         if (use_quadratic)
@@ -99,7 +105,13 @@ void PlannerCore::initialize(std::string name, costmap_2d::Costmap2D* costmap, s
         bool use_dijkstra;
         private_nh.param("use_dijkstra", use_dijkstra, true);
         if (use_dijkstra)
-            planner_ = new DijkstraExpansion(p_calc_, cx, cy);
+        {
+            DijkstraExpansion* de = new DijkstraExpansion(p_calc_, cx, cy);
+            if(!old_navfn_behavior_)
+                de->setPreciseStart(true);
+            planner_ = de;
+            
+        }
         else
             planner_ = new AStarExpansion(p_calc_, cx, cy);
 
@@ -109,12 +121,6 @@ void PlannerCore::initialize(std::string name, costmap_2d::Costmap2D* costmap, s
             path_maker_ = new GridPath(p_calc_);
         else
             path_maker_ = new GradientPath(p_calc_);
-
-        private_nh.param("old_navfn_behavior", old_navfn_behavior_, false);
-        if(!old_navfn_behavior_)
-            convert_offset_ = 0.5;
-        else
-            convert_offset_ = 0.0;
 
         plan_pub_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
         potential_pub_ = private_nh.advertise<nav_msgs::OccupancyGrid>("potential", 1);
@@ -231,21 +237,34 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
     double wx = start.pose.position.x;
     double wy = start.pose.position.y;
 
-    unsigned int start_x_i, start_y_i, goal_x, goal_y;
+    unsigned int start_x_i, start_y_i, goal_x_i, goal_y_i;
+    double start_x, start_y, goal_x, goal_y;
 
     if (!costmap_->worldToMap(wx, wy, start_x_i, start_y_i)) {
         ROS_WARN(
                 "The robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?");
         return false;
     }
+    if(old_navfn_behavior_){
+        start_x = start_x_i;
+        start_y = start_y_i;
+    }else{
+        worldToMap(wx, wy, start_x, start_y);
+    }
 
     wx = goal.pose.position.x;
     wy = goal.pose.position.y;
 
-    if (!costmap_->worldToMap(wx, wy, goal_x, goal_y)) {
+    if (!costmap_->worldToMap(wx, wy, goal_x_i, goal_y_i)) {
         ROS_WARN(
                 "The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal.");
         return false;
+    }
+    if(old_navfn_behavior_){
+        goal_x = goal_x_i;
+        goal_y = goal_y_i;
+    }else{
+        worldToMap(wx, wy, goal_x, goal_y);
     }
 
     //clear the starting cell within the costmap because we know it can't be an obstacle
@@ -263,26 +282,17 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
 
     outlineMap(costmap_->getCharMap(), nx, ny, 254);
 
-    double start_x, start_y;
-    if(old_navfn_behavior_ || true){
-        start_x = start_x_i;
-        start_y = start_y_i;
-    }else if(!worldToMap(start.pose.position.x, start.pose.position.y, start_x, start_y)) {
-        ROS_INFO("This error will never happen.</hubris>");
-		//TODO: Fix this side
-    }
-
     bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), start_x, start_y, goal_x, goal_y,
                                                     nx * ny * 2, potential_array_);
 
-	if(!old_navfn_behavior_)
-        planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x, goal_y, 2);
+    if(!old_navfn_behavior_)
+        planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x_i, goal_y_i, 2);
     if(publish_potential_)
         publishPotential(potential_array_);
 
     if (found_legal) {
         //extract the plan
-        if (getPlanFromPotential(goal, plan)) {
+        if (getPlanFromPotential(start_x, start_y, goal_x, goal_y, goal, plan)) {
             //make sure the goal we push on has the same timestamp as the rest of the plan
             geometry_msgs::PoseStamped goal_copy = goal;
             goal_copy.header.stamp = ros::Time::now();
@@ -295,13 +305,12 @@ bool PlannerCore::makePlan(const geometry_msgs::PoseStamped& start, const geomet
     }
 
     //publish the plan for visualization purposes
-    publishPlan(plan, 0.0, 1.0, 0.0, 0.0);
+    publishPlan(plan);
     delete potential_array_;
     return !plan.empty();
 }
 
-void PlannerCore::publishPlan(const std::vector<geometry_msgs::PoseStamped>& path, double r, double g, double b,
-                              double a) {
+void PlannerCore::publishPlan(const std::vector<geometry_msgs::PoseStamped>& path) {
     if (!initialized_) {
         ROS_ERROR(
                 "This planner has not been initialized yet, but it is being used, please call initialize() before use");
@@ -325,7 +334,8 @@ void PlannerCore::publishPlan(const std::vector<geometry_msgs::PoseStamped>& pat
     plan_pub_.publish(gui_path);
 }
 
-bool PlannerCore::getPlanFromPotential(const geometry_msgs::PoseStamped& goal,
+bool PlannerCore::getPlanFromPotential(double start_x, double start_y, double goal_x, double goal_y,
+                                      const geometry_msgs::PoseStamped& goal,
                                        std::vector<geometry_msgs::PoseStamped>& plan) {
     if (!initialized_) {
         ROS_ERROR(
@@ -338,32 +348,9 @@ bool PlannerCore::getPlanFromPotential(const geometry_msgs::PoseStamped& goal,
     //clear the plan, just in case
     plan.clear();
 
-    //until tf can handle transforming things that are way in the past... we'll require the goal to be in our global frame
-    if (tf::resolve(tf_prefix_, goal.header.frame_id) != tf::resolve(tf_prefix_, global_frame)) {
-        ROS_ERROR(
-                "The goal pose passed to this planner must be in the %s frame.  It is instead in the %s frame.", tf::resolve(tf_prefix_, global_frame).c_str(), tf::resolve(tf_prefix_, goal.header.frame_id).c_str());
-        return false;
-    }
-
-    double goal_x, goal_y;
-
-    if(old_navfn_behavior_){
-        unsigned int goal_x_i, goal_y_i;
-        if (!costmap_->worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x_i, goal_y_i)) {
-            ROS_WARN(
-                    "The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal.");
-            return false;
-        }
-        goal_x = goal_x_i;
-        goal_y = goal_y_i;
-    }else if (!worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x, goal_y)) {
-        ROS_WARN(
-                "The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal.");
-        return false;
-    }
-
     std::vector<std::pair<float, float> > path;
-    if (!path_maker_->getPath(potential_array_, goal_x, goal_y, path)) {
+
+    if (!path_maker_->getPath(potential_array_, start_x, start_y, goal_x, goal_y, path)) {
         ROS_ERROR("NO PATH!");
         return false;
     }
@@ -387,10 +374,9 @@ bool PlannerCore::getPlanFromPotential(const geometry_msgs::PoseStamped& goal,
         pose.pose.orientation.w = 1.0;
         plan.push_back(pose);
     }
-        plan.push_back(goal);
-
-    //publish the plan for visualization purposes
-    publishPlan(plan, 0.0, 1.0, 0.0, 0.0);
+    if(old_navfn_behavior_){
+            plan.push_back(goal);
+    }
     return !plan.empty();
 }
 

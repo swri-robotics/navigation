@@ -65,35 +65,37 @@ void GradientPath::setSize(int xs, int ys) {
     grady_ = new float[xs * ys];
 }
 
-bool GradientPath::getPath(float* potential, double end_x, double end_y, std::vector<std::pair<float, float> >& path) {
+bool GradientPath::getPath(float* potential, double start_x, double start_y, double goal_x, double goal_y, std::vector<std::pair<float, float> >& path) {
     std::pair<float, float> current;
-    int stc = getIndex(end_x, end_y);
+    int stc = getIndex(goal_x, goal_y);
 
     // set up offset
-    float dx = end_x - (int)end_x;
-    float dy = end_y - (int)end_y;
+    float dx = goal_x - (int)goal_x;
+    float dy = goal_y - (int)goal_y;
     int ns = xs_ * ys_;
     memset(gradx_, 0, ns * sizeof(float));
     memset(grady_, 0, ns * sizeof(float));
 
-    while (1) {
+    int c = 0;
+    while (c++<ns*4) {
         // check if near goal
-        int nearest_point = getNearestPoint(stc, dx, dy);
-        if (potential[nearest_point] == 0) {
-            current.first = nearest_point % xs_;
-            current.second = nearest_point / xs_;
+        double nx = stc % xs_ + dx, ny = stc / xs_ + dy;
+
+        if (nx - start_x < .5 && ny - start_y < .5) {
+            current.first = start_x;
+            current.second = start_y;
             path.push_back(current);
             return true;
         }
 
         if (stc < xs_ || stc > xs_ * ys_ - xs_) // would be out of bounds
-                {
+        {
             printf("[PathCalc] Out of bounds\n");
             return false;
         }
 
-        current.first = stc % xs_ + dx;
-        current.second = stc / xs_ + dy;
+        current.first = nx;
+        current.second = ny;
 
         //ROS_INFO("%d %d | %f %f ", stc%xs_, stc/xs_, dx, dy);
 

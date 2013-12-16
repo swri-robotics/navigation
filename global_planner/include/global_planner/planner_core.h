@@ -121,8 +121,9 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
          * @param plan The plan... filled by the planner
          * @return True if a valid plan was found, false otherwise
          */
-        bool getPlanFromPotential(const geometry_msgs::PoseStamped& goal,
-                                  std::vector<geometry_msgs::PoseStamped>& plan);
+        bool getPlanFromPotential(double start_x, double start_y, double end_x, double end_y,
+                                  const geometry_msgs::PoseStamped& goal,
+							      std::vector<geometry_msgs::PoseStamped>& plan);
 
         /**
          * @brief Get the potential, or naviagation cost, at a given point in the world (Note: You should call computePotential first)
@@ -149,7 +150,7 @@ class PlannerCore : public nav_core::BaseGlobalPlanner {
         /**
          * @brief  Publish a path for visualization purposes
          */
-        void publishPlan(const std::vector<geometry_msgs::PoseStamped>& path, double r, double g, double b, double a);
+        void publishPlan(const std::vector<geometry_msgs::PoseStamped>& path);
 
         ~PlannerCore() {
         }
