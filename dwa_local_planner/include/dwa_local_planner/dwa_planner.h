@@ -56,17 +56,7 @@
 #include <base_local_planner/simple_trajectory_generator.h>
 
 #include <dwa_local_planner/trajectory_cost_function.h>
-
-#include <dwa_local_planner/oscillation_cost_function.h>
-#include <dwa_local_planner/obstacle_cost_function.h>
-#include <dwa_local_planner/map_grid_cost_function.h>
 #include <dwa_local_planner/simple_scored_sampling_planner.h>
-
-#include <dwa_local_planner/goal_dist_cost_function.h>
-#include <dwa_local_planner/path_dist_cost_function.h>
-#include <dwa_local_planner/goal_align_cost_function.h>
-#include <dwa_local_planner/path_align_cost_function.h>
-
 #include <nav_msgs/Path.h>
 #include <pluginlib/class_loader.h>
 
