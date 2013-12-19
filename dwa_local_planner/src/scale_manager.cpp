@@ -67,6 +67,8 @@ void ScaleManager::initialize(std::vector<CostFunctionPointer >* critics)
     description_pub_ = nh.advertise<dynamic_reconfigure::ConfigDescription>("scale/parameter_descriptions", 1, true);
     set_params_srv_  = nh.advertiseService("scale/set_parameters", &ScaleManager::set_params, this);
 
+    description_pub_.publish(description_);
+
 }
 
 
