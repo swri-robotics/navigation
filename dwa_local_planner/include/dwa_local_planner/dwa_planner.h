@@ -57,6 +57,8 @@
 
 #include <dwa_local_planner/trajectory_cost_function.h>
 #include <dwa_local_planner/simple_scored_sampling_planner.h>
+#include <dwa_local_planner/scale_manager.h>
+
 #include <nav_msgs/Path.h>
 #include <pluginlib/class_loader.h>
 
@@ -177,6 +179,8 @@ namespace dwa_local_planner {
       std::vector<CostFunctionPointer > critics_;
 
       dwa_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
+
+      dwa_local_planner::ScaleManager scale_manager_;
   };
 };
 #endif

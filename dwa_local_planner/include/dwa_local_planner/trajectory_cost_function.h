@@ -2,6 +2,7 @@
 #define DWA_TRAJECTORYCOSTFUNCTION_H_
 
 #define COST_ITERATOR(X, Y)  for(std::vector<CostFunctionPointer >::iterator X = Y.begin(); X != Y.end(); ++X)
+#define COST_ITERATOR_P(X, Y)  for(std::vector<CostFunctionPointer >::iterator X = Y->begin(); X != Y->end(); ++X)
 
 #include <base_local_planner/trajectory.h>
 #include <base_local_planner/local_planner_util.h>

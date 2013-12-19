@@ -197,6 +197,7 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
           plugin->initialize(name + "/" + pname, planner_util); 
         }
     }
+    scale_manager_.initialize(&critics_);
 
     // trajectory generators
     std::vector<base_local_planner::TrajectorySampleGenerator*> generator_list;
