@@ -54,7 +54,7 @@ add_library(cost_functions
 	src/prefer_forward_cost_function.cpp
 )
 
-add_library(dwa_local_planner src/dwa_planner.cpp src/dwa_planner_ros.cpp)
+add_library(dwa_local_planner src/scale_manager.cpp src/dwa_planner.cpp src/dwa_planner_ros.cpp)
 target_link_libraries(dwa_local_planner base_local_planner cost_functions)
 add_dependencies(dwa_local_planner dwa_local_planner_gencfg)
 add_dependencies(dwa_local_planner nav_msgs_gencpp)
