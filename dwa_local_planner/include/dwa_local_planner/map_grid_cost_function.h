@@ -84,7 +84,7 @@ public:
   double scoreCell(double px, double py, double pth);
 
   // used for easier debugging
-  double getCosts(unsigned int cx, unsigned int cy);
+  virtual float getCost(unsigned int cx, unsigned int cy);
 
   virtual void setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y);
 
