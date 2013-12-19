@@ -58,19 +58,27 @@ public:
 };
 
 namespace dwa_local_planner {
-void move_parameter(ros::NodeHandle& nh, std::string old_name, std::string name, double default_value, bool should_delete=true)
+void move_parameter(ros::NodeHandle& nh, std::string old_name, 
+                    std::string name, double default_value, bool should_delete=true)
 {
-  XmlRpc::XmlRpcValue value;
-  if (nh.hasParam(old_name))
-  {
-    nh.getParam(old_name, value);
-    if(should_delete) nh.deleteParam(old_name);
-  }
-  else
-    value = default_value;
+    if (nh.hasParam(name)){
+        if(should_delete)
+            nh.deleteParam(old_name);
+        return;
+    }
 
-  nh.setParam(name, value);
-  
+
+
+    XmlRpc::XmlRpcValue value;
+    if (nh.hasParam(old_name))
+    {
+        nh.getParam(old_name, value);
+        if(should_delete) nh.deleteParam(old_name);
+    }
+    else
+        value = default_value;
+
+    nh.setParam(name, value);
 }
 
 
@@ -176,13 +184,11 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name, std::string name,
           {
               type = type + "CostFunction";
           }
-	  
-	  if(type.find("::") == std::string::npos)
-	  {
-     	      type = "dwa_local_planner::" + type;
-	  }
 
-
+          if(type.find("::") == std::string::npos)
+          {
+              type = "dwa_local_planner::" + type;
+          }
 
           ROS_INFO("Using critic \"%s\"", pname.c_str());
 
@@ -233,13 +239,13 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name, std::string name,
     COST_ITERATOR(critic, critics_){
         CostFunctionPointer cp = *critic;
         std::string name = cp->getName();
-        if(name=="Obstacle"){
+        if(name.find("Obstacle")!=std::string::npos){
             occ_cost = cp->getCost(cx, cy);
             total_cost += occ_cost * cp->getScale();
-        }else if(name=="PathDist"){
+        }else if(name.find("PathDist")!=std::string::npos){
             path_cost = cp->getCost(cx, cy);
             total_cost += path_cost * cp->getScale();
-        }else if(name=="GoalDist"){
+        }else if(name.find("GoalDist")!=std::string::npos){
             goal_cost = cp->getCost(cx, cy);
             total_cost += goal_cost * cp->getScale();
         }
