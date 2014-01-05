@@ -65,6 +65,9 @@ target_link_libraries(dwa_local_planner base_local_planner)
 add_dependencies(dwa_local_planner dwa_local_planner_gencfg)
 add_dependencies(dwa_local_planner nav_msgs_gencpp)
 
+add_executable(standalone_planner src/standalone_planner.cpp)
+target_link_libraries(standalone_planner dwa_local_planner)
+
 install(TARGETS dwa_local_planner
        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
        )

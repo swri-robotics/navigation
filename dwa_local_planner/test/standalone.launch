@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find simple_costmap_configuration)/launch/transforms.launch" />
+    <rosparam file="$(find dwa_local_planner)/dwa.yaml" command="load" ns="/standalone" />
+</launch>
