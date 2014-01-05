@@ -22,7 +22,7 @@ namespace dwa_local_planner {
 class TrajectoryCostFunction {
 public:
 
-  void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util) {
+  virtual void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util) {
     name_ = name;
     planner_util_ = planner_util;
     costmap_ = planner_util->getCostmap();
