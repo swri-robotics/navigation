@@ -53,6 +53,7 @@ namespace dwa_local_planner {
 class ObstacleCostFunction : public TrajectoryCostFunction {
 
 public:
+  ObstacleCostFunction(): world_model_(NULL) {}
   ~ObstacleCostFunction();
 
   virtual void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
