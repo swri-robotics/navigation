@@ -29,7 +29,9 @@ double OffsetGridCostFunction::scoreCell(double px, double py, double pth)
       py = py + yshift * sin(pth + M_PI_2);
     }
 
-    return MapGridCostFunction::scoreCell(px, py, pth);  
+    double g = MapGridCostFunction::scoreCell(px, py, pth);  
+    // ROS_INFO("\t\t%.2f %.2f %.2f | %.2f", px, py, pth, g);
+    return g;
 }
 } /* namespace dwa_local_planner */
 

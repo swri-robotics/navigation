@@ -58,9 +58,9 @@ namespace dwa_local_planner {
 class SimpleScoredSamplingPlanner : public base_local_planner::TrajectorySearch {
 public:
 
-  ~SimpleScoredSamplingPlanner() {}
+  ~SimpleScoredSamplingPlanner() { }
 
-  SimpleScoredSamplingPlanner() {}
+  SimpleScoredSamplingPlanner() { debug_paths_ = false; }
 
   /**
    * Takes a list of generators and critics. Critics return costs > 0, or negative costs for invalid trajectories.
@@ -98,6 +98,8 @@ public:
 private:
   std::vector<base_local_planner::TrajectorySampleGenerator*> gen_list_;
   std::vector<CostFunctionPointer > critics_;
+
+  bool debug_paths_;
 
   int max_samples_;
 };

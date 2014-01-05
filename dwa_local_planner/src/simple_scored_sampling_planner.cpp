@@ -53,6 +53,10 @@ namespace dwa_local_planner {
   double SimpleScoredSamplingPlanner::scoreTrajectory(Trajectory& traj, double best_traj_cost) {
     double traj_cost = 0;
     int gen_id = 0;
+    if(debug_paths_)
+    {
+        ROS_INFO("Trajectory: %.2f %.2f %.2f ==========", traj.xv_, traj.yv_, traj.thetav_);
+    }
     COST_ITERATOR(score_function, critics_) { 
       if ((*score_function)->getScale() == 0) {
         continue;
@@ -63,6 +67,7 @@ namespace dwa_local_planner {
         traj_cost = cost;
         break;
       }
+      if(debug_paths_){ ROS_INFO("\t%20s %.2f", (*score_function)->getName().c_str(), cost); }
       if (cost != 0) {
         cost *= (*score_function)->getScale();
       }
@@ -75,7 +80,7 @@ namespace dwa_local_planner {
       }
       gen_id ++;
     }
-
+    if(debug_paths_){ ROS_INFO("\tTotal: %.2f", traj_cost); }
 
     return traj_cost;
   }
@@ -133,6 +138,7 @@ namespace dwa_local_planner {
         break;
       }
     }
+    if(debug_paths_){ ROS_INFO("Best cost: %.4f", best_traj_cost); }
     return best_traj_cost >= 0;
   }
 
