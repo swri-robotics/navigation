@@ -60,7 +60,7 @@ public:
 
   ~SimpleScoredSamplingPlanner() { }
 
-  SimpleScoredSamplingPlanner() { debug_paths_ = false; }
+  SimpleScoredSamplingPlanner() { }
 
   /**
    * Takes a list of generators and critics. Critics return costs > 0, or negative costs for invalid trajectories.

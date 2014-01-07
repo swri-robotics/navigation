@@ -48,6 +48,7 @@ namespace dwa_local_planner {
     max_samples_ = max_samples;
     gen_list_ = gen_list;
     critics_ = critics;
+    debug_paths_ = false;
   }
 
   double SimpleScoredSamplingPlanner::scoreTrajectory(Trajectory& traj, double best_traj_cost) {
