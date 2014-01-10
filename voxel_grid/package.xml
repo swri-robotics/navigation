@@ -8,9 +8,9 @@
     </description>
     <author>Eitan Marder-Eppstein, Eric Berger</author>
     <author>contradict@gmail.com</author>
-    <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+    <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
     <license>BSD</license>
-    <url>http://ros.org/wiki/voxel_grid</url>
+    <url>http://wiki.ros.org/voxel_grid</url>
 
     <buildtool_depend>catkin</buildtool_depend>
 

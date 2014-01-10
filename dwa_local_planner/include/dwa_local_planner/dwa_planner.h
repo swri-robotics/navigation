@@ -148,12 +148,14 @@ namespace dwa_local_planner {
 
       double stop_time_buffer_; ///< @brief How long before hitting something we're going to enforce that the robot stop
       double pdist_scale_, gdist_scale_, occdist_scale_;
+      double porient_scale_, gorient_scale_;
       Eigen::Vector3f vsamples_;
 
       double sim_period_;///< @brief The number of seconds to use to compute max/min vels for dwa
       base_local_planner::Trajectory result_traj_;
 
       double forward_point_distance_;
+      double scaled_path_factor_;
 
       std::vector<geometry_msgs::PoseStamped> global_plan_;
 

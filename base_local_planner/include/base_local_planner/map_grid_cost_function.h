@@ -118,6 +118,9 @@ public:
   // used for easier debugging
   double getCellCosts(unsigned int cx, unsigned int cy);
 
+  void setGoal(double x, double y){ goal_x_ = x; goal_y_ = y; }
+  void setForwardDistanceFactor(double factor){ distance_factor_= factor; }
+
 private:
   std::vector<geometry_msgs::PoseStamped> target_poses_;
   costmap_2d::Costmap2D* costmap_;
@@ -133,6 +136,8 @@ private:
   // if true, we look for a suitable local goal on path, else we use the full path for costs
   bool is_local_goal_function_;
   bool stop_on_failure_;
+
+  double goal_x_, goal_y_, distance_factor_;
 };
 
 } /* namespace base_local_planner */

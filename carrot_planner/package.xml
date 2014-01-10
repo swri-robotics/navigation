@@ -9,9 +9,9 @@
     <author>Eitan Marder-Eppstein</author>
     <author>Sachin Chitta</author>
     <author>contradict@gmail.com</author>
-    <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+    <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
     <license>BSD</license>
-    <url>http://pr.willowgarage.com/wiki/carrot_planner</url>
+    <url>http://wiki.ros.org/carrot_planner</url>
 
     <buildtool_depend>catkin</buildtool_depend>
 

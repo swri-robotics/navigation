@@ -65,11 +65,13 @@ namespace dwa_local_planner {
     pdist_scale_ = config.path_distance_bias;
     // pdistscale used for both path and alignment, set  forward_point_distance to zero to discard alignment
     path_costs_.setScale(resolution * pdist_scale_ * 0.5);
-    alignment_costs_.setScale(resolution * pdist_scale_ * 0.5);
+    porient_scale_ = config.path_orientation_bias;
+    alignment_costs_.setScale(resolution * pdist_scale_ * 0.5 * porient_scale_);
 
     gdist_scale_ = config.goal_distance_bias;
     goal_costs_.setScale(resolution * gdist_scale_ * 0.5);
-    goal_front_costs_.setScale(resolution * gdist_scale_ * 0.5);
+    gorient_scale_ = config.goal_orientation_bias;
+    goal_front_costs_.setScale(resolution * gdist_scale_ * 0.5 * gorient_scale_);
 
     occdist_scale_ = config.occdist_scale;
     obstacle_costs_.setScale(resolution * occdist_scale_);
@@ -146,6 +148,11 @@ namespace dwa_local_planner {
 
     oscillation_costs_.resetOscillationFlags();
 
+    bool sum_scores;
+    private_nh.param("sum_scores", sum_scores, false);
+    obstacle_costs_.setSumScores(sum_scores);
+
+
     private_nh.param("publish_cost_grid_pc", publish_cost_grid_pc_, false);
     map_viz_.initialize(name, planner_util->getGlobalFrame(), boost::bind(&DWAPlanner::getCellCosts, this, _1, _2, _3, _4, _5, _6));
 
@@ -168,6 +175,9 @@ namespace dwa_local_planner {
     generator_list.push_back(&generator_);
 
     scored_sampling_planner_ = base_local_planner::SimpleScoredSamplingPlanner(generator_list, critics);
+
+    private_nh.param("scaled_path_factor", scaled_path_factor_, -1.0);
+    alignment_costs_.setForwardDistanceFactor(scaled_path_factor_);
   }
 
   // used for visualization only, total_costs are not really total costs
@@ -243,10 +253,13 @@ namespace dwa_local_planner {
     // alignment costs
     geometry_msgs::PoseStamped goal_pose = global_plan_.back();
 
+    double gx = goal_pose.pose.position.x, gy = goal_pose.pose.position.y;
+    alignment_costs_.setGoal(gx, gy);
+
     Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
     double sq_dist =
-        (pos[0] - goal_pose.pose.position.x) * (pos[0] - goal_pose.pose.position.x) +
-        (pos[1] - goal_pose.pose.position.y) * (pos[1] - goal_pose.pose.position.y);
+        (pos[0] - gx) * (pos[0] - gx) +
+        (pos[1] - gy) * (pos[1] - gy);
 
     // we want the robot nose to be drawn to its final position
     // (before robot turns towards goal orientation), not the end of the
@@ -254,7 +267,7 @@ namespace dwa_local_planner {
     // turning towards goal orientation causes instability when the
     // robot needs to make a 180 degree turn at the end
     std::vector<geometry_msgs::PoseStamped> front_global_plan = global_plan_;
-    double angle_to_goal = atan2(goal_pose.pose.position.y - pos[1], goal_pose.pose.position.x - pos[0]);
+    double angle_to_goal = atan2(gy - pos[1], gx - pos[0]);
     front_global_plan.back().pose.position.x = front_global_plan.back().pose.position.x +
       forward_point_distance_ * cos(angle_to_goal);
     front_global_plan.back().pose.position.y = front_global_plan.back().pose.position.y + forward_point_distance_ *
@@ -262,14 +275,17 @@ namespace dwa_local_planner {
 
     goal_front_costs_.setTargetPoses(front_global_plan);
     
-    // keeping the nose on the path
-    if (sq_dist > forward_point_distance_ * forward_point_distance_ * 2) {
-      alignment_costs_.setScale(1.0);
-      // costs for robot being aligned with path (nose on path, not ju
-      alignment_costs_.setTargetPoses(global_plan_);
-    } else {
-      // once we are close to goal, trying to keep the nose close to anything destabilizes behavior.
-      alignment_costs_.setScale(0.0);
+    if(scaled_path_factor_ < 0)
+    {
+        // keeping the nose on the path
+        if (sq_dist > forward_point_distance_ * forward_point_distance_) {
+          alignment_costs_.setScale(1.0 * porient_scale_);
+          // costs for robot being aligned with path (nose on path, not ju
+          alignment_costs_.setTargetPoses(global_plan_);
+        } else {
+          // once we are close to goal, trying to keep the nose close to anything destabilizes behavior.
+          alignment_costs_.setScale(0.0);
+        }
     }
   }
 

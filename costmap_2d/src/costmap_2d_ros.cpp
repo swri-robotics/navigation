@@ -540,16 +540,9 @@ void Costmap2DROS::mapUpdateLoop(double frequency)
     struct timeval start, end;
     double start_t, end_t, t_diff;
     gettimeofday(&start, NULL);
-    if (!stop_updates_)
-    {
-      //get global pose
-      tf::Stamped < tf::Pose > pose;
-      if (getRobotPose (pose))
-      {
-        layered_costmap_->updateMap(pose.getOrigin().x(), pose.getOrigin().y(), tf::getYaw(pose.getRotation()));
-        initialized_ = true;
-      }
-    }
+
+    updateMap();    
+
     gettimeofday(&end, NULL);
     start_t = start.tv_sec + double(start.tv_usec) / 1e6;
     end_t = end.tv_sec + double(end.tv_usec) / 1e6;
@@ -573,6 +566,20 @@ void Costmap2DROS::mapUpdateLoop(double frequency)
     if (r.cycleTime() > ros::Duration(1 / frequency))
       ROS_WARN("Map update loop missed its desired rate of %.4fHz... the loop actually took %.4f seconds", frequency,
                r.cycleTime().toSec());
+  }
+}
+
+void Costmap2DROS::updateMap()
+{
+  if (!stop_updates_)
+  {
+    //get global pose
+    tf::Stamped < tf::Pose > pose;
+    if (getRobotPose (pose))
+    {
+      layered_costmap_->updateMap(pose.getOrigin().x(), pose.getOrigin().y(), tf::getYaw(pose.getRotation()));
+      initialized_ = true;
+    }
   }
 }
 
