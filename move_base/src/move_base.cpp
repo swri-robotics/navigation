@@ -339,15 +339,6 @@ namespace move_base {
     last_valid_plan_ = ros::Time::now();
     last_oscillation_reset_ = ros::Time::now();
 
-
-
-
-
-
-
-
-
-
     //wake up the planner thread so that it can exit cleanly
     lock.lock();
     runPlanner_ = true;

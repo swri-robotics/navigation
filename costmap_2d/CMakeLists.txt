@@ -114,25 +114,6 @@ target_link_libraries(layers
   costmap_2d
 )
 
-catkin_package(
-    INCLUDE_DIRS
-        include
-        ${EIGEN_INCLUDE_DIRS}
-        ${PCL_INCLUDE_DIRS}
-    LIBRARIES costmap_2d
-    CATKIN_DEPENDS
-        roslib
-        roscpp
-        message_generation
-        pcl_ros
-        voxel_grid
-        map_msgs
-    DEPENDS
-        PCL
-        Eigen
-
-)
-
 add_dependencies(costmap_2d costmap_2d_gencfg)
 add_dependencies(layers costmap_2d_gencfg)
 add_dependencies(costmap_2d costmap_2d_gencpp)
