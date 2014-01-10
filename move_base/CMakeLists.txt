@@ -36,7 +36,7 @@ include_directories(
 
 # move_base
 add_library(move_base
-  src/move_base.cpp
+  src/move_base.cpp src/global_navigator.cpp src/local_navigator.cpp
 )
 target_link_libraries(move_base
     ${Boost_LIBRARIES}
