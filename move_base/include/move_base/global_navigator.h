@@ -25,6 +25,7 @@ class GlobalNavigator {
             return planner_costmap_ros_;
         }
         void setGoal(geometry_msgs::PoseStamped goal);
+        
         PlannerState getPlannerState() {
             return planner_state_;
         }
