@@ -17,6 +17,7 @@ class GlobalNavigator {
         }
         void stop() {
             planner_costmap_ros_->stop();
+            replan();
         }
         std::string getGlobalFrameID() {
             return planner_costmap_ros_->getGlobalFrameID();
@@ -24,13 +25,19 @@ class GlobalNavigator {
         costmap_2d::Costmap2DROS* getCostmap() {
             return planner_costmap_ros_;
         }
-        void setGoal(geometry_msgs::PoseStamped goal);
         
         PlannerState getPlannerState() {
             return planner_state_;
         }
         PlanState getPlanState() {
             return plan_state_;
+        }
+        bool hasNewPlan(){
+            if(plan_state_==VALID){
+                has_new_plan_ = false;
+                return true;
+            }
+            return false;
         }
 
         std::vector<geometry_msgs::PoseStamped> getPlan() {
@@ -40,6 +47,10 @@ class GlobalNavigator {
             lock.unlock();
             return return_plan;
         }
+
+
+        void setGoal(geometry_msgs::PoseStamped goal);
+        void replan();
 
         /**
          * @brief  Make a new global plan
@@ -69,6 +80,7 @@ class GlobalNavigator {
 
         PlannerState planner_state_;
         PlanState plan_state_;
+        bool has_new_plan_;
 };
 
 }; // namespace move_base

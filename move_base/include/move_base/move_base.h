@@ -64,10 +64,7 @@ namespace move_base
 //typedefs to help us out with the action server so that we don't hace to type so much
 typedef actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction> MoveBaseActionServer;
 
-enum RecoveryTrigger
-{
-  PLANNING_R, CONTROLLING_R, OSCILLATION_R
-};
+
 
 /**
  * @class MoveBase
@@ -105,17 +102,7 @@ private:
    */
   bool planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp);
 
-  /**
-   * @brief  Load the recovery behaviors for the navigation stack from the parameter server
-   * @param node The ros::NodeHandle to be used for loading parameters
-   * @return True if the recovery behaviors were loaded successfully, false otherwise
-   */
-  bool loadRecoveryBehaviors(ros::NodeHandle node);
 
-  /**
-   * @brief  Loads the default recovery behaviors for the navigation stack
-   */
-  void loadDefaultRecoveryBehaviors();
 
   /**
    * @brief  Clears obstacles within a window around the robot
@@ -135,8 +122,6 @@ private:
 
   bool isQuaternionValid(const geometry_msgs::Quaternion& q);
 
-  double distance(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2);
-
   geometry_msgs::PoseStamped goalToGlobalFrame(const geometry_msgs::PoseStamped& goal_pose_msg);
 
   tf::TransformListener& tf_;
@@ -146,25 +131,11 @@ private:
   GlobalNavigator global_nav_;
   LocalNavigator local_nav_;
 
-  std::vector<boost::shared_ptr<nav_core::RecoveryBehavior> > recovery_behaviors_;
-  unsigned int recovery_index_;
-
   tf::Stamped<tf::Pose> global_pose_;
-  double conservative_reset_dist_, clearing_radius_;
   ros::Publisher current_goal_pub_, vel_pub_, action_goal_pub_;
   ros::Subscriber goal_sub_;
 
   ros::ServiceServer make_plan_srv_;
-  bool shutdown_costmaps_, clearing_rotation_allowed_, recovery_behavior_enabled_;
-
-  double oscillation_timeout_, oscillation_distance_;
-
-  RecoveryTrigger recovery_trigger_;
-
-  ros::Time last_valid_control_, last_oscillation_reset_;
-  geometry_msgs::PoseStamped oscillation_pose_;
-
-  pluginlib::ClassLoader<nav_core::RecoveryBehavior> recovery_loader_;
 
   boost::recursive_mutex configuration_mutex_;
   dynamic_reconfigure::Server<move_base::MoveBaseConfig> *dsrv_;
@@ -174,7 +145,6 @@ private:
   move_base::MoveBaseConfig last_config_;
   move_base::MoveBaseConfig default_config_;
   bool setup_;
-  bool new_global_plan_;
 };
 }
 ;

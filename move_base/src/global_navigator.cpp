@@ -16,6 +16,7 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
 
     planner_state_ = IDLE;
     plan_state_ = NONE;
+    has_new_plan_ = false;
 
     //create the ros wrapper for the planner's costmap... and initializer a pointer we'll use with the underlying map
     planner_costmap_ros_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
@@ -64,9 +65,15 @@ GlobalNavigator::~GlobalNavigator() {
 
 void GlobalNavigator::setGoal(geometry_msgs::PoseStamped goal) {
     planner_goal_ = goal;
+    replan();
+}
+
+void GlobalNavigator::replan(){
     plan_state_ = NONE;
     planner_state_ = PLANNING;
+    has_new_plan_ = false;
     planner_cond_.notify_one();
+    
 }
 
 
@@ -104,6 +111,7 @@ void GlobalNavigator::planThread() {
             std::vector<geometry_msgs::PoseStamped>* temp_plan = planner_plan_;
 
             lock.lock();
+            has_new_plan_ = true;
             plan_state_ = VALID;
             planner_plan_ = latest_plan_;
             latest_plan_ = temp_plan;
