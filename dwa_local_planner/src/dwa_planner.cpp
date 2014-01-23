@@ -171,10 +171,12 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
         for (int32_t i = 0; i < my_list.size(); ++i)
         {
           std::string pname, type;
+          double scale = 0.0;
 
           if(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeStruct){
               pname = static_cast<std::string>(my_list[i]["name"]);
               type = static_cast<std::string>(my_list[i]["type"]);
+              scale = my_list[i]["scale"];
           }else{
               pname = static_cast<std::string>(my_list[i]);
               type = pname;
@@ -195,6 +197,10 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
           CostFunctionPointer plugin = plugin_loader_.createInstance(type);
           critics_.push_back(plugin);
           plugin->initialize(name + "/" + pname, planner_util); 
+          if(scale>0.0)
+            plugin->setScale(scale);
+          
+          ROS_INFO("     (scale: %f)", plugin->getScale());
         }
     }
     scale_manager_.initialize(&critics_);
