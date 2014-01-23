@@ -58,6 +58,7 @@
 #include <move_base/MoveBaseConfig.h>
 #include <move_base/global_navigator.h>
 #include <move_base/local_navigator.h>
+#include <move_base/state_machine.h>
 
 namespace move_base
 {
@@ -130,6 +131,7 @@ private:
 
   GlobalNavigator global_nav_;
   LocalNavigator local_nav_;
+  StateMachine* state_machine_;
 
   tf::Stamped<tf::Pose> global_pose_;
   ros::Publisher current_goal_pub_, vel_pub_, action_goal_pub_;

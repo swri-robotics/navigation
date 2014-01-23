@@ -19,22 +19,21 @@ StandardStateMachine::StandardStateMachine() :
     //load any user specified recovery behaviors, and if that fails load the defaults
     if(!loadRecoveryBehaviors(private_nh)) {
         loadDefaultRecoveryBehaviors();
-    }
-    
+    }    
     reset();
 }
 
 StandardStateMachine::~StandardStateMachine() 
 {
     recovery_behaviors_.clear();
-    state_ = STANDARD;
-    recovery_trigger_ = PLANNING_R;
 }
 
 void StandardStateMachine::reset()
 {
     //we'll start executing recovery behaviors at the beginning of our list
     recovery_index_ = 0;
+    state_ = STANDARD;
+    recovery_trigger_ = PLANNING_R;
 
 }
 

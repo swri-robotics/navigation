@@ -12,7 +12,7 @@ enum RecoveryTrigger
 
 namespace move_base {
 
-  class StandardStateMachine : StateMachine {
+  class StandardStateMachine : public StateMachine {
     public:
       StandardStateMachine();
       ~StandardStateMachine();

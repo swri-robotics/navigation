@@ -42,6 +42,7 @@
 #include <boost/thread.hpp>
 
 #include <geometry_msgs/Twist.h>
+#include <move_base/standard_state_machine.h>
 
 namespace move_base {
 
@@ -66,6 +67,8 @@ MoveBase::MoveBase(tf::TransformListener& tf) :
     ros::NodeHandle simple_nh("move_base_simple");
     goal_sub_ = simple_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, boost::bind(&MoveBase::goalCB, this, _1));
 
+    state_machine_ = new StandardStateMachine();
+    state_machine_->initialize(&tf, &global_nav_, &local_nav_);
 
     //we're all set up now so we can start the action server
     as_->start();
@@ -203,7 +206,7 @@ void MoveBase::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goal) {
 
 MoveBase::~MoveBase() {
     delete dsrv_;
-
+    delete state_machine_;
     if(as_ != NULL)
         delete as_;
 }
@@ -272,6 +275,55 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
     current_goal_pub_.publish(goal);
 
     std::vector<geometry_msgs::PoseStamped> global_plan;
+    
+    ros::Rate rate(10);
+    ros::NodeHandle n;
+    while(n.ok())
+    {
+      if(as_->isPreemptRequested()){
+        if(as_->isNewGoalAvailable()){
+          //if we're active and a new goal is available, we'll accept it, but we won't shut anything down
+          move_base_msgs::MoveBaseGoal new_goal = *as_->acceptNewGoal();
+
+          if(!isQuaternionValid(new_goal.target_pose.pose.orientation)){
+            as_->setAborted(move_base_msgs::MoveBaseResult(), "Aborting on goal because it was sent with an invalid quaternion");
+            return;
+          }
+
+          goal = goalToGlobalFrame(new_goal.target_pose);
+
+          //we'll make sure that we reset our state for the next execution cycle
+          state_machine_->reset();
+
+          //we have a new goal so make sure the planner is awake
+          lock.lock();
+          planner_goal_ = goal;
+          runPlanner_ = true;
+          planner_cond_.notify_one();
+          lock.unlock();
+
+          //publish the goal point to the visualizer
+          ROS_DEBUG_NAMED("move_base","move_base has received a goal of x: %.2f, y: %.2f", goal.pose.position.x, goal.pose.position.y);
+          current_goal_pub_.publish(goal);
+
+          //make sure to reset our timeouts
+          last_valid_control_ = ros::Time::now();
+          last_valid_plan_ = ros::Time::now();
+          last_oscillation_reset_ = ros::Time::now();
+        }
+        else {
+          //if we've been preempted explicitly we need to shut things down
+          resetState();
+
+          //notify the ActionServer that we've successfully preempted
+          ROS_DEBUG_NAMED("move_base","Move base preempting the current goal");
+          as_->setPreempted();
+
+          //we'll actually return from execute after preempting
+          return;
+        }
+      }
+  }
 
     //wake up the planner thread so that it can exit cleanly
     global_nav_.stop();
