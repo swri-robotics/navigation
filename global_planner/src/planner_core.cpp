@@ -376,6 +376,9 @@ bool GlobalPlanner::getPlanFromPotential(double start_x, double start_y, double 
     }
     if(old_navfn_behavior_){
             plan.push_back(goal);
+    }else if(plan.size()>0){
+      geometry_msgs::PoseStamped* pose = &(plan[ plan.size() -1 ]);
+      pose->pose.orientation = goal.pose.orientation;
     }
     return !plan.empty();
 }
