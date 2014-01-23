@@ -203,7 +203,9 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
     std::vector<base_local_planner::TrajectorySampleGenerator*> generator_list;
     generator_list.push_back(&generator_);
 
-    scored_sampling_planner_ = SimpleScoredSamplingPlanner(generator_list, critics_);
+    bool debug_paths;
+    private_nh.param("debug_paths", debug_paths, false);
+    scored_sampling_planner_ = SimpleScoredSamplingPlanner(generator_list, critics_, -1, debug_paths);
   }
 
   void DWAPlanner::resetOldParameters(ros::NodeHandle& nh)

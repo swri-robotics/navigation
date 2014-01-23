@@ -72,7 +72,7 @@ public:
    * generator until generator runs out of samples (or forever if that never happens)
    */
   SimpleScoredSamplingPlanner(std::vector<base_local_planner::TrajectorySampleGenerator*> gen_list, 
-                              std::vector<CostFunctionPointer >& critics, int max_samples = -1);
+                              std::vector<CostFunctionPointer >& critics, int max_samples = -1, bool debug_paths=false);
 
   /**
    * runs all scoring functions over the trajectory creating a weigthed sum

@@ -44,11 +44,11 @@ using base_local_planner::TrajectorySampleGenerator;
 
 namespace dwa_local_planner {
   
-  SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<CostFunctionPointer >& critics, int max_samples) {
+  SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<CostFunctionPointer >& critics, int max_samples, bool debug_paths) {
     max_samples_ = max_samples;
     gen_list_ = gen_list;
     critics_ = critics;
-    debug_paths_ = false;
+    debug_paths_ = debug_paths;
   }
 
   double SimpleScoredSamplingPlanner::scoreTrajectory(Trajectory& traj, double best_traj_cost) {
