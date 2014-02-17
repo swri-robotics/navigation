@@ -33,7 +33,8 @@ class GlobalNavigator {
             return plan_state_;
         }
         bool hasNewPlan(){
-            if(plan_state_==VALID){
+            boost::unique_lock<boost::mutex> lock(planner_mutex_);
+            if(plan_state_==VALID and has_new_plan_){
                 has_new_plan_ = false;
                 return true;
             }
@@ -42,9 +43,7 @@ class GlobalNavigator {
 
         std::vector<geometry_msgs::PoseStamped> getPlan() {
             boost::unique_lock<boost::mutex> lock(planner_mutex_);
-            lock.lock();
-            std::vector<geometry_msgs::PoseStamped> return_plan = *planner_plan_;
-            lock.unlock();
+            std::vector<geometry_msgs::PoseStamped> return_plan = *latest_plan_;
             return return_plan;
         }
 
