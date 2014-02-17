@@ -34,6 +34,18 @@ void StandardStateMachine::reset()
     recovery_index_ = 0;
     state_ = STANDARD;
     recovery_trigger_ = PLANNING_R;
+    /*
+    
+          planner_goal_ = goal;
+          runPlanner_ = true;
+          planner_cond_.notify_one();
+          
+                    //make sure to reset our timeouts
+          last_valid_control_ = ros::Time::now();
+          last_valid_plan_ = ros::Time::now();
+          last_oscillation_reset_ = ros::Time::now();
+
+          */
 
 }
 
