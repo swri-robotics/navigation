@@ -48,9 +48,7 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
     planner_costmap_ros_->start();
 
     //set up the planner's thread
-    if(planner_frequency_ > 0.0) {
-        planner_thread_ = new boost::thread(boost::bind(&GlobalNavigator::planThread, this));
-    }
+    planner_thread_ = new boost::thread(boost::bind(&GlobalNavigator::planThread, this));
 }
 
 GlobalNavigator::~GlobalNavigator() {
