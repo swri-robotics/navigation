@@ -38,6 +38,7 @@
 #include "costmap_2d/array_parser.h"
 #include <costmap_2d/layered_costmap.h>
 #include <costmap_2d/costmap_2d_ros.h>
+#include <std_msgs/Float32.h>
 #include <cstdio>
 #include <string>
 #include <algorithm>
