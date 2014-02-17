@@ -23,7 +23,7 @@ class LocalNavigator {
 
 		ControllerState getState() { return state_; }
 
-        void setGlobalPlan( std::vector<geometry_msgs::PoseStamped>& global_plan );
+        void setGlobalPlan( std::vector<geometry_msgs::PoseStamped> global_plan );
 
         /**
          * @brief  Publishes a velocity command of zero to the base
@@ -35,6 +35,7 @@ class LocalNavigator {
 
         ControllerState state_;
         double controller_frequency_, controller_patience_;
+        boost::thread* control_thread_;
         ros::Publisher vel_pub_;
         tf::TransformListener& tf_;
         boost::shared_ptr<nav_core::BaseLocalPlanner> tc_;

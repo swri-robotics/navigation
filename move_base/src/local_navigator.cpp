@@ -48,12 +48,17 @@ LocalNavigator::LocalNavigator(tf::TransformListener& tf) :
     //for comanding the base
     vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
     controller_costmap_ros_->start();
+    
+    state_ = IDLE;
+    //set up the planner's thread
+    control_thread_ = new boost::thread(boost::bind(&LocalNavigator::controlThread, this));
 
 }
 
 LocalNavigator::~LocalNavigator() {
     if(controller_costmap_ros_ != NULL)
         delete controller_costmap_ros_;
+    delete control_thread_;
 }
 
 void LocalNavigator::publishZeroVelocity() {
@@ -64,7 +69,7 @@ void LocalNavigator::publishZeroVelocity() {
     vel_pub_.publish(cmd_vel);
 }
 
-void LocalNavigator::setGlobalPlan( std::vector<geometry_msgs::PoseStamped>& global_plan ) {
+void LocalNavigator::setGlobalPlan( std::vector<geometry_msgs::PoseStamped> global_plan ) {
     controller_plan_ = global_plan;
     if(tc_->setPlan(controller_plan_)){
         state_ = CONTROLLING;

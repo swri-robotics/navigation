@@ -312,6 +312,10 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
           return;
         }
       }
+      
+      if(global_nav_.hasNewPlan()){
+        local_nav_.setGlobalPlan( global_nav_.getPlan() );
+      }
   }
 
     //wake up the planner thread so that it can exit cleanly
