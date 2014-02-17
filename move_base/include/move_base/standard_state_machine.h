@@ -16,6 +16,8 @@ namespace move_base {
     public:
       StandardStateMachine();
       ~StandardStateMachine();
+      
+      virtual void initialize(tf::TransformListener* tf, GlobalNavigator* planner, LocalNavigator* controller);
 
       virtual void reset();
       virtual std::string executeCycle();

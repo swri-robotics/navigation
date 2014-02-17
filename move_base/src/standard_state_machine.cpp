@@ -6,6 +6,16 @@ namespace move_base
 StandardStateMachine::StandardStateMachine() :
     recovery_loader_("nav_core", "nav_core::RecoveryBehavior")
 {
+}
+
+StandardStateMachine::~StandardStateMachine() 
+{
+    recovery_behaviors_.clear();
+}
+
+void StandardStateMachine::initialize(tf::TransformListener* tf, GlobalNavigator* planner, LocalNavigator* controller)
+{
+    StateMachine::initialize(tf, planner, controller);
     ros::NodeHandle private_nh("~");
 
     //we'll assume the radius of the robot to be consistent with what's specified for the costmaps
@@ -21,11 +31,6 @@ StandardStateMachine::StandardStateMachine() :
         loadDefaultRecoveryBehaviors();
     }    
     reset();
-}
-
-StandardStateMachine::~StandardStateMachine() 
-{
-    recovery_behaviors_.clear();
 }
 
 void StandardStateMachine::reset()
