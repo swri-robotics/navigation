@@ -44,6 +44,7 @@
 #include <costmap_2d/Costmap2DConfig.h>
 #include <costmap_2d/footprint.h>
 #include <geometry_msgs/Polygon.h>
+#include <std_msgs/Float32.h>
 #include <dynamic_reconfigure/server.h>
 #include <pluginlib/class_loader.h>
 
