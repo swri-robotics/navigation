@@ -13,6 +13,7 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
     private_nh.param("planner_frequency", planner_frequency_, 0.0);
     private_nh.param("planner_patience", planner_patience_, 5.0);
     planner_plan_ = new std::vector<geometry_msgs::PoseStamped>();
+    latest_plan_ = new std::vector<geometry_msgs::PoseStamped>();
 
     planner_state_ = IDLE;
     plan_state_ = NONE;

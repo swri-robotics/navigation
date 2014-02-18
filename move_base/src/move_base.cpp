@@ -291,6 +291,7 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
           }
 
           goal = goalToGlobalFrame(new_goal.target_pose);
+          global_nav_.setGoal(goal);
 
           //we'll make sure that we reset our state for the next execution cycle
           state_machine_->reset();
