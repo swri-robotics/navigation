@@ -2,6 +2,7 @@
 #define GLOBAL_NAVIGATOR_H_
 #include <nav_core/base_global_planner.h>
 #include <costmap_2d/costmap_2d_ros.h>
+#include <nav_msgs/GetPlan.h>
 namespace move_base {
 
 enum PlannerState { IDLE, PLANNING };
@@ -58,6 +59,14 @@ class GlobalNavigator {
          * @return  True if planning succeeds, false otherwise
          */
         bool makePlan(const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
+        
+         /**
+           * @brief  A service call that can be made when the action is inactive that will return a plan
+           * @param  req The goal request
+           * @param  resp The plan request
+           * @return True if planning succeeded, false otherwise
+           */
+        bool planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp);
 
     private:
         void planThread();
@@ -65,6 +74,7 @@ class GlobalNavigator {
         boost::shared_ptr<nav_core::BaseGlobalPlanner> planner_;
         costmap_2d::Costmap2DROS* planner_costmap_ros_;
         pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
+        ros::ServiceServer make_plan_srv_;
 
         std::vector<geometry_msgs::PoseStamped>* planner_plan_;
         std::vector<geometry_msgs::PoseStamped>* latest_plan_;

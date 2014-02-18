@@ -49,7 +49,6 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
-#include <nav_msgs/GetPlan.h>
 
 #include <pluginlib/class_loader.h>
 #include <std_srvs/Empty.h>
@@ -96,16 +95,6 @@ private:
   bool clearCostmapsService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp);
 
   /**
-   * @brief  A service call that can be made when the action is inactive that will return a plan
-   * @param  req The goal request
-   * @param  resp The plan request
-   * @return True if planning succeeded, false otherwise
-   */
-  bool planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp);
-
-
-
-  /**
    * @brief  Clears obstacles within a window around the robot
    * @param size_x The x size of the window
    * @param size_y The y size of the window
@@ -136,8 +125,6 @@ private:
   tf::Stamped<tf::Pose> global_pose_;
   ros::Publisher current_goal_pub_, vel_pub_, action_goal_pub_;
   ros::Subscriber goal_sub_;
-
-  ros::ServiceServer make_plan_srv_;
 
   boost::recursive_mutex configuration_mutex_;
   dynamic_reconfigure::Server<move_base::MoveBaseConfig> *dsrv_;

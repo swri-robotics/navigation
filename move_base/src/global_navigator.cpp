@@ -14,6 +14,9 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
     private_nh.param("planner_patience", planner_patience_, 5.0);
     planner_plan_ = new std::vector<geometry_msgs::PoseStamped>();
     latest_plan_ = new std::vector<geometry_msgs::PoseStamped>();
+    
+    //advertise a service for getting a plan
+    make_plan_srv_ = private_nh.advertiseService("make_plan", &GlobalNavigator::planService, this);
 
     planner_state_ = IDLE;
     plan_state_ = NONE;
@@ -176,6 +179,62 @@ bool GlobalNavigator::makePlan(const geometry_msgs::PoseStamped& goal, std::vect
 
     return true;
 }
+
+bool GlobalNavigator::planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp){
+    boost::unique_lock< boost::shared_mutex > lock(*(planner_costmap_ros_->getCostmap()->getLock()));
+
+    //make sure we have a costmap for our planner
+    if(planner_costmap_ros_ == NULL){
+        ROS_ERROR("move_base cannot make a plan for you because it doesn't have a costmap");
+        return false;
+    }
+
+    tf::Stamped<tf::Pose> global_pose;
+    if(!planner_costmap_ros_->getRobotPose(global_pose)){
+        ROS_ERROR("move_base cannot make a plan for you because it could not get the start pose of the robot");
+        return false;
+    }
+
+    geometry_msgs::PoseStamped start;
+    //if the user does not specify a start pose, identified by an empty frame id, then use the robot's pose
+    if(req.start.header.frame_id == "")
+        tf::poseStampedTFToMsg(global_pose, start);
+    else
+        start = req.start;
+
+    //if we have a tolerance on the goal point that is greater
+    //than the resolution of the map... compute the full potential function
+    double resolution = planner_costmap_ros_->getCostmap()->getResolution();
+    std::vector<geometry_msgs::PoseStamped> global_plan;
+    geometry_msgs::PoseStamped p;
+    p = req.goal;
+    p.pose.position.y = req.goal.pose.position.y - req.tolerance;
+    bool found_legal = false;
+    while(!found_legal && p.pose.position.y <= req.goal.pose.position.y + req.tolerance){
+        p.pose.position.x = req.goal.pose.position.x - req.tolerance;
+        while(!found_legal && p.pose.position.x <= req.goal.pose.position.x + req.tolerance){
+            if(planner_->makePlan(start, p, global_plan)){
+                if(!global_plan.empty()){
+                    global_plan.push_back(p);
+                    found_legal = true;
+                }
+                else
+                    ROS_DEBUG_NAMED("move_base","Failed to find a  plan to point (%.2f, %.2f)", p.pose.position.x, p.pose.position.y);
+            }
+            p.pose.position.x += resolution*3.0;
+        }
+        p.pose.position.y += resolution*3.0;
+    }
+
+    //copy the plan into a message to send out
+    resp.plan.poses.resize(global_plan.size());
+    for(unsigned int i = 0; i < global_plan.size(); ++i){
+      resp.plan.poses[i] = global_plan[i];
+    }
+
+    return true;
+}
+
 
 
 
