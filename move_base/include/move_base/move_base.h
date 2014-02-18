@@ -130,9 +130,6 @@ private:
   dynamic_reconfigure::Server<move_base::MoveBaseConfig> *dsrv_;
 
   void reconfigureCB(move_base::MoveBaseConfig &config, uint32_t level);
-
-  move_base::MoveBaseConfig last_config_;
-  move_base::MoveBaseConfig default_config_;
   bool setup_;
 };
 }
