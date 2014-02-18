@@ -3,6 +3,7 @@
 
 #include<move_base/state_machine.h>
 #include<nav_core/recovery_behavior.h>
+#include<move_base/StandardStateMachineConfig.h>
 
 enum SState { STANDARD, RECOVERY };
 enum RecoveryTrigger
@@ -44,6 +45,10 @@ namespace move_base {
   unsigned int recovery_index_;
   bool clearing_rotation_allowed_, recovery_behavior_enabled_;
   double base_radius_, conservative_reset_dist_, clearing_radius_;
+  
+  dynamic_reconfigure::Server<move_base::StandardStateMachineConfig> *dsrv_;
+  void reconfigureCB(move_base::StandardStateMachineConfig &config, uint32_t level);
+  
   };
 };
 

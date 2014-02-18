@@ -2,6 +2,7 @@
 #define LOCAL_NAVIGATOR_H_
 #include <nav_core/base_local_planner.h>
 #include <costmap_2d/costmap_2d_ros.h>
+#include <move_base/LocalNavConfig.h>
 
 enum ControllerState { IDLE, CONTROLLING, OSCILLATING, ERROR, INVALID_CONTROL, FINISHED };
 
@@ -44,10 +45,13 @@ class LocalNavigator {
         std::vector<geometry_msgs::PoseStamped> controller_plan_;
         bool c_freq_change_;
 
-
-  double oscillation_timeout_, oscillation_distance_;
-  ros::Time last_valid_control_, last_oscillation_reset_;
-  geometry_msgs::PoseStamped oscillation_pose_;
+        double oscillation_timeout_, oscillation_distance_;
+        ros::Time last_valid_control_, last_oscillation_reset_;
+        geometry_msgs::PoseStamped oscillation_pose_;
+  
+        dynamic_reconfigure::Server<move_base::LocalNavConfig> *dsrv_;
+        void reconfigureCB(move_base::LocalNavConfig &config, uint32_t level);
+  
 };
 
 }; // namespace move_base

@@ -18,6 +18,9 @@ add_definitions(${EIGEN_DEFINITIONS})
 # dynamic reconfigure
 generate_dynamic_reconfigure_options(
     cfg/MoveBase.cfg
+    cfg/GlobalNav.cfg
+    cfg/LocalNav.cfg
+    cfg/StandardStateMachine.cfg
 )
 
 catkin_package(

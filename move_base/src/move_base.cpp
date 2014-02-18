@@ -77,123 +77,13 @@ MoveBase::MoveBase(tf::TransformListener& tf) :
     dynamic_reconfigure::Server<move_base::MoveBaseConfig>::CallbackType cb = boost::bind(&MoveBase::reconfigureCB, this, _1, _2);
     dsrv_->setCallback(cb);*/
 }
-/*
+
   void MoveBase::reconfigureCB(move_base::MoveBaseConfig &config, uint32_t level){
     boost::recursive_mutex::scoped_lock l(configuration_mutex_);
 
-    //The first time we're called, we just want to make sure we have the
-    //original configuration
-    if(!setup_)
-    {
-      last_config_ = config;
-      default_config_ = config;
-      setup_ = true;
-      return;
-    }
+    //TODO: shutdown_costmaps_ = config.shutdown_costmaps;
 
-    if(config.restore_defaults) {
-      config = default_config_;
-      //if someone sets restore defaults on the parameter server, prevent looping
-      config.restore_defaults = false;
-    }
-
-    if(planner_frequency_ != config.planner_frequency)
-    {
-      planner_frequency_ = config.planner_frequency;
-      p_freq_change_ = true;
-    }
-
-    if(controller_frequency_ != config.controller_frequency)
-    {
-      controller_frequency_ = config.controller_frequency;
-      c_freq_change_ = true;
-    }
-
-    planner_patience_ = config.planner_patience;
-    controller_patience_ = config.controller_patience;
-    conservative_reset_dist_ = config.conservative_reset_dist;
-
-    recovery_behavior_enabled_ = config.recovery_behavior_enabled;
-    clearing_rotation_allowed_ = config.clearing_rotation_allowed;
-    shutdown_costmaps_ = config.shutdown_costmaps;
-
-    oscillation_timeout_ = config.oscillation_timeout;
-    oscillation_distance_ = config.oscillation_distance;
-    if(config.base_global_planner != last_config_.base_global_planner) {
-      boost::shared_ptr<nav_core::BaseGlobalPlanner> old_planner = planner_;
-      //initialize the global planner
-      ROS_INFO("Loading global planner %s", config.base_global_planner.c_str());
-      try {
-        //check if a non fully qualified name has potentially been passed in
-        if(!bgp_loader_.isClassAvailable(config.base_global_planner)){
-          std::vector<std::string> classes = bgp_loader_.getDeclaredClasses();
-          for(unsigned int i = 0; i < classes.size(); ++i){
-            if(config.base_global_planner == bgp_loader_.getName(classes[i])){
-              //if we've found a match... we'll get the fully qualified name and break out of the loop
-              ROS_WARN("Planner specifications should now include the package name. You are using a deprecated API. Please switch from %s to %s in your yaml file.",
-                  config.base_global_planner.c_str(), classes[i].c_str());
-              config.base_global_planner = classes[i];
-              break;
-            }
-          }
-        }
-
-        planner_ = bgp_loader_.createInstance(config.base_global_planner);
-
-        // wait for the current planner to finish planning
-        boost::unique_lock<boost::mutex> lock(planner_mutex_);
-
-        // Clean up before initializing the new planner
-        planner_plan_->clear();
-        latest_plan_->clear();
-        controller_plan_->clear();
-        resetState();
-        planner_->initialize(bgp_loader_.getName(config.base_global_planner), planner_costmap_ros_);
-
-        lock.unlock();
-      } catch (const pluginlib::PluginlibException& ex)
-      {
-        ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", config.base_global_planner.c_str(), ex.what());
-        planner_ = old_planner;
-        config.base_global_planner = last_config_.base_global_planner;
-      }
-    }
-
-    if(config.base_local_planner != last_config_.base_local_planner){
-      boost::shared_ptr<nav_core::BaseLocalPlanner> old_planner = tc_;
-      //create a local planner
-      try {
-        //check if a non fully qualified name has potentially been passed in
-        ROS_INFO("Loading local planner: %s", config.base_local_planner.c_str());
-        if(!blp_loader_.isClassAvailable(config.base_local_planner)){
-          std::vector<std::string> classes = blp_loader_.getDeclaredClasses();
-          for(unsigned int i = 0; i < classes.size(); ++i){
-            if(config.base_local_planner == blp_loader_.getName(classes[i])){
-              //if we've found a match... we'll get the fully qualified name and break out of the loop
-              ROS_WARN("Planner specifications should now include the package name. You are using a deprecated API. Please switch from %s to %s in your yaml file.",
-                  config.base_local_planner.c_str(), classes[i].c_str());
-              config.base_local_planner = classes[i];
-              break;
-            }
-          }
-        }
-        tc_ = blp_loader_.createInstance(config.base_local_planner);
-        // Clean up before initializing the new planner
-        planner_plan_->clear();
-        latest_plan_->clear();
-        controller_plan_->clear();
-        resetState();
-        tc_->initialize(blp_loader_.getName(config.base_local_planner), &tf_, controller_costmap_ros_);
-      } catch (const pluginlib::PluginlibException& ex)
-      {
-        ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", config.base_local_planner.c_str(), ex.what());
-        tc_ = old_planner;
-        config.base_local_planner = last_config_.base_local_planner;
-      }
-    }
-
-    last_config_ = config;
-  }*/
+  }
 
 void MoveBase::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goal) {
     ROS_DEBUG_NAMED("move_base","In ROS goal callback, wrapping the PoseStamped in the action message and re-sending to the server.");

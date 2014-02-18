@@ -21,16 +21,23 @@ void StandardStateMachine::initialize(tf::TransformListener* tf, GlobalNavigator
     //we'll assume the radius of the robot to be consistent with what's specified for the costmaps
     private_nh.param("local_costmap/circumscribed_radius", base_radius_, 0.46);
     private_nh.param("clearing_radius", clearing_radius_,  base_radius_);
-    private_nh.param("conservative_reset_dist", conservative_reset_dist_, 3.0);
-
-    private_nh.param("clearing_rotation_allowed", clearing_rotation_allowed_, true);
-    private_nh.param("recovery_behavior_enabled", recovery_behavior_enabled_, true);
 
     //load any user specified recovery behaviors, and if that fails load the defaults
     if(!loadRecoveryBehaviors(private_nh)) {
         loadDefaultRecoveryBehaviors();
     }    
+    
+    dsrv_ = new dynamic_reconfigure::Server<move_base::StandardStateMachineConfig>(ros::NodeHandle("~"));
+    dynamic_reconfigure::Server<move_base::StandardStateMachineConfig>::CallbackType cb = boost::bind(&StandardStateMachine::reconfigureCB, this, _1, _2);
+    dsrv_->setCallback(cb);
+    
     reset();
+}
+
+void StandardStateMachine::reconfigureCB(move_base::StandardStateMachineConfig &config, uint32_t level){
+    conservative_reset_dist_ = config.conservative_reset_dist;
+    recovery_behavior_enabled_ = config.recovery_behavior_enabled;
+    clearing_rotation_allowed_ = config.clearing_rotation_allowed;
 }
 
 void StandardStateMachine::reset()

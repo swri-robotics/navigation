@@ -10,8 +10,6 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
     ros::NodeHandle nh;
     std::string global_planner;
     private_nh.param("base_global_planner", global_planner, std::string("navfn/NavfnROS"));
-    private_nh.param("planner_frequency", planner_frequency_, 0.0);
-    private_nh.param("planner_patience", planner_patience_, 5.0);
     planner_plan_ = new std::vector<geometry_msgs::PoseStamped>();
     latest_plan_ = new std::vector<geometry_msgs::PoseStamped>();
     
@@ -48,6 +46,10 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
         ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", global_planner.c_str(), ex.what());
         exit(1);
     }
+    
+    dsrv_ = new dynamic_reconfigure::Server<move_base::GlobalNavConfig>(ros::NodeHandle("~"));
+    dynamic_reconfigure::Server<move_base::GlobalNavConfig>::CallbackType cb = boost::bind(&GlobalNavigator::reconfigureCB, this, _1, _2);
+    dsrv_->setCallback(cb);
 
     planner_costmap_ros_->start();
 
@@ -64,6 +66,18 @@ GlobalNavigator::~GlobalNavigator() {
     delete planner_thread_;
     delete planner_plan_;
 }
+
+
+void GlobalNavigator::reconfigureCB(move_base::GlobalNavConfig &config, uint32_t level){
+    if(planner_frequency_ != config.planner_frequency)
+    {
+        planner_frequency_ = config.planner_frequency;
+        p_freq_change_ = true;
+    }
+
+    planner_patience_ = config.planner_patience;
+}
+
 
 void GlobalNavigator::setGoal(geometry_msgs::PoseStamped goal) {
     planner_goal_ = goal;

@@ -11,13 +11,6 @@ LocalNavigator::LocalNavigator(tf::TransformListener& tf) :
     std::string local_planner;
     private_nh.param("base_local_planner", local_planner, std::string("base_local_planner/TrajectoryPlannerROS"));
 
-
-    private_nh.param("controller_frequency", controller_frequency_, 20.0);
-    private_nh.param("controller_patience", controller_patience_, 15.0);
-
-    private_nh.param("oscillation_timeout", oscillation_timeout_, 0.0);
-    private_nh.param("oscillation_distance", oscillation_distance_, 0.5);
-
     //create the ros wrapper for the controller's costmap... and initializer a pointer we'll use with the underlying map
     controller_costmap_ros_ = new costmap_2d::Costmap2DROS("local_costmap", tf_);
     controller_costmap_ros_->pause();
@@ -47,6 +40,11 @@ LocalNavigator::LocalNavigator(tf::TransformListener& tf) :
 
     //for comanding the base
     vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    
+    dsrv_ = new dynamic_reconfigure::Server<move_base::LocalNavConfig>(ros::NodeHandle("~"));
+    dynamic_reconfigure::Server<move_base::LocalNavConfig>::CallbackType cb = boost::bind(&LocalNavigator::reconfigureCB, this, _1, _2);
+    dsrv_->setCallback(cb);
+    
     controller_costmap_ros_->start();
     
     state_ = IDLE;
@@ -59,6 +57,19 @@ LocalNavigator::~LocalNavigator() {
     if(controller_costmap_ros_ != NULL)
         delete controller_costmap_ros_;
     delete control_thread_;
+}
+
+void LocalNavigator::reconfigureCB(move_base::LocalNavConfig &config, uint32_t level){
+
+    if(controller_frequency_ != config.controller_frequency)
+    {
+      controller_frequency_ = config.controller_frequency;
+      c_freq_change_ = true;
+    }
+    controller_patience_ = config.controller_patience;
+    oscillation_timeout_ = config.oscillation_timeout;
+    oscillation_distance_ = config.oscillation_distance;
+
 }
 
 void LocalNavigator::publishZeroVelocity() {

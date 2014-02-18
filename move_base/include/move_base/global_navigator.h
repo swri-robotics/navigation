@@ -3,6 +3,8 @@
 #include <nav_core/base_global_planner.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <nav_msgs/GetPlan.h>
+#include <move_base/GlobalNavConfig.h>
+
 namespace move_base {
 
 enum PlannerState { IDLE, PLANNING };
@@ -90,6 +92,10 @@ class GlobalNavigator {
         PlannerState planner_state_;
         PlanState plan_state_;
         bool has_new_plan_;
+
+        dynamic_reconfigure::Server<move_base::GlobalNavConfig> *dsrv_;
+        void reconfigureCB(move_base::GlobalNavConfig &config, uint32_t level);
+
 };
 
 }; // namespace move_base
