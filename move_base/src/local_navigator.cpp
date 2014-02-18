@@ -109,14 +109,13 @@ void LocalNavigator::controlThread() {
         // check oscillation progress
         tf::Stamped<tf::Pose> global_pose;
         controller_costmap_ros_->getRobotPose(global_pose);
-        geometry_msgs::PoseStamped current_position;
-        tf::poseStampedTFToMsg(global_pose, current_position);
+        tf::poseStampedTFToMsg(global_pose, current_position_);
 
         //check to see if we've moved far enough to reset our oscillation timeout
-        if(pose_distance(current_position, oscillation_pose_) >= oscillation_distance_)
+        if(pose_distance(current_position_, oscillation_pose_) >= oscillation_distance_)
         {
           last_oscillation_reset_ = ros::Time::now();
-          oscillation_pose_ = current_position;
+          oscillation_pose_ = current_position_;
           // TODO: reset?  oscillation
         }
 

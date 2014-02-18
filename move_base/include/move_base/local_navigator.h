@@ -30,6 +30,8 @@ class LocalNavigator {
          * @brief  Publishes a velocity command of zero to the base
          */
         void publishZeroVelocity();
+        
+        geometry_msgs::PoseStamped* getCurrentPosition(){ return &current_position_; }
 
     private:
         void controlThread();
@@ -44,6 +46,8 @@ class LocalNavigator {
         pluginlib::ClassLoader<nav_core::BaseLocalPlanner> blp_loader_;
         std::vector<geometry_msgs::PoseStamped> controller_plan_;
         bool c_freq_change_;
+        
+        geometry_msgs::PoseStamped current_position_;
 
         double oscillation_timeout_, oscillation_distance_;
         ros::Time last_valid_control_, last_oscillation_reset_;

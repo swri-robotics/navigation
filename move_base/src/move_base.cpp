@@ -209,6 +209,11 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
       }else if(global_nav_.getPlanState()==FAILED){
         local_nav_.publishZeroVelocity();
       }
+      
+      //push the feedback out
+      move_base_msgs::MoveBaseFeedback feedback;
+      feedback.base_position = *local_nav_.getCurrentPosition();
+      as_->publishFeedback(feedback);
   }
 
     //wake up the planner thread so that it can exit cleanly
@@ -219,12 +224,5 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
     return;
 }
 
-/* TODO:
-    //push the feedback out
-    move_base_msgs::MoveBaseFeedback feedback;
-    feedback.base_position = current_position;
-    as_->publishFeedback(feedback);
-
-*/
 
 };
