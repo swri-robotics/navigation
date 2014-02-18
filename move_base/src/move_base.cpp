@@ -206,6 +206,8 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
       
       if(global_nav_.hasNewPlan()){
         local_nav_.setGlobalPlan( global_nav_.getPlan() );
+      }else if(global_nav_.getPlanState()==FAILED){
+        local_nav_.publishZeroVelocity();
       }
   }
 
@@ -217,7 +219,7 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
     return;
 }
 
-/*
+/* TODO:
     //push the feedback out
     move_base_msgs::MoveBaseFeedback feedback;
     feedback.base_position = current_position;

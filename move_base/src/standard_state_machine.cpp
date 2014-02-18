@@ -46,7 +46,8 @@ void StandardStateMachine::reset()
     recovery_index_ = 0;
     state_ = STANDARD;
     recovery_trigger_ = PLANNING_R;
-    /*
+    controller_->publishZeroVelocity();
+    /* TODO:
     
           planner_goal_ = goal;
           runPlanner_ = true;

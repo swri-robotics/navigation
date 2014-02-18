@@ -160,9 +160,6 @@ void GlobalNavigator::planThread() {
     }
 }
 
-///TODO:          local_nav_.publishZeroVelocity();
-
-
 bool GlobalNavigator::makePlan(const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan) {
     boost::unique_lock< boost::shared_mutex > lock(*(planner_costmap_ros_->getCostmap()->getLock()));
 
