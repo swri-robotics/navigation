@@ -30,7 +30,7 @@ void StandardStateMachine::initialize(tf::TransformListener* tf, GlobalNavigator
         loadDefaultRecoveryBehaviors();
     }    
     
-    dsrv_ = new dynamic_reconfigure::Server<move_base::StandardStateMachineConfig>(ros::NodeHandle("~"));
+    dsrv_ = new dynamic_reconfigure::Server<move_base::StandardStateMachineConfig>(ros::NodeHandle("~/standard_state_machine"));
     dynamic_reconfigure::Server<move_base::StandardStateMachineConfig>::CallbackType cb = boost::bind(&StandardStateMachine::reconfigureCB, this, _1, _2);
     dsrv_->setCallback(cb);
     

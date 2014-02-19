@@ -47,7 +47,7 @@ GlobalNavigator::GlobalNavigator(tf::TransformListener& tf) :
         exit(1);
     }
     
-    dsrv_ = new dynamic_reconfigure::Server<move_base::GlobalNavConfig>(ros::NodeHandle("~"));
+    dsrv_ = new dynamic_reconfigure::Server<move_base::GlobalNavConfig>(ros::NodeHandle("~/global_nav"));
     dynamic_reconfigure::Server<move_base::GlobalNavConfig>::CallbackType cb = boost::bind(&GlobalNavigator::reconfigureCB, this, _1, _2);
     dsrv_->setCallback(cb);
 

@@ -41,7 +41,7 @@ LocalNavigator::LocalNavigator(tf::TransformListener& tf) :
     //for comanding the base
     vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
     
-    dsrv_ = new dynamic_reconfigure::Server<move_base::LocalNavConfig>(ros::NodeHandle("~"));
+    dsrv_ = new dynamic_reconfigure::Server<move_base::LocalNavConfig>(ros::NodeHandle("~/local_nav"));
     dynamic_reconfigure::Server<move_base::LocalNavConfig>::CallbackType cb = boost::bind(&LocalNavigator::reconfigureCB, this, _1, _2);
     dsrv_->setCallback(cb);
     
