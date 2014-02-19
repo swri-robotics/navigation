@@ -74,8 +74,8 @@ MoveBase::MoveBase(tf::TransformListener& tf) :
 
     // Load the state machine
     try {
-        //state_machine_ = state_machine_loader_.createInstance(sm_name);
-        //state_machine_->initialize(&tf, &global_nav_, &local_nav_);
+        state_machine_ = state_machine_loader_.createInstance(sm_name);
+        state_machine_->initialize(&tf, &global_nav_, &local_nav_);
     } catch (const pluginlib::PluginlibException& ex) {
         ROS_FATAL("Failed to create the %s state machine, are you sure it is properly registered and that the containing library is built? Exception: %s", sm_name.c_str(), ex.what());
         exit(1);
@@ -214,10 +214,18 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
         }
       }
       
+      state_machine_->executeCycle();
+      
       if(global_nav_.hasNewPlan()){
         local_nav_.setGlobalPlan( global_nav_.getPlan() );
       }else if(global_nav_.getPlanState()==FAILED){
         local_nav_.publishZeroVelocity();
+      }
+      
+      if(local_nav_.getState()==FINISHED){
+       state_machine_->reset();
+       as_->setSucceeded(move_base_msgs::MoveBaseResult(), "Goal reached.");
+       return;
       }
       
       //push the feedback out
