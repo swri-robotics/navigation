@@ -1,0 +1,6 @@
+<library path="libstandard_state_machine">
+  <class type="move_base::StandardStateMachine" base_class_type="move_base::StateMachine">
+    <description>
+    </description>
+  </class>
+</library>

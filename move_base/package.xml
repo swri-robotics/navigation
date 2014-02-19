@@ -53,5 +53,8 @@
     <run_depend>message_generation</run_depend>
     <run_depend>std_srvs</run_depend>
     <run_depend>dynamic_reconfigure</run_depend>
+  <export>
+      <move_base plugin="${prefix}/state_machine_plugin.xml" />
+  </export>
 
 </package>

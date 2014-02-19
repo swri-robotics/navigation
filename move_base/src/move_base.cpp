@@ -42,14 +42,14 @@
 #include <boost/thread.hpp>
 
 #include <geometry_msgs/Twist.h>
-#include <move_base/standard_state_machine.h>
 
 namespace move_base {
 
 MoveBase::MoveBase(tf::TransformListener& tf) :
     tf_(tf), as_(NULL),
     global_nav_(tf), local_nav_(tf),
- setup_(false) {
+ setup_(false),
+    state_machine_loader_("move_base", "move_base::StateMachine") {
 
     as_ = new MoveBaseActionServer(ros::NodeHandle(), "move_base", boost::bind(&MoveBase::executeCb, this, _1), false);
 
@@ -67,8 +67,19 @@ MoveBase::MoveBase(tf::TransformListener& tf) :
     ros::NodeHandle simple_nh("move_base_simple");
     goal_sub_ = simple_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, boost::bind(&MoveBase::goalCB, this, _1));
 
-    state_machine_ = new StandardStateMachine();
-    state_machine_->initialize(&tf, &global_nav_, &local_nav_);
+
+    std::string sm_name;
+    private_nh.param("state_machine", sm_name, std::string("move_base::StandardStateMachine"));
+    ROS_INFO("Using state machine: %s", sm_name.c_str());
+
+    // Load the state machine
+    try {
+        //state_machine_ = state_machine_loader_.createInstance(sm_name);
+        //state_machine_->initialize(&tf, &global_nav_, &local_nav_);
+    } catch (const pluginlib::PluginlibException& ex) {
+        ROS_FATAL("Failed to create the %s state machine, are you sure it is properly registered and that the containing library is built? Exception: %s", sm_name.c_str(), ex.what());
+        exit(1);
+    }
 
     //we're all set up now so we can start the action server
     as_->start();
@@ -96,7 +107,6 @@ void MoveBase::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goal) {
 
 MoveBase::~MoveBase() {
     delete dsrv_;
-    delete state_machine_;
     if(as_ != NULL)
         delete as_;
 }

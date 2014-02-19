@@ -1,4 +1,7 @@
 #include<move_base/standard_state_machine.h>
+#include <pluginlib/class_list_macros.h>
+
+PLUGINLIB_EXPORT_CLASS(move_base::StandardStateMachine, move_base::StateMachine)
 
 namespace move_base
 {

@@ -24,6 +24,8 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
+    INCLUDE_DIRS
+        include
     CATKIN_DEPENDS
         roscpp
         dynamic_reconfigure
@@ -37,9 +39,13 @@ include_directories(
 #    ${Boost_INCLUDE_DIRS}
 )
 
+add_library(standard_state_machine
+    src/standard_state_machine.cpp    
+)
+
 # move_base
 add_library(move_base
-  src/global_navigator.cpp src/local_navigator.cpp src/standard_state_machine.cpp src/move_base.cpp 
+  src/global_navigator.cpp src/local_navigator.cpp  src/move_base.cpp 
 )
 target_link_libraries(move_base
     ${Boost_LIBRARIES}
@@ -74,3 +80,6 @@ install(
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+install(FILES state_machine_plugin.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

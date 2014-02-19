@@ -120,7 +120,7 @@ private:
 
   GlobalNavigator global_nav_;
   LocalNavigator local_nav_;
-  StateMachine* state_machine_;
+  boost::shared_ptr<StateMachine> state_machine_;
 
   tf::Stamped<tf::Pose> global_pose_;
   ros::Publisher current_goal_pub_, vel_pub_, action_goal_pub_;
@@ -131,6 +131,8 @@ private:
 
   void reconfigureCB(move_base::MoveBaseConfig &config, uint32_t level);
   bool setup_;
+  
+  pluginlib::ClassLoader<StateMachine> state_machine_loader_;
 };
 }
 ;
