@@ -29,6 +29,7 @@ catkin_package(
     CATKIN_DEPENDS
         roscpp
         dynamic_reconfigure
+        nav_core
 )
 
 include_directories(

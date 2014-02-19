@@ -21,7 +21,7 @@ namespace move_base {
       virtual void initialize(tf::TransformListener* tf, GlobalNavigator* planner, LocalNavigator* controller);
 
       virtual void reset();
-      virtual std::string executeCycle();
+      virtual void executeCycle(int* status, std::string* message);
 
     private:
       SState state_;

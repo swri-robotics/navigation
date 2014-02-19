@@ -214,18 +214,18 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
         }
       }
       
-      state_machine_->executeCycle();
+      int status;
+      std::string message;
+      state_machine_->executeCycle(&status, &message);
       
-      if(global_nav_.hasNewPlan()){
-        local_nav_.setGlobalPlan( global_nav_.getPlan() );
-      }else if(global_nav_.getPlanState()==FAILED){
-        local_nav_.publishZeroVelocity();
-      }
-      
-      if(local_nav_.getState()==FINISHED){
+      if(status>0){
        state_machine_->reset();
-       as_->setSucceeded(move_base_msgs::MoveBaseResult(), "Goal reached.");
+       as_->setSucceeded(move_base_msgs::MoveBaseResult(), message);
        return;
+      }else if(status<0){
+		state_machine_->reset();
+        as_->setAborted(move_base_msgs::MoveBaseResult(), message);
+        return;
       }
       
       //push the feedback out

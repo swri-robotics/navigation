@@ -65,7 +65,7 @@ void StandardStateMachine::reset()
 
 }
 
-std::string StandardStateMachine::executeCycle()
+void StandardStateMachine::executeCycle(int* status, std::string* message)
 {
     if(planner_->getPlanState() == FAILED){
         state_ = RECOVERY;
@@ -88,8 +88,27 @@ std::string StandardStateMachine::executeCycle()
         }
     }
     
+    
+      
+      if(planner_->hasNewPlan()){
+        controller_->setGlobalPlan( planner_->getPlan() );
+      }else if(planner_->getPlanState()==FAILED){
+        controller_->publishZeroVelocity();
+      }
+      
+      if(controller_->getState()==FINISHED){
+       reset();
+       *status = 1;
+       *message = "Goal Reached Motherfuckers!";
+       return;
+      }
+    
+    
     if(state_==STANDARD)
-        return "";
+    {
+        *status = 0;
+        return;
+    }
         
     ROS_DEBUG_NAMED("move_base","In clearing/recovery state");
     
@@ -104,21 +123,25 @@ std::string StandardStateMachine::executeCycle()
 
       //update the index of the next recovery behavior that we'll try
       recovery_index_++;
+      *status = 0;
     }
     else{
       ROS_DEBUG_NAMED("move_base_recovery","All recovery behaviors have failed, locking the planner and disabling it.");
 
       if(recovery_trigger_ == CONTROLLING_R){
         ROS_ERROR("Aborting because a valid control could not be found. Even after executing all recovery behaviors");
-        return "Failed to find a valid control. Even after executing recovery behaviors.";
+        *status = -1;
+        *message = "Failed to find a valid control. Even after executing recovery behaviors.";
       }
       else if(recovery_trigger_ == PLANNING_R){
         ROS_ERROR("Aborting because a valid plan could not be found. Even after executing all recovery behaviors");
-        return "Failed to find a valid plan. Even after executing recovery behaviors.";
+        *status = -1;
+        *message ="Failed to find a valid plan. Even after executing recovery behaviors.";
       }
       else if(recovery_trigger_ == OSCILLATION_R){
         ROS_ERROR("Aborting because the robot appears to be oscillating over and over. Even after executing all recovery behaviors");
-        return "Robot is oscillating. Even after executing recovery behaviors.";
+        *status = -1;
+        *message ="Robot is oscillating. Even after executing recovery behaviors.";
       }
     }
 }

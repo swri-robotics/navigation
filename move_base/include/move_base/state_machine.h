@@ -16,7 +16,15 @@ namespace move_base {
       }
 
       virtual void reset() = 0;
-      virtual std::string executeCycle() = 0;
+      
+      /**
+       * Executes one iteration of the state machine. 
+       * Sets status to 1, if complete
+       *                0, if still working
+       *               -1, if failed. 
+       * Also optionally sets error/success message. 
+       */
+      virtual void executeCycle(int* status, std::string* message) = 0;
 
     protected:
       StateMachine(){}
