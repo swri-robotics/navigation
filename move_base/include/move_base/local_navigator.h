@@ -23,6 +23,8 @@ class LocalNavigator {
         }
 
 		ControllerState getState() { return state_; }
+		
+		void reset();
 
         void setGlobalPlan( std::vector<geometry_msgs::PoseStamped> global_plan );
 

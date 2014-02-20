@@ -72,6 +72,11 @@ void LocalNavigator::reconfigureCB(move_base::LocalNavConfig &config, uint32_t l
 
 }
 
+void LocalNavigator::reset() {
+    state_ = IDLE;
+    publishZeroVelocity();
+}
+
 void LocalNavigator::publishZeroVelocity() {
     geometry_msgs::Twist cmd_vel;
     cmd_vel.linear.x = 0.0;
