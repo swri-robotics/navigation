@@ -1,4 +1,5 @@
 #include<move_base/global_navigator.h>
+#include<move_base/path_math.h>
 
 namespace move_base {
 
@@ -81,13 +82,31 @@ void GlobalNavigator::reconfigureCB(move_base::GlobalNavConfig &config, uint32_t
 
 void GlobalNavigator::setGoal(geometry_msgs::PoseStamped goal) {
     planner_goal_ = goal;
-    replan();
+    replan(true);
 }
 
-void GlobalNavigator::replan(){
+
+void GlobalNavigator::updatePosition(geometry_msgs::PoseStamped pos){ 
+    current_pos_ = pos;
+    if(distance_travelled_==-1.0){
+        prev_ = current_pos_;
+        distance_travelled_ = 0.0;
+    }else{
+        distance_travelled_ += pose_distance(prev_, current_pos_);
+        prev_ = current_pos_;
+    }    
+    
+    int closest = get_closest(current_pos_, latest_plan_);
+    distance_left_ = path_distance(latest_plan_, closest);
+}
+
+void GlobalNavigator::replan(bool reset_data){
     plan_state_ = NONE;
     planner_state_ = PLANNING;
     has_new_plan_ = false;
+    if(reset_data)
+        distance_travelled_ = -1.0;
+        
     planner_cond_.notify_one();
     
 }

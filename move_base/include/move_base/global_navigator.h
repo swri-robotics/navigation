@@ -51,8 +51,9 @@ class GlobalNavigator {
         }
 
 
+        void updatePosition(geometry_msgs::PoseStamped pos);
         void setGoal(geometry_msgs::PoseStamped goal);
-        void replan();
+        void replan(bool reset_values=false);
 
         /**
          * @brief  Make a new global plan
@@ -69,6 +70,10 @@ class GlobalNavigator {
            * @return True if planning succeeded, false otherwise
            */
         bool planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp);
+        
+        double getDistanceTravelled(){ return distance_travelled_; }
+        double getDistanceLeft(){ return distance_left_; }
+        double getPercentComplete(){ return distance_travelled_ / (distance_travelled_ + distance_left_); }
 
     private:
         void planThread();
@@ -81,13 +86,15 @@ class GlobalNavigator {
         std::vector<geometry_msgs::PoseStamped>* planner_plan_;
         std::vector<geometry_msgs::PoseStamped>* latest_plan_;
 
-        geometry_msgs::PoseStamped planner_goal_;
+        geometry_msgs::PoseStamped current_pos_, prev_, planner_goal_;
         bool p_freq_change_;
         boost::condition_variable planner_cond_;
         ros::Time last_valid_plan_;
         boost::mutex planner_mutex_;
         boost::thread* planner_thread_;
         double planner_frequency_, planner_patience_;
+        
+        double distance_travelled_, distance_left_;
 
         PlannerState planner_state_;
         PlanState plan_state_;

@@ -46,7 +46,7 @@ add_library(standard_state_machine
 
 # move_base
 add_library(move_base
-  src/global_navigator.cpp src/local_navigator.cpp  src/move_base.cpp 
+  src/global_navigator.cpp src/local_navigator.cpp src/path_math.cpp src/move_base.cpp 
 )
 target_link_libraries(move_base
     ${Boost_LIBRARIES}

@@ -175,7 +175,7 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
     current_goal_pub_.publish(goal);
 
     std::vector<geometry_msgs::PoseStamped> global_plan;
-    
+        
     ros::Rate rate(10);
     ros::NodeHandle n;
     while(n.ok())
@@ -231,6 +231,13 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
       //push the feedback out
       move_base_msgs::MoveBaseFeedback feedback;
       feedback.base_position = *local_nav_.getCurrentPosition();
+      
+      global_nav_.updatePosition(feedback.base_position);
+
+      feedback.percent_complete = global_nav_.getPercentComplete();
+      feedback.distance_travelled = global_nav_.getDistanceTravelled();
+      feedback.estimated_distance_remaining = global_nav_.getDistanceLeft();
+     
       as_->publishFeedback(feedback);
   }
 

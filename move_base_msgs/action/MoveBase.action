@@ -2,3 +2,6 @@ geometry_msgs/PoseStamped target_pose
 ---
 ---
 geometry_msgs/PoseStamped base_position
+float32 percent_complete
+float32 distance_travelled
+float32 estimated_distance_remaining
