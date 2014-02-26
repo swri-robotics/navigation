@@ -41,10 +41,32 @@ catkin_package(
         pluginlib
 )
 
-add_library(dwa_local_planner src/dwa_planner.cpp src/dwa_planner_ros.cpp)
+add_library(cost_functions 
+    src/map_grid_cost_function.cpp
+    src/goal_dist_cost_function.cpp
+    src/path_dist_cost_function.cpp
+    src/offset_grid_cost_function.cpp
+    src/goal_align_cost_function.cpp
+    src/path_align_cost_function.cpp
+    src/obstacle_cost_function.cpp
+    src/oscillation_cost_function.cpp
+    src/prefer_forward_cost_function.cpp
+) 
+
+add_library(dwa_local_planner
+    src/scale_manager.cpp
+    src/dwa_planner.cpp
+    src/dwa_planner_ros.cpp
+    src/simple_scored_sampling_planner.cpp
+)
+target_link_libraries(cost_functions base_local_planner)
 target_link_libraries(dwa_local_planner base_local_planner)
+
 add_dependencies(dwa_local_planner dwa_local_planner_gencfg)
 add_dependencies(dwa_local_planner nav_msgs_gencpp)
+
+add_executable(standalone_planner src/standalone_planner.cpp)
+target_link_libraries(standalone_planner dwa_local_planner)
 
 install(TARGETS dwa_local_planner
        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

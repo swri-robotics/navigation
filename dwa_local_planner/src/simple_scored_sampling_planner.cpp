@@ -35,34 +35,42 @@
  * Author: TKruse
  *********************************************************************/
 
-#include <base_local_planner/simple_scored_sampling_planner.h>
+#include <dwa_local_planner/simple_scored_sampling_planner.h>
 
 #include <ros/console.h>
 
-namespace base_local_planner {
+using base_local_planner::Trajectory;
+using base_local_planner::TrajectorySampleGenerator;
+
+namespace dwa_local_planner {
   
-  SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples) {
+  SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<CostFunctionPointer >& critics, int max_samples, bool debug_paths) {
     max_samples_ = max_samples;
     gen_list_ = gen_list;
     critics_ = critics;
+    debug_paths_ = debug_paths;
   }
 
   double SimpleScoredSamplingPlanner::scoreTrajectory(Trajectory& traj, double best_traj_cost) {
     double traj_cost = 0;
     int gen_id = 0;
-    for(std::vector<TrajectoryCostFunction*>::iterator score_function = critics_.begin(); score_function != critics_.end(); ++score_function) {
-      TrajectoryCostFunction* score_function_p = *score_function;
-      if (score_function_p->getScale() == 0) {
+    if(debug_paths_)
+    {
+        ROS_INFO("Trajectory: %.2f %.2f %.2f ==========", traj.xv_, traj.yv_, traj.thetav_);
+    }
+    COST_ITERATOR(score_function, critics_) { 
+      if ((*score_function)->getScale() == 0) {
         continue;
       }
-      double cost = score_function_p->scoreTrajectory(traj);
+      double cost = (*score_function)->scoreTrajectory(traj);
       if (cost < 0) {
         ROS_DEBUG("Velocity %.3lf, %.3lf, %.3lf discarded by cost function  %d with cost: %f", traj.xv_, traj.yv_, traj.thetav_, gen_id, cost);
         traj_cost = cost;
         break;
       }
+      if(debug_paths_){ ROS_INFO("\t%20s %.2f", (*score_function)->getName().c_str(), cost); }
       if (cost != 0) {
-        cost *= score_function_p->getScale();
+        cost *= (*score_function)->getScale();
       }
       traj_cost += cost;
       if (best_traj_cost > 0) {
@@ -73,7 +81,7 @@ namespace base_local_planner {
       }
       gen_id ++;
     }
-
+    if(debug_paths_){ ROS_INFO("\tTotal: %.2f", traj_cost); }
 
     return traj_cost;
   }
@@ -84,13 +92,6 @@ namespace base_local_planner {
     double loop_traj_cost, best_traj_cost = -1;
     bool gen_success;
     int count, count_valid;
-    for (std::vector<TrajectoryCostFunction*>::iterator loop_critic = critics_.begin(); loop_critic != critics_.end(); ++loop_critic) {
-      TrajectoryCostFunction* loop_critic_p = *loop_critic;
-      if (loop_critic_p->prepare() == false) {
-        ROS_WARN("A scoring function failed to prepare");
-        return false;
-      }
-    }
 
     for (std::vector<TrajectorySampleGenerator*>::iterator loop_gen = gen_list_.begin(); loop_gen != gen_list_.end(); ++loop_gen) {
       count = 0;
@@ -138,6 +139,7 @@ namespace base_local_planner {
         break;
       }
     }
+    if(debug_paths_){ ROS_INFO("Best cost: %.4f", best_traj_cost); }
     return best_traj_cost >= 0;
   }
 

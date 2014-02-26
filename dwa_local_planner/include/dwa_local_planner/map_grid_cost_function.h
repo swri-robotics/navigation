@@ -38,12 +38,12 @@
 #ifndef MAP_GRID_COST_FUNCTION_H_
 #define MAP_GRID_COST_FUNCTION_H_
 
-#include <base_local_planner/trajectory_cost_function.h>
+#include <dwa_local_planner/trajectory_cost_function.h>
 
 #include <costmap_2d/costmap_2d.h>
 #include <base_local_planner/map_grid.h>
 
-namespace base_local_planner {
+namespace dwa_local_planner {
 
 /**
  * when scoring a trajectory according to the values in mapgrid, we can take
@@ -70,75 +70,38 @@ enum CostAggregationType { Last, Sum, Product};
  * @param is_local_goal_function, scores for local goal rather than whole path
  * @param aggregationType how to combine costs along trajectory
  */
-class MapGridCostFunction: public base_local_planner::TrajectoryCostFunction {
+class MapGridCostFunction: public dwa_local_planner::TrajectoryCostFunction {
 public:
-  MapGridCostFunction(costmap_2d::Costmap2D* costmap,
-      double xshift = 0.0,
-      double yshift = 0.0,
-      bool is_local_goal_function = false,
-      CostAggregationType aggregationType = Last);
 
-  ~MapGridCostFunction() {}
+  MapGridCostFunction() : stop_on_failure_(true), aggregationType_(Last) {}
 
-  /**
-   * set line segments on the grid with distance 0, resets the grid
-   */
-  void setTargetPoses(std::vector<geometry_msgs::PoseStamped> target_poses);
+  virtual void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
+  virtual bool prepare(tf::Stamped<tf::Pose> global_pose,
+		       tf::Stamped<tf::Pose> global_vel,
+		       std::vector<geometry_msgs::Point> footprint_spec) = 0;
 
-  void setXShift(double xshift) {xshift_ = xshift;}
-  void setYShift(double yshift) {yshift_ = yshift;}
-
-  /** @brief If true, failures along the path cause the entire path to be rejected.
-   *
-   * Default is true. */
-  void setStopOnFailure(bool stop_on_failure) {stop_on_failure_ = stop_on_failure;}
-
-  /**
-   * propagate distances
-   */
-  bool prepare();
-
-  double scoreTrajectory(Trajectory &traj);
-
-  /**
-   * return a value that indicates cell is in obstacle
-   */
-  double obstacleCosts() {
-    return map_.obstacleCosts();
-  }
-
-  /**
-   * returns a value indicating cell was not reached by wavefront
-   * propagation of set cells. (is behind walls, regarding the region covered by grid)
-   */
-  double unreachableCellCosts() {
-    return map_.unreachableCellCosts();
-  }
+  virtual double scoreTrajectory(base_local_planner::Trajectory &traj);
+  virtual double scoreCell(double px, double py, double pth);
 
   // used for easier debugging
-  double getCellCosts(unsigned int cx, unsigned int cy);
+  virtual float getCost(unsigned int cx, unsigned int cy);
 
-  void setGoal(double x, double y){ goal_x_ = x; goal_y_ = y; }
-  void setForwardDistanceFactor(double factor){ distance_factor_= factor; }
+  virtual void setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y);
 
-private:
+  inline bool isValidCost(double cost)
+  {
+    return cost!=map_.obstacleCosts() && cost!=map_.unreachableCellCosts();
+  }
+
+protected:
   std::vector<geometry_msgs::PoseStamped> target_poses_;
-  costmap_2d::Costmap2D* costmap_;
+  double goal_x_, goal_y_;
+  bool stop_on_failure_;
 
   base_local_planner::MapGrid map_;
   CostAggregationType aggregationType_;
-  /// xshift and yshift allow scoring for different
-  // ooints of robots than center, like fron or back
-  // this can help with alignment or keeping specific
-  // wheels on tracks both default to 0
-  double xshift_;
-  double yshift_;
-  // if true, we look for a suitable local goal on path, else we use the full path for costs
-  bool is_local_goal_function_;
-  bool stop_on_failure_;
 
-  double goal_x_, goal_y_, distance_factor_;
 };
 
-} /* namespace base_local_planner */
+} /* namespace dwa_local_planner */
 #endif /* MAP_GRID_COST_FUNCTION_H_ */

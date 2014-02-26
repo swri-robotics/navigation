@@ -55,12 +55,12 @@
 #include <base_local_planner/local_planner_util.h>
 #include <base_local_planner/simple_trajectory_generator.h>
 
-#include <base_local_planner/oscillation_cost_function.h>
-#include <base_local_planner/map_grid_cost_function.h>
-#include <base_local_planner/obstacle_cost_function.h>
-#include <base_local_planner/simple_scored_sampling_planner.h>
+#include <dwa_local_planner/trajectory_cost_function.h>
+#include <dwa_local_planner/simple_scored_sampling_planner.h>
+#include <dwa_local_planner/scale_manager.h>
 
 #include <nav_msgs/Path.h>
+#include <pluginlib/class_loader.h>
 
 namespace dwa_local_planner {
   /**
@@ -143,6 +143,11 @@ namespace dwa_local_planner {
       bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
 
     private:
+      void reset() { 
+        COST_ITERATOR(critic, critics_){ (*critic)->reset(); }
+      }
+
+      void resetOldParameters(ros::NodeHandle& nh);
 
       base_local_planner::LocalPlannerUtil *planner_util_;
 
@@ -169,14 +174,13 @@ namespace dwa_local_planner {
 
       // see constructor body for explanations
       base_local_planner::SimpleTrajectoryGenerator generator_;
-      base_local_planner::OscillationCostFunction oscillation_costs_;
-      base_local_planner::ObstacleCostFunction obstacle_costs_;
-      base_local_planner::MapGridCostFunction path_costs_;
-      base_local_planner::MapGridCostFunction goal_costs_;
-      base_local_planner::MapGridCostFunction goal_front_costs_;
-      base_local_planner::MapGridCostFunction alignment_costs_;
 
-      base_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
+      pluginlib::ClassLoader<TrajectoryCostFunction> plugin_loader_;
+      std::vector<CostFunctionPointer > critics_;
+
+      dwa_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
+
+      dwa_local_planner::ScaleManager scale_manager_;
   };
 };
 #endif

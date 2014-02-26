@@ -35,39 +35,28 @@
  * Author: TKruse
  *********************************************************************/
 
-#include <base_local_planner/map_grid_cost_function.h>
+#include <dwa_local_planner/map_grid_cost_function.h>
 
-namespace base_local_planner {
+using base_local_planner::Trajectory;
 
-MapGridCostFunction::MapGridCostFunction(costmap_2d::Costmap2D* costmap,
-    double xshift,
-    double yshift,
-    bool is_local_goal_function,
-    CostAggregationType aggregationType) :
-    costmap_(costmap),
-    map_(costmap->getSizeInCellsX(), costmap->getSizeInCellsY()),
-    aggregationType_(aggregationType),
-    xshift_(xshift),
-    yshift_(yshift),
-    is_local_goal_function_(is_local_goal_function),
-    stop_on_failure_(true), distance_factor_(-1.0) {}
+namespace dwa_local_planner {
 
-void MapGridCostFunction::setTargetPoses(std::vector<geometry_msgs::PoseStamped> target_poses) {
-  target_poses_ = target_poses;
+void MapGridCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util) {
+    TrajectoryCostFunction::initialize(name, planner_util);
+    stop_on_failure_ = true;
+
+    ros::NodeHandle nh("~/" + name_);
+    std::string aggro_str;
+    nh.param("aggregation_type", aggro_str, std::string("last"));
+    if(aggro_str=="last") 
+        aggregationType_ = Last;
+    else if(aggro_str=="sum")
+        aggregationType_ = Sum;
+    else if(aggro_str=="product")
+        aggregationType_ = Product;
 }
 
-bool MapGridCostFunction::prepare() {
-  map_.resetPathDist();
-
-  if (is_local_goal_function_) {
-    map_.setLocalGoal(*costmap_, target_poses_);
-  } else {
-    map_.setTargetCells(*costmap_, target_poses_);
-  }
-  return true;
-}
-
-double MapGridCostFunction::getCellCosts(unsigned int px, unsigned int py) {
+float MapGridCostFunction::getCost(unsigned int px, unsigned int py) {
   double grid_dist = map_(px, py).target_dist;
   return grid_dist;
 }
@@ -78,44 +67,12 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
     cost = 1.0;
   }
   double px, py, pth;
-  unsigned int cell_x, cell_y;
   double grid_dist;
 
   for (unsigned int i = 0; i < traj.getPointsSize(); ++i) {
     traj.getPoint(i, px, py, pth);
-
-    double xshift=xshift_, yshift=yshift_;
-
-    if(distance_factor_>=0.0)
-    {
-        double d = sqrt(pow(px-goal_x_,2)+pow(py-goal_y_,2));
-        double shift_d = sqrt(pow(xshift, 2)+pow(yshift,2));
-        if(d<shift_d){
-            xshift = d * distance_factor_;
-            yshift = d * distance_factor_;
-        }
-    }
-
-    // translate point forward if specified
-    if (xshift != 0.0) {
-      px = px + xshift * cos(pth);
-      py = py + xshift * sin(pth);
-    }
-    // translate point sideways if specified
-    if (yshift != 0.0) {
-      px = px + yshift * cos(pth + M_PI_2);
-      py = py + yshift * sin(pth + M_PI_2);
-    }
-
-    //we won't allow trajectories that go off the map... shouldn't happen that often anyways
-    if ( ! costmap_->worldToMap(px, py, cell_x, cell_y)) {
-      //we're off the map
-      ROS_WARN("Off Map %f, %f", px, py);
-      return -4.0;
-    }
-    grid_dist = getCellCosts(cell_x, cell_y);
-    //if a point on this trajectory has no clear path to the goal... it may be invalid
-    if (stop_on_failure_) {
+    grid_dist = scoreCell(px, py, pth);
+    if(stop_on_failure_){
       if (grid_dist == map_.obstacleCosts()) {
         return -3.0;
       } else if (grid_dist == map_.unreachableCellCosts()) {
@@ -137,7 +94,27 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
       break;
     }
   }
-  return cost;
+
+  double factor = costmap_->getResolution() * 0.5;
+  return cost * factor;
 }
 
-} /* namespace base_local_planner */
+double MapGridCostFunction::scoreCell(double px, double py, double pth) {
+    unsigned int cell_x, cell_y;
+    //we won't allow trajectories that go off the map... shouldn't happen that often anyways
+    if ( ! costmap_->worldToMap(px, py, cell_x, cell_y)) {
+      //we're off the map
+      ROS_WARN("Off Map %f, %f", px, py);
+      return -4.0;
+    }
+    return getCost(cell_x, cell_y);
+}
+
+void MapGridCostFunction::setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y)
+{
+    target_poses_ = orig_global_plan;
+    goal_x_ = goal_x;
+    goal_y_ = goal_y;
+}
+
+} /* namespace dwa_local_planner */

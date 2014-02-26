@@ -87,7 +87,7 @@ namespace dwa_local_planner {
   }
 
   DWAPlannerROS::DWAPlannerROS() : initialized_(false),
-      odom_helper_("odom") {
+      odom_helper_("odom"), dsrv_(NULL) {
 
   }
 
@@ -169,7 +169,8 @@ namespace dwa_local_planner {
 
   DWAPlannerROS::~DWAPlannerROS(){
     //make sure to clean things up
-    delete dsrv_;
+    if(dsrv_)
+        delete dsrv_;
   }
 
 
