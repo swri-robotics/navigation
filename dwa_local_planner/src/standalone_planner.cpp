@@ -4,18 +4,22 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "standalone");
     
-    double x = 0, y = 2;
+    double x = 0, y = 2, yaw=0;
     bool loop = false;
-    ROS_INFO("%d", argc);
     if(argc>1){
         if(argc>2){
             x = atof(argv[1]);
             y = atof(argv[2]);
+            if(argc>3){
+                yaw = atof(argv[3]);
+            }
         }
         if(strcmp(argv[argc-1], "-l")==0){
             loop = true;
         }
     }
+
+    ROS_INFO("GOAL: %f %f %f", x, y, yaw);
 
     tf::TransformListener tf;
 
@@ -31,6 +35,11 @@ int main(int argc, char** argv)
         pose.pose.orientation.w = 1.0;
         pose.pose.position.x = i * x / N;
         pose.pose.position.y = i * y / N;
+
+        if(i==N-1){
+            pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
+        }
+
         plan.push_back(pose);
     }
     planner.setPlan(plan);
