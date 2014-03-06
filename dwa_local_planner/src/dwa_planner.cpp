@@ -189,7 +189,10 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
 
           if(type.find("::") == std::string::npos)
           {
-              type = "dwa_local_planner::" + type;
+              if(plugin_loader_.isClassAvailable("dwa_local_planner::"+type))
+                  type = "dwa_local_planner::" + type;              
+              else if(plugin_loader_.isClassAvailable("dwa_plugins::"+type))
+                  type = "dwa_plugins::"+type;
           }
 
           ROS_INFO("Using critic \"%s\"", pname.c_str());
