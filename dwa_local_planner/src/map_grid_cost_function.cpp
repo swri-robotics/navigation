@@ -54,6 +54,8 @@ void MapGridCostFunction::initialize(std::string name, base_local_planner::Local
         aggregationType_ = Sum;
     else if(aggro_str=="product")
         aggregationType_ = Product;
+        
+    map_.sizeCheck(costmap_->getSizeInCellsX(), costmap_->getSizeInCellsY());
 }
 
 float MapGridCostFunction::getCost(unsigned int px, unsigned int py) {
