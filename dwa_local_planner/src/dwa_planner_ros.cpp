@@ -117,6 +117,8 @@ namespace dwa_local_planner {
         odom_helper_.setOdomTopic( odom_topic_ );
       }
       
+      private_nh.param( "automatic_rotate_at_end", automatic_rotate_at_end_ , true);
+      
       initialized_ = true;
 
       dsrv_ = new dynamic_reconfigure::Server<DWAPlannerConfig>(private_nh);
@@ -272,7 +274,7 @@ namespace dwa_local_planner {
     // update plan in dwa_planner even if we just stop and rotate, to allow checkTrajectory
     dp_->updatePlanAndLocalCosts(current_pose_, transformed_plan);
 
-    if (latchedStopRotateController_.isPositionReached(&planner_util_, current_pose_)) {
+    if (automatic_rotate_at_end_ && latchedStopRotateController_.isPositionReached(&planner_util_, current_pose_)) {
       //publish an empty plan because we've reached our goal position
       std::vector<geometry_msgs::PoseStamped> local_plan;
       std::vector<geometry_msgs::PoseStamped> transformed_plan;

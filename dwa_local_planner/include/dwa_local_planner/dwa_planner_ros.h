@@ -150,6 +150,7 @@ namespace dwa_local_planner {
 
 
       bool initialized_;
+      bool automatic_rotate_at_end_;
 
 
       base_local_planner::OdometryHelperRos odom_helper_;
