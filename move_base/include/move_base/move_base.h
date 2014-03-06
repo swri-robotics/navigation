@@ -165,6 +165,7 @@ namespace move_base {
       bool isQuaternionValid(const geometry_msgs::Quaternion& q);
 
       double distance(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2);
+      double angle_distance(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2);
 
       geometry_msgs::PoseStamped goalToGlobalFrame(const geometry_msgs::PoseStamped& goal_pose_msg);
 
@@ -189,7 +190,8 @@ namespace move_base {
       ros::Subscriber goal_sub_;
       ros::ServiceServer make_plan_srv_, clear_costmaps_srv_;
       bool shutdown_costmaps_, clearing_rotation_allowed_, recovery_behavior_enabled_;
-      double oscillation_timeout_, oscillation_distance_;
+      double oscillation_timeout_, oscillation_distance_, oscillation_angle_;
+      bool oscillation_initialized_;
 
       MoveBaseState state_;
       RecoveryTrigger recovery_trigger_;

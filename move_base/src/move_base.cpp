@@ -37,7 +37,7 @@
 *********************************************************************/
 #include <move_base/move_base.h>
 #include <cmath>
-
+#include <angles/angles.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
 
@@ -48,7 +48,7 @@ namespace move_base {
   MoveBase::MoveBase(tf::TransformListener& tf) :
     tf_(tf),
     as_(NULL),
-    planner_costmap_ros_(NULL), controller_costmap_ros_(NULL),
+    planner_costmap_ros_(NULL), controller_costmap_ros_(NULL), oscillation_initialized_(false),
     bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner"),
     blp_loader_("nav_core", "nav_core::BaseLocalPlanner"), 
     recovery_loader_("nav_core", "nav_core::RecoveryBehavior"),
@@ -75,6 +75,7 @@ namespace move_base {
 
     private_nh.param("oscillation_timeout", oscillation_timeout_, 0.0);
     private_nh.param("oscillation_distance", oscillation_distance_, 0.5);
+    private_nh.param("oscillation_angle", oscillation_angle_, 0.15);
 
     //set up plan triple buffer
     planner_plan_ = new std::vector<geometry_msgs::PoseStamped>();
@@ -787,6 +788,13 @@ namespace move_base {
         + (p1.pose.position.y - p2.pose.position.y) * (p1.pose.position.y - p2.pose.position.y));
   }
 
+  double MoveBase::angle_distance(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2)
+  {
+    double y1 = tf::getYaw(p1.pose.orientation);
+    double y2 = tf::getYaw(p2.pose.orientation);
+    return fabs(angles::shortest_angular_distance(y1, y2));
+  }
+
   bool MoveBase::executeCycle(geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& global_plan){
     boost::recursive_mutex::scoped_lock ecl(configuration_mutex_);
     //we need to be able to publish velocity commands
@@ -804,10 +812,12 @@ namespace move_base {
     as_->publishFeedback(feedback);
 
     //check to see if we've moved far enough to reset our oscillation timeout
-    if(distance(current_position, oscillation_pose_) >= oscillation_distance_)
+    if(!oscillation_initialized_ or distance(current_position, oscillation_pose_) >= oscillation_distance_ or
+       angle_distance(current_position, oscillation_pose_) >= oscillation_angle_)
     {
       last_oscillation_reset_ = ros::Time::now();
       oscillation_pose_ = current_position;
+      oscillation_initialized_ = true;
 
       //if our last recovery was caused by oscillation, we want to reset the recovery index 
       if(recovery_trigger_ == OSCILLATION_R)
