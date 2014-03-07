@@ -90,6 +90,9 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
         unsigned int cx = costmap->getSizeInCellsX(), cy = costmap->getSizeInCellsY();
 
         private_nh.param("old_navfn_behavior", old_navfn_behavior_, false);
+        private_nh.param("precise", precise_, true);
+        private_nh.param("clear_ending", clear_ending_, true);
+        
         if(!old_navfn_behavior_)
             convert_offset_ = 0.5;
         else
@@ -107,7 +110,7 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
         if (use_dijkstra)
         {
             DijkstraExpansion* de = new DijkstraExpansion(p_calc_, cx, cy);
-            if(!old_navfn_behavior_)
+            if(precise_)
                 de->setPreciseStart(true);
             planner_ = de;
             
@@ -245,7 +248,7 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
                 "The robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?");
         return false;
     }
-    if(old_navfn_behavior_){
+    if(!precise_){
         start_x = start_x_i;
         start_y = start_y_i;
     }else{
@@ -260,7 +263,7 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
                 "The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal.");
         return false;
     }
-    if(old_navfn_behavior_){
+    if(!precise_){
         goal_x = goal_x_i;
         goal_y = goal_y_i;
     }else{
@@ -285,7 +288,7 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
     bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), start_x, start_y, goal_x, goal_y,
                                                     nx * ny * 2, potential_array_);
 
-    if(!old_navfn_behavior_)
+    if(clear_ending_)
         planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x_i, goal_y_i, 2);
     if(publish_potential_)
         publishPotential(potential_array_);

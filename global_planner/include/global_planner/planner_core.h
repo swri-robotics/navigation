@@ -192,6 +192,10 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
         unsigned int start_x_, start_y_, end_x_, end_y_;
 
         bool old_navfn_behavior_;
+        
+        bool clear_ending_;
+        bool precise_;
+        
         float convert_offset_;
 
         dynamic_reconfigure::Server<global_planner::GlobalPlannerConfig> *dsrv_;
