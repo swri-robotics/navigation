@@ -98,9 +98,21 @@ namespace dwa_local_planner {
           const Eigen::Vector3f pos,
           const Eigen::Vector3f vel,
           const Eigen::Vector3f vel_samples);
+          
+      /**
+       * @brief  Score a trajectory for a position/velocity pair
+       * @param pos The robot's position
+       * @param vel The robot's velocity
+       * @param vel_samples The desired velocity
+       * @return True if the trajectory is valid, false otherwise
+       */
+      double scoreTrajectory(
+          const Eigen::Vector3f pos,
+          const Eigen::Vector3f vel,
+          const Eigen::Vector3f vel_samples);
 
       /**
-       * @brief Given the current position and velocity of the robot, find the best trajectory to exectue
+       * @brief Given the current position and velocity of the robot, find the best trajectory to execute
        * @param global_pose The current position of the robot 
        * @param global_vel The current velocity of the robot 
        * @param drive_velocities The velocities to send to the robot base
@@ -110,6 +122,18 @@ namespace dwa_local_planner {
           tf::Stamped<tf::Pose> global_pose,
           tf::Stamped<tf::Pose> global_vel,
           tf::Stamped<tf::Pose>& drive_velocities,
+          std::vector<geometry_msgs::Point> footprint_spec);
+
+      /**
+       * @brief Pass the current position and velocity of the robot to the trajectory cost functions
+       * @param global_pose The current position of the robot 
+       * @param global_vel The current velocity of the robot 
+       * @param drive_velocities The velocities to send to the robot base
+       * @return The highest scoring trajectory. A cost >= 0 means the trajectory is legal to execute.
+       */          
+      void prepare(
+          tf::Stamped<tf::Pose> global_pose,
+          tf::Stamped<tf::Pose> global_vel,
           std::vector<geometry_msgs::Point> footprint_spec);
 
       /**

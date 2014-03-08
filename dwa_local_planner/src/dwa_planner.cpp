@@ -279,6 +279,23 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
       Eigen::Vector3f pos,
       Eigen::Vector3f vel,
       Eigen::Vector3f vel_samples){
+      
+    double cost = scoreTrajectory(pos, vel, vel_samples);
+    //if the trajectory is a legal one... the check passes
+    if(cost >= 0) {
+      return true;
+    }
+    ROS_WARN("Invalid Trajectory %f, %f, %f, cost: %f", vel_samples[0], vel_samples[1], vel_samples[2], cost);
+
+    //otherwise the check fails
+    return false;
+  }
+  
+  
+  double DWAPlanner::scoreTrajectory(
+      Eigen::Vector3f pos,
+      Eigen::Vector3f vel,
+      Eigen::Vector3f vel_samples){    
     reset();
     base_local_planner::Trajectory traj;
     geometry_msgs::PoseStamped goal_pose = global_plan_.back();
@@ -290,15 +307,8 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
         &limits,
         vsamples_);
     generator_.generateTrajectory(pos, vel, vel_samples, traj);
-    double cost = scored_sampling_planner_.scoreTrajectory(traj, -1);
-    //if the trajectory is a legal one... the check passes
-    if(cost >= 0) {
-      return true;
-    }
-    ROS_WARN("Invalid Trajectory %f, %f, %f, cost: %f", vel_samples[0], vel_samples[1], vel_samples[2], cost);
-
-    //otherwise the check fails
-    return false;
+    
+    return scored_sampling_planner_.scoreTrajectory(traj, -1);
   }
 
 
@@ -349,11 +359,7 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
     // find best trajectory by sampling and scoring the samples
     std::vector<base_local_planner::Trajectory> all_explored;
 
-    COST_ITERATOR(critic, critics_){
-      if ((*critic)->prepare(global_pose, global_vel, footprint_spec) == false) {
-        ROS_WARN("A scoring function failed to prepare");
-      }
-    }
+	prepare(global_pose, global_vel, footprint_spec);
     scored_sampling_planner_.findBestTrajectory(result_traj_, &all_explored);
 
     if(publish_traj_pc_)
@@ -406,4 +412,18 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
 
     return result_traj_;
   }
+  
+  
+  void DWAPlanner::prepare(
+          tf::Stamped<tf::Pose> global_pose,
+          tf::Stamped<tf::Pose> global_vel,
+          std::vector<geometry_msgs::Point> footprint_spec){
+  
+    COST_ITERATOR(critic, critics_){
+      if ((*critic)->prepare(global_pose, global_vel, footprint_spec) == false) {
+        ROS_WARN("A scoring function failed to prepare");
+      }
+    }
+  }
+  
 };

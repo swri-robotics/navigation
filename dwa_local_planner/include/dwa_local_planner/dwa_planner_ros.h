@@ -119,6 +119,10 @@ namespace dwa_local_planner {
       bool isInitialized() {
         return initialized_;
       }
+      
+      double scoreTrajectory(double x, double y, double theta, 
+                             double vx, double vy, double vtheta,
+                             double cvx, double cvy, double cvtheta);
 
     private:
       /**
