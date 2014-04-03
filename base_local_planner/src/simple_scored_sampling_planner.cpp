@@ -48,6 +48,15 @@ namespace base_local_planner {
   }
 
   double SimpleScoredSamplingPlanner::scoreTrajectory(Trajectory& traj, double best_traj_cost) {
+  for (std::vector<TrajectoryCostFunction*>::iterator loop_critic = critics_.begin(); loop_critic != critics_.end(); ++loop_critic) {
+      TrajectoryCostFunction* loop_critic_p = *loop_critic;
+      if (loop_critic_p->prepare() == false) {
+        ROS_WARN("A scoring function failed to prepare");
+        return false;
+      }
+    }
+  
+  
     double traj_cost = 0;
     int gen_id = 0;
     for(std::vector<TrajectoryCostFunction*>::iterator score_function = critics_.begin(); score_function != critics_.end(); ++score_function) {
