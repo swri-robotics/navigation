@@ -18,12 +18,14 @@ void PathAlignCostFunction::initialize(std::string name, base_local_planner::Loc
     {
         nh.getParam(key, xshift_);
         yshift_ = 0.0;
+        shift_d_ = xshift_;
     }else{
         xshift_ = 0.325;
         yshift_ = 0.0;
+        shift_d_ = xshift_;
     }
 
-    nh.param("scale_offset", scale_offset_, 0.75);
+    quit_within_radius_ = true;
 }
 
 bool PathAlignCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,

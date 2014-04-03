@@ -20,7 +20,9 @@ void GoalAlignCostFunction::initialize(std::string name, base_local_planner::Loc
         xshift_ = 0.325;
         yshift_ = 0.0;
     }
-    scale_offset_ = -1.0;
+    shift_d_ = xshift_;
+    
+    quit_within_radius_ = false;
 }
 
 bool GoalAlignCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,

@@ -13,7 +13,9 @@ public:
 		       std::vector<geometry_msgs::Point> footprint_spec) = 0;
   virtual double scoreCell(double px, double py, double pth);
 protected:
-    double xshift_, yshift_, scale_offset_;
+    double xshift_, yshift_;
+    double shift_d_;
+    bool quit_within_radius_;
 };
 
 } /* namespace dwa_local_planner */
