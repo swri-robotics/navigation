@@ -204,6 +204,25 @@ namespace dwa_local_planner {
       Eigen::Vector3f pos,
       Eigen::Vector3f vel,
       Eigen::Vector3f vel_samples){
+      
+      
+      double cost = scoreTrajectory(pos, vel, vel_samples);
+    //if the trajectory is a legal one... the check passes
+    if(cost >= 0) {
+      return true;
+    }
+    ROS_WARN("Invalid Trajectory %f, %f, %f, cost: %f", vel_samples[0], vel_samples[1], vel_samples[2], cost);
+
+    //otherwise the check fails
+    return false;
+  }
+  
+  
+  double DWAPlanner::scoreTrajectory(
+      Eigen::Vector3f pos,
+      Eigen::Vector3f vel,
+      Eigen::Vector3f vel_samples){    
+      
     oscillation_costs_.resetOscillationFlags();
     base_local_planner::Trajectory traj;
     geometry_msgs::PoseStamped goal_pose = global_plan_.back();
@@ -215,15 +234,7 @@ namespace dwa_local_planner {
         &limits,
         vsamples_);
     generator_.generateTrajectory(pos, vel, vel_samples, traj);
-    double cost = scored_sampling_planner_.scoreTrajectory(traj, -1);
-    //if the trajectory is a legal one... the check passes
-    if(cost >= 0) {
-      return true;
-    }
-    ROS_WARN("Invalid Trajectory %f, %f, %f, cost: %f", vel_samples[0], vel_samples[1], vel_samples[2], cost);
-
-    //otherwise the check fails
-    return false;
+    return scored_sampling_planner_.scoreTrajectory(traj, -1);
   }
 
 
@@ -263,9 +274,10 @@ namespace dwa_local_planner {
 
     goal_front_costs_.setTargetPoses(front_global_plan);
     
+    double resolution = planner_util_->getCostmap()->getResolution();
     // keeping the nose on the path
     if (sq_dist > forward_point_distance_ * forward_point_distance_ ) {
-      alignment_costs_.setScale(1.0);
+      alignment_costs_.setScale(resolution * pdist_scale_ * 0.5);
       // costs for robot being aligned with path (nose on path, not ju
       alignment_costs_.setTargetPoses(global_plan_);
     } else {
@@ -354,5 +366,15 @@ namespace dwa_local_planner {
     }
 
     return result_traj_;
+  }
+  
+   void DWAPlanner::prepare(
+          tf::Stamped<tf::Pose> global_pose,
+          tf::Stamped<tf::Pose> global_vel,
+          std::vector<geometry_msgs::Point> footprint_spec){
+  
+    
+    obstacle_costs_.setFootprint(footprint_spec);
+
   }
 };

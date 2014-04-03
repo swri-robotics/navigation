@@ -114,7 +114,9 @@ namespace dwa_local_planner {
        */
       bool isGoalReached();
 
-
+      double scoreTrajectory(double x, double y, double theta, 
+                             double vx, double vy, double vtheta,
+                             double cvx, double cvy, double cvtheta);
 
       bool isInitialized() {
         return initialized_;

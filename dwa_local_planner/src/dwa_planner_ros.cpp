@@ -288,6 +288,39 @@ namespace dwa_local_planner {
       return isOk;
     }
   }
+  double DWAPlannerROS::scoreTrajectory(double x, double y, double theta, 
+                             double vx, double vy, double vtheta,
+                             double cvx, double cvy, double cvtheta)
+ {
+    Eigen::Vector3f pos(x, y, theta);
+    Eigen::Vector3f vel(vx, vy, vtheta);
+    Eigen::Vector3f cvel(cvx, cvy, cvtheta);
+    
+    geometry_msgs::PoseStamped pose;
+    pose.header.frame_id = "/map";
+    pose.pose.position.x = x;
+    pose.pose.position.y = y;
+    pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,theta);
+    
+    tf::poseStampedMsgToTF(pose, current_pose_);
+    
+    tf::Stamped<tf::Pose> robot_vel;
+    pose.pose.position.x = vx;
+    pose.pose.position.y = vy;
+    pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,vtheta);
+    tf::poseStampedMsgToTF(pose, robot_vel);
+    
+    std::vector<geometry_msgs::PoseStamped> transformed_plan;
+    if ( ! planner_util_.getLocalPlan(current_pose_, transformed_plan)) {
+      ROS_ERROR("Could not get local plan");
+      return false;
+    }
 
+    // update plan in dwa_planner 
+    dp_->updatePlanAndLocalCosts(current_pose_, transformed_plan);
+    dp_->prepare(current_pose_, robot_vel, costmap_ros_->getRobotFootprint());
+  
+    return dp_->scoreTrajectory(pos, vel, cvel);
+ }
 
 };
