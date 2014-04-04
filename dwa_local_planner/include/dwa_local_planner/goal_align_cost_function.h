@@ -16,6 +16,7 @@ public:
 
 private:
     tf::Stamped<tf::Pose> global_pose_;
+    double goal_x_, goal_y_;
 
 };
 

@@ -28,29 +28,34 @@ void GoalAlignCostFunction::initialize(std::string name, base_local_planner::Loc
 bool GoalAlignCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,
       std::vector<geometry_msgs::Point> footprint_spec) {
-  map_.resetPathDist();
-  map_.setLocalGoal(*costmap_, target_poses_);
-  global_pose_ = global_pose;
-  return true;
-}
-
-
-void GoalAlignCostFunction::setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y){
-
+    map_.resetPathDist();
+  
+    global_pose_ = global_pose;
+  
     double px = global_pose_.getOrigin().getX(), py = global_pose_.getOrigin().getY(), pth = tf::getYaw(global_pose_.getRotation());
 
-    double sq_dist = (px - goal_x) * (px - goal_x) + (py - goal_y) * (py - goal_y);
+    double sq_dist = (px - goal_x_) * (px - goal_x_) + (py - goal_y_) * (py - goal_y_);
 
     // we want the robot nose to be drawn to its final position
     // (before robot turns towards goal orientation), not the end of the
     // path for the robot center. Choosing the final position after
     // turning towards goal orientation causes instability when the
     // robot needs to make a 180 degree turn at the end
-    target_poses_ = orig_global_plan;
-    double angle_to_goal = atan2(goal_y - py, goal_x - px);
+    double angle_to_goal = atan2(goal_y_ - py, goal_x_ - px);
 
     target_poses_.back().pose.position.x += xshift_ * cos(angle_to_goal);
     target_poses_.back().pose.position.y += xshift_ * sin(angle_to_goal);
+  
+  
+    map_.setLocalGoal(*costmap_, target_poses_);
+    return true;
+}
+
+
+void GoalAlignCostFunction::setGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan, double goal_x, double goal_y){
+    goal_x_ = goal_x;
+    goal_y_ = goal_y;
+    target_poses_ = orig_global_plan;    
 }
 
 } /* namespace dwa_local_planner */
