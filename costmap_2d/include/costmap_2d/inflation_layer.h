@@ -107,7 +107,7 @@ public:
   /** @brief  Given a distance, compute a cost.
    * @param  distance The distance from an obstacle in cells
    * @return A cost value for the distance */
-  inline unsigned char computeCost(double distance) const
+  virtual unsigned char computeCost(double distance) const
   {
     unsigned char cost = 0;
     if (distance == 0)
@@ -127,6 +127,8 @@ public:
 protected:
   virtual void onFootprintChanged();
   boost::shared_mutex* access_;
+  double resolution_;  
+  double inflation_radius_, inscribed_radius_, weight_;
 
 private:
   /**
@@ -171,12 +173,10 @@ private:
   inline void enqueue(unsigned char* grid, unsigned int index, unsigned int mx, unsigned int my, unsigned int src_x,
                       unsigned int src_y);
 
-  double inflation_radius_, inscribed_radius_, weight_;
   unsigned int cell_inflation_radius_;
   unsigned int cached_cell_inflation_radius_;
   std::priority_queue<CellData> inflation_queue_;
 
-  double resolution_;
 
   bool* seen_;
 

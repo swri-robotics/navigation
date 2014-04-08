@@ -38,6 +38,7 @@
 #include <boost/bind.hpp>
 #include <costmap_2d/costmap_2d_publisher.h>
 #include <costmap_2d/cost_values.h>
+#include<geometry_msgs/PolygonStamped.h>
 
 namespace costmap_2d
 {
@@ -49,6 +50,8 @@ Costmap2DPublisher::Costmap2DPublisher(ros::NodeHandle * ros_node, Costmap2D* co
 {
   costmap_pub_ = ros_node->advertise<nav_msgs::OccupancyGrid>( topic_name, 1, boost::bind( &Costmap2DPublisher::onNewSubscription, this, _1 ));
   costmap_update_pub_ = ros_node->advertise<map_msgs::OccupancyGridUpdate>( topic_name + "_updates", 1 );
+  
+  box_pub_ = ros_node->advertise<geometry_msgs::PolygonStamped>("bounding_box", 1);
 
   if( cost_translation_table_ == NULL )
   {
@@ -141,6 +144,24 @@ void Costmap2DPublisher::publishCostmap()
     }
     costmap_update_pub_.publish(update);
   }
+  
+  double sx, sy, ex, ey;
+  costmap_->mapToWorld(x0_, y0_, sx, sy);
+  costmap_->mapToWorld(xn_, yn_, ex, ey);
+  
+  geometry_msgs::PolygonStamped polygon;
+  polygon.header.stamp = ros::Time::now();
+  polygon.header.frame_id = global_frame_;
+  polygon.polygon.points.resize(4);
+  polygon.polygon.points[0].x = sx;
+  polygon.polygon.points[0].y = sy;
+  polygon.polygon.points[1].x = ex;
+  polygon.polygon.points[1].y = sy;
+  polygon.polygon.points[2].x = ex;
+  polygon.polygon.points[2].y = ey;
+  polygon.polygon.points[3].x = sx;
+  polygon.polygon.points[3].y = ey;
+  box_pub_.publish(polygon);
 
   xn_ = yn_ = 0;
   x0_ = costmap_->getSizeInCellsX();
