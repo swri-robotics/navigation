@@ -306,9 +306,11 @@ void move_parameter(ros::NodeHandle& nh, std::string old_name,
         goal,
         &limits,
         vsamples_);
-    generator_.generateTrajectory(pos, vel, vel_samples, traj);
-    
-    return scored_sampling_planner_.scoreTrajectory(traj, -1);
+        
+    if(generator_.generateTrajectory(pos, vel, vel_samples, traj))
+        return scored_sampling_planner_.scoreTrajectory(traj, -1);
+    else
+        return -1.0;
   }
 
 
