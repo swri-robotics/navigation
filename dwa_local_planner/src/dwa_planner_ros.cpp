@@ -250,16 +250,20 @@ namespace dwa_local_planner {
   }
 
 
-
-
   bool DWAPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel) {
-    // dispatches to either dwa sampling control or stop and rotate control, depending on whether we have been close enough to goal
     if ( ! costmap_ros_->getRobotPose(current_pose_)) {
       ROS_ERROR("Could not get robot pose");
       return false;
     }
+    
+    return computeVelocityCommands(current_pose_, cmd_vel);
+  }
+
+  bool DWAPlannerROS::computeVelocityCommands(tf::Stamped<tf::Pose>& global_pose, geometry_msgs::Twist& cmd_vel) {
+    // dispatches to either dwa sampling control or stop and rotate control, depending on whether we have been close enough to goal
+
     std::vector<geometry_msgs::PoseStamped> transformed_plan;
-    if ( ! planner_util_.getLocalPlan(current_pose_, transformed_plan)) {
+    if ( ! planner_util_.getLocalPlan(global_pose, transformed_plan)) {
       ROS_ERROR("Could not get local plan");
       return false;
     }
@@ -272,9 +276,9 @@ namespace dwa_local_planner {
     ROS_DEBUG_NAMED("dwa_local_planner", "Received a transformed plan with %zu points.", transformed_plan.size());
 
     // update plan in dwa_planner even if we just stop and rotate, to allow checkTrajectory
-    dp_->updatePlanAndLocalCosts(current_pose_, transformed_plan);
+    dp_->updatePlanAndLocalCosts(global_pose, transformed_plan);
 
-    if (automatic_rotate_at_end_ && latchedStopRotateController_.isPositionReached(&planner_util_, current_pose_)) {
+    if (automatic_rotate_at_end_ && latchedStopRotateController_.isPositionReached(&planner_util_, global_pose)) {
       //publish an empty plan because we've reached our goal position
       std::vector<geometry_msgs::PoseStamped> local_plan;
       std::vector<geometry_msgs::PoseStamped> transformed_plan;
@@ -287,10 +291,10 @@ namespace dwa_local_planner {
           dp_->getSimPeriod(),
           &planner_util_,
           odom_helper_,
-          current_pose_,
+          global_pose,
           boost::bind(&DWAPlanner::checkTrajectory, dp_, _1, _2, _3));
     } else {
-      bool isOk = dwaComputeVelocityCommands(current_pose_, cmd_vel);
+      bool isOk = dwaComputeVelocityCommands(global_pose, cmd_vel);
       if (isOk) {
         publishGlobalPlan(transformed_plan);
       } else {
