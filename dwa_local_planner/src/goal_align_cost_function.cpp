@@ -25,6 +25,38 @@ void GoalAlignCostFunction::initialize(std::string name, base_local_planner::Loc
     quit_within_radius_ = false;
 }
 
+double GoalAlignCostFunction::scoreTrajectory(Trajectory &traj) {
+  double px, py, pth;
+  double grid_dist;
+  
+  traj.getPoint(0, px, py, pth);
+  double start = MapGridCostFunction::scoreCell(px, py, pth);  
+  double align = scoreCell(px,py,pth);
+  
+  if(start < align){
+    if(fabs(traj.xv_) > 0 or fabs(traj.yv_)>0){
+    return -4;
+    }
+  }
+  
+  
+  
+  unsigned int last = traj.getPointsSize()-1;
+  traj.getPoint(last, px,py,pth);
+  
+    grid_dist = scoreCell(px, py, pth);
+    if(stop_on_failure_){
+      if (grid_dist == map_.obstacleCosts()) {
+        return -3.0;
+      } else if (grid_dist == map_.unreachableCellCosts()) {
+        return -2.0;
+      }
+    }
+
+  double factor = costmap_->getResolution() * 0.5;
+  return grid_dist * factor;
+}
+
 bool GoalAlignCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,
       std::vector<geometry_msgs::Point> footprint_spec) {
