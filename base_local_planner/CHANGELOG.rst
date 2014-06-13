@@ -2,6 +2,25 @@
 Changelog for package base_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.11.9 (2014-06-10)
+-------------------
+* uses ::hypot(x, y) instead of sqrt(x*x, y*y)
+* No need to use `limits->`
+* Contributors: Enrique Fernández Perdomo
+
+1.11.8 (2014-05-21)
+-------------------
+
+1.11.7 (2014-05-21)
+-------------------
+* fixes latch_xy_goal_tolerance param not taken
+* update build to find eigen using cmake_modules
+* Trajectory: fix constness of getter methods
+* Use hypot() instead of sqrt(x*x, y*y)
+* Fix bug in distance calculation for trajectory rollout
+* Some documentation fixes in SimpleTrajectoryGenerator
+* Contributors: Michael Ferguson, Siegfried-A. Gevatter Pujals, enriquefernandez
+
 1.11.5 (2014-01-30)
 -------------------
 * Merge pull request `#152 <https://github.com/ros-planning/navigation/issues/152>`_ from KaijenHsiao/hydro-devel

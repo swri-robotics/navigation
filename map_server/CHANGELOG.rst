@@ -2,6 +2,19 @@
 Changelog for package map_server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.11.9 (2014-06-10)
+-------------------
+
+1.11.8 (2014-05-21)
+-------------------
+* fix build, was broken by `#175 <https://github.com/ros-planning/navigation/issues/175>`_
+* Contributors: Michael Ferguson
+
+1.11.7 (2014-05-21)
+-------------------
+* make rostest in CMakeLists optional
+* Contributors: Lukas Bulwahn
+
 1.11.5 (2014-01-30)
 -------------------
 * install crop map

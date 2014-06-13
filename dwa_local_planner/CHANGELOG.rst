@@ -2,6 +2,17 @@
 Changelog for package dwa_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.11.9 (2014-06-10)
+-------------------
+
+1.11.8 (2014-05-21)
+-------------------
+
+1.11.7 (2014-05-21)
+-------------------
+* update build to find eigen using cmake_modules
+* Contributors: Michael Ferguson
+
 1.11.5 (2014-01-30)
 -------------------
 * Fix for `#5 <https://github.com/ros-planning/navigation/issues/5>`_

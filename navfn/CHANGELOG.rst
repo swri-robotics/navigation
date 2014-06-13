@@ -2,6 +2,19 @@
 Changelog for package navfn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.11.9 (2014-06-10)
+-------------------
+* uses ::hypot(x, y) instead of sqrt(x*x, y*y)
+* Contributors: Enrique Fernández Perdomo
+
+1.11.8 (2014-05-21)
+-------------------
+
+1.11.7 (2014-05-21)
+-------------------
+* update build to find eigen using cmake_modules
+* Contributors: Michael Ferguson
+
 1.11.5 (2014-01-30)
 -------------------
 * navfn: fix parallel build error from missing dep

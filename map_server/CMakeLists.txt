@@ -6,7 +6,6 @@ find_package(catkin REQUIRED
             roscpp
             tf
             nav_msgs
-            rostest
         )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -68,6 +67,8 @@ if(CATKIN_ENABLE_TESTING)
   )
   add_dependencies(rtest nav_msgs_gencpp)
 
+  # This has to be done after we've already built targets, or catkin variables get borked
+  find_package(rostest)
   add_rostest(test/rtest.xml)
 endif()
 
