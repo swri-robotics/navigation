@@ -96,6 +96,11 @@ add_library(costmap_2d
   src/footprint.cpp
   src/costmap_layer.cpp
 )
+
+add_library(occupancy_grid_subscriber
+  src/occupancy_grid_subscriber.cpp
+)
+
 add_dependencies(costmap_2d geometry_msgs_gencpp)
 target_link_libraries(costmap_2d
   ${PCL_LIBRARIES}
