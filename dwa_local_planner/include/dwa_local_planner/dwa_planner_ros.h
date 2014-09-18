@@ -91,6 +91,14 @@ namespace dwa_local_planner {
        * @return True if a valid trajectory was found, false otherwise
        */
       bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
+      
+      /**
+       * @brief  Given the provided position, orientation, and velocity of the robot,
+       * compute velocity commands to send to the base
+       * @param cmd_vel Will be filled with the velocity command to be passed to the robot base
+       * @return True if a valid trajectory was found, false otherwise
+       */
+      bool computeVelocityCommands(tf::Stamped<tf::Pose>& global_pose, geometry_msgs::Twist& cmd_vel);
 
 
       /**
@@ -119,6 +127,10 @@ namespace dwa_local_planner {
       bool isInitialized() {
         return initialized_;
       }
+      
+      double scoreTrajectory(double x, double y, double theta, 
+                             double vx, double vy, double vtheta,
+                             double cvx, double cvy, double cvtheta);
 
     private:
       /**
@@ -150,6 +162,7 @@ namespace dwa_local_planner {
 
 
       bool initialized_;
+      bool automatic_rotate_at_end_;
 
 
       base_local_planner::OdometryHelperRos odom_helper_;

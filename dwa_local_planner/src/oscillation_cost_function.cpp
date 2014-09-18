@@ -35,34 +35,50 @@
  * Author: TKruse
  *********************************************************************/
 
-#include <base_local_planner/oscillation_cost_function.h>
+#include <dwa_local_planner/oscillation_cost_function.h>
 
 #include <cmath>
 
-namespace base_local_planner {
+PLUGINLIB_EXPORT_CLASS(dwa_local_planner::OscillationCostFunction, dwa_local_planner::TrajectoryCostFunction)
 
-OscillationCostFunction::OscillationCostFunction() {
-}
+using base_local_planner::Trajectory;
+
+namespace dwa_local_planner {
 
 OscillationCostFunction::~OscillationCostFunction() {
   prev_stationary_pos_ = Eigen::Vector3f::Zero();
 }
 
-void OscillationCostFunction::setOscillationResetDist(double dist, double angle) {
-  oscillation_reset_dist_ = dist;
-  oscillation_reset_angle_ = angle;
+void OscillationCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util)
+{
+    TrajectoryCostFunction::initialize(name, planner_util);
+
+    oscillation_reset_dist_ = .05; // TODO: Load this dynamically
+    oscillation_reset_angle_ = .2; // TODO: Load this dynamically
 }
 
-void OscillationCostFunction::updateOscillationFlags(Eigen::Vector3f pos, base_local_planner::Trajectory* traj, double min_vel_trans) {
+bool OscillationCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec){
+    pos_[0] = global_pose.getOrigin().getX();
+    pos_[1] = global_pose.getOrigin().getY();
+    pos_[2] = tf::getYaw(global_pose.getRotation());
+    return true;
+}
+
+void OscillationCostFunction::debrief(base_local_planner::Trajectory* traj) {
+  //Eigen::Vector3f pos;
+
+  double min_vel_trans = planner_util_->getCurrentLimits().min_trans_vel;
   if (traj->cost_ >= 0) {
     if (setOscillationFlags(traj, min_vel_trans)) {
-      prev_stationary_pos_ = pos;
+      prev_stationary_pos_ = pos_;
     }
     //if we've got restrictions... check if we can reset any oscillation flags
     if(forward_pos_only_ || forward_neg_only_
         || strafe_pos_only_ || strafe_neg_only_
         || rot_pos_only_ || rot_neg_only_){
-      resetOscillationFlagsIfPossible(pos, prev_stationary_pos_);
+      resetOscillationFlagsIfPossible(pos_, prev_stationary_pos_);
     }
   }
 }
@@ -77,11 +93,11 @@ void OscillationCostFunction::resetOscillationFlagsIfPossible(const Eigen::Vecto
   //if we've moved far enough... we can reset our flags
   if (sq_dist > oscillation_reset_dist_ * oscillation_reset_dist_ ||
       fabs(th_diff) > oscillation_reset_angle_) {
-    resetOscillationFlags();
+    reset();
   }
 }
 
-void OscillationCostFunction::resetOscillationFlags() {
+void OscillationCostFunction::reset() {
   strafe_pos_only_ = false;
   strafe_neg_only_ = false;
   strafing_pos_ = false;
@@ -175,4 +191,4 @@ double OscillationCostFunction::scoreTrajectory(Trajectory &traj) {
   return 0.0;
 }
 
-} /* namespace base_local_planner */
+} /* namespace dwa_local_planner */

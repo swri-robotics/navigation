@@ -40,11 +40,11 @@
 
 #include <vector>
 #include <base_local_planner/trajectory.h>
-#include <base_local_planner/trajectory_cost_function.h>
+#include <dwa_local_planner/trajectory_cost_function.h>
 #include <base_local_planner/trajectory_sample_generator.h>
 #include <base_local_planner/trajectory_search.h>
 
-namespace base_local_planner {
+namespace dwa_local_planner {
 
 /**
  * @class SimpleScoredSamplingPlanner
@@ -58,9 +58,9 @@ namespace base_local_planner {
 class SimpleScoredSamplingPlanner : public base_local_planner::TrajectorySearch {
 public:
 
-  ~SimpleScoredSamplingPlanner() {}
+  ~SimpleScoredSamplingPlanner() { }
 
-  SimpleScoredSamplingPlanner() {}
+  SimpleScoredSamplingPlanner() { }
 
   /**
    * Takes a list of generators and critics. Critics return costs > 0, or negative costs for invalid trajectories.
@@ -71,14 +71,15 @@ public:
    * passing max_samples = -1 (default): Each Sampling planner will continue to call
    * generator until generator runs out of samples (or forever if that never happens)
    */
-  SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples = -1);
+  SimpleScoredSamplingPlanner(std::vector<base_local_planner::TrajectorySampleGenerator*> gen_list, 
+                              std::vector<CostFunctionPointer >& critics, int max_samples = -1, bool debug_paths=false);
 
   /**
    * runs all scoring functions over the trajectory creating a weigthed sum
    * of positive costs, aborting as soon as a negative cost are found or costs greater
    * than positive best_traj_cost accumulated
    */
-  double scoreTrajectory(Trajectory& traj, double best_traj_cost);
+  double scoreTrajectory(base_local_planner::Trajectory& traj, double best_traj_cost);
 
   /**
    * Calls generator until generator has no more samples or max_samples is reached.
@@ -91,12 +92,14 @@ public:
    * @param traj The container to write the result to
    * @param all_explored pass NULL or a container to collect all trajectories for debugging (has a penalty)
    */
-  bool findBestTrajectory(Trajectory& traj, std::vector<Trajectory>* all_explored = 0);
+  bool findBestTrajectory(base_local_planner::Trajectory& traj, std::vector<base_local_planner::Trajectory>* all_explored = 0);
 
 
 private:
-  std::vector<TrajectorySampleGenerator*> gen_list_;
-  std::vector<TrajectoryCostFunction*> critics_;
+  std::vector<base_local_planner::TrajectorySampleGenerator*> gen_list_;
+  std::vector<CostFunctionPointer > critics_;
+
+  bool debug_paths_;
 
   int max_samples_;
 };

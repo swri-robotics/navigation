@@ -35,52 +35,52 @@
  * Author: TKruse
  *********************************************************************/
 
-#ifndef TRAJECTORYCOSTFUNCTION_H_
-#define TRAJECTORYCOSTFUNCTION_H_
+#ifndef OBSTACLE_COST_FUNCTION_H_
+#define OBSTACLE_COST_FUNCTION_H_
 
-#include <base_local_planner/trajectory.h>
+#include <dwa_local_planner/trajectory_cost_function.h>
 
-namespace base_local_planner {
+#include <base_local_planner/costmap_model.h>
+#include <costmap_2d/costmap_2d.h>
+
+namespace dwa_local_planner {
 
 /**
- * @class TrajectoryCostFunction
- * @brief Provides an interface for critics of trajectories
- * During each sampling run, a batch of many trajectories will be scored using such a cost function.
- * The prepare method is called before each batch run, and then for each
- * trajectory of the sampling set, score_trajectory may be called.
+ * class ObstacleCostFunction
+ * @brief Uses costmap 2d to assign negative costs if robot footprint
+ * is in obstacle on any point of the trajectory.
  */
-class TrajectoryCostFunction {
+class ObstacleCostFunction : public TrajectoryCostFunction {
+
 public:
+  ObstacleCostFunction(): world_model_(NULL) {}
+  ~ObstacleCostFunction();
 
-  /**
-   *
-   * General updating of context values if required.
-   * Subclasses may overwrite. Return false in case there is any error.
-   */
-  virtual bool prepare() = 0;
+  virtual void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
+  bool prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec);
+  double scoreTrajectory(base_local_planner::Trajectory &traj);
 
-  /**
-   * return a score for trajectory traj
-   */
-  virtual double scoreTrajectory(Trajectory &traj) = 0;
-
-  double getScale() {
-    return scale_;
-  }
-
-  void setScale(double scale) {
-    scale_ = scale;
-  }
-
-  virtual ~TrajectoryCostFunction() {}
-
-protected:
-  TrajectoryCostFunction(double scale = 1.0): scale_(scale) {}
+  // helper functions, made static for easy unit testing
+  static double getScalingFactor(base_local_planner::Trajectory &traj, double scaling_speed, double max_trans_vel, double max_scaling_factor);
+  static double footprintCost(
+      const double& x,
+      const double& y,
+      const double& th,
+      double scale,
+      std::vector<geometry_msgs::Point> footprint_spec,
+      costmap_2d::Costmap2D* costmap,
+      base_local_planner::WorldModel* world_model);
+  virtual float getCost(unsigned int cx, unsigned int cy){ return costmap_->getCost(cx, cy); }
 
 private:
-  double scale_;
+  std::vector<geometry_msgs::Point> footprint_spec_;
+  base_local_planner::WorldModel* world_model_;
+  bool sum_scores_;
+  //footprint scaling with velocity;
+  double max_scaling_factor_, scaling_speed_;
 };
 
-}
-
-#endif /* TRAJECTORYCOSTFUNCTION_H_ */
+} /* namespace base_local_planner */
+#endif /* OBSTACLE_COST_FUNCTION_H_ */

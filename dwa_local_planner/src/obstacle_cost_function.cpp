@@ -35,18 +35,26 @@
  * Author: TKruse
  *********************************************************************/
 
-#include <base_local_planner/obstacle_cost_function.h>
+#include <dwa_local_planner/obstacle_cost_function.h>
 #include <cmath>
 #include <Eigen/Core>
 #include <ros/console.h>
 
-namespace base_local_planner {
+PLUGINLIB_EXPORT_CLASS(dwa_local_planner::ObstacleCostFunction, dwa_local_planner::TrajectoryCostFunction)
 
-ObstacleCostFunction::ObstacleCostFunction(costmap_2d::Costmap2D* costmap) 
-    : costmap_(costmap), sum_scores_(false) {
-  if (costmap != NULL) {
+using base_local_planner::Trajectory;
+
+namespace dwa_local_planner {
+
+void ObstacleCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util) {
+    TrajectoryCostFunction::initialize(name, planner_util);
+
     world_model_ = new base_local_planner::CostmapModel(*costmap_);
-  }
+
+    ros::NodeHandle nh("~/" + name_);
+    nh.param("sum_scores", sum_scores_, false);
+    nh.param("max_scaling_factor", max_scaling_factor_, 0.2);
+    nh.param("scaling_speed", scaling_speed_, 0.25);
 }
 
 ObstacleCostFunction::~ObstacleCostFunction() {
@@ -56,24 +64,17 @@ ObstacleCostFunction::~ObstacleCostFunction() {
 }
 
 
-void ObstacleCostFunction::setParams(double max_trans_vel, double max_scaling_factor, double scaling_speed) {
-  // TODO: move this to prepare if possible
-  max_trans_vel_ = max_trans_vel;
-  max_scaling_factor_ = max_scaling_factor;
-  scaling_speed_ = scaling_speed;
-}
-
-void ObstacleCostFunction::setFootprint(std::vector<geometry_msgs::Point> footprint_spec) {
+bool ObstacleCostFunction::prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec) {
   footprint_spec_ = footprint_spec;
-}
-
-bool ObstacleCostFunction::prepare() {
   return true;
 }
 
 double ObstacleCostFunction::scoreTrajectory(Trajectory &traj) {
   double cost = 0;
-  double scale = getScalingFactor(traj, scaling_speed_, max_trans_vel_, max_scaling_factor_);
+  double max_trans_vel = planner_util_->getCurrentLimits().max_trans_vel;
+  double scale = getScalingFactor(traj, scaling_speed_, max_trans_vel, max_scaling_factor_);
   double px, py, pth;
   if (footprint_spec_.size() == 0) {
     // Bug, should never happen
@@ -96,7 +97,7 @@ double ObstacleCostFunction::scoreTrajectory(Trajectory &traj) {
     else
         cost = f_cost;
   }
-  return cost;
+  return cost * costmap_->getResolution();
 }
 
 double ObstacleCostFunction::getScalingFactor(Trajectory &traj, double scaling_speed, double max_trans_vel, double max_scaling_factor) {
@@ -141,4 +142,4 @@ double ObstacleCostFunction::footprintCost (
   return occ_cost;
 }
 
-} /* namespace base_local_planner */
+} /* namespace dwa_local_planner */

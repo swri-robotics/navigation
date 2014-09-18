@@ -35,30 +35,55 @@
  * Author: TKruse
  *********************************************************************/
 
-#ifndef PREFER_FORWARD_COST_FUNCTION_H_
-#define PREFER_FORWARD_COST_FUNCTION_H_
+#ifndef OSCILLATION_COST_FUNCTION_H_
+#define OSCILLATION_COST_FUNCTION_H_
 
-#include <base_local_planner/trajectory_cost_function.h>
+#include <dwa_local_planner/trajectory_cost_function.h>
+#include <Eigen/Core>
 
-namespace base_local_planner {
+namespace dwa_local_planner {
 
-class PreferForwardCostFunction: public base_local_planner::TrajectoryCostFunction {
+class OscillationCostFunction: public dwa_local_planner::TrajectoryCostFunction {
 public:
+  void initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util);
+  virtual ~OscillationCostFunction();
 
-  PreferForwardCostFunction(double penalty) : penalty_(penalty) {}
-  ~PreferForwardCostFunction() {}
+  double scoreTrajectory(base_local_planner::Trajectory &traj);
 
-  double scoreTrajectory(Trajectory &traj);
+  bool prepare(tf::Stamped<tf::Pose> global_pose,
+      tf::Stamped<tf::Pose> global_vel,
+      std::vector<geometry_msgs::Point> footprint_spec);
 
-  bool prepare() {return true;};
+  /**
+   * @brief  Reset the oscillation flags for the local planner
+   */
+  virtual void reset();
 
-  void setPenalty(double penalty) {
-    penalty_ = penalty;
-  }
+
+  void debrief(base_local_planner::Trajectory* traj);
 
 private:
-  double penalty_;
+
+  void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
+
+  /**
+   * @brief  Given a trajectory that's selected, set flags if needed to
+   * prevent the robot from oscillating
+   * @param  t The selected trajectory
+   * @return True if a flag was set, false otherwise
+   */
+  bool setOscillationFlags(base_local_planner::Trajectory* t, double min_vel_trans);
+
+  // flags
+  bool strafe_pos_only_, strafe_neg_only_, strafing_pos_, strafing_neg_;
+  bool rot_pos_only_, rot_neg_only_, rotating_pos_, rotating_neg_;
+  bool forward_pos_only_, forward_neg_only_, forward_pos_, forward_neg_;
+
+  // param
+  double oscillation_reset_dist_, oscillation_reset_angle_;
+
+  Eigen::Vector3f pos_, prev_stationary_pos_;
 };
 
-} /* namespace base_local_planner */
-#endif /* PREFER_FORWARD_COST_FUNCTION_H_ */
+} /* namespace dwa_local_planner */
+#endif /* OSCILLATION_COST_FUNCTION_H_ */
