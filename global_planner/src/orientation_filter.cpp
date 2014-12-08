@@ -47,7 +47,9 @@ void OrientationFilter::processPath(const geometry_msgs::PoseStamped& start,
             }
             // ROS_INFO("%f %f", path[i].pose.position.x, path[i].pose.position.y);
             
-            path[0].pose.orientation = start.pose.orientation;
+            if(i==0){
+                path[0].pose.orientation = start.pose.orientation;
+            }
             interpolate(path, i, n-1);
             break;           
     }
