@@ -87,7 +87,7 @@ namespace dwa_local_planner {
   }
 
   DWAPlannerROS::DWAPlannerROS() : initialized_(false),
-      odom_helper_("odom"), setup_(false) {
+      odom_helper_("odom"), dsrv_(NULL), setup_(false) {
 
   }
 
@@ -116,6 +116,8 @@ namespace dwa_local_planner {
       {
         odom_helper_.setOdomTopic( odom_topic_ );
       }
+      
+      private_nh.param( "automatic_rotate_at_end", automatic_rotate_at_end_ , true);
       
       initialized_ = true;
 
@@ -169,7 +171,8 @@ namespace dwa_local_planner {
 
   DWAPlannerROS::~DWAPlannerROS(){
     //make sure to clean things up
-    delete dsrv_;
+    if(dsrv_)
+        delete dsrv_;
   }
 
 
@@ -247,16 +250,20 @@ namespace dwa_local_planner {
   }
 
 
-
-
   bool DWAPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel) {
-    // dispatches to either dwa sampling control or stop and rotate control, depending on whether we have been close enough to goal
     if ( ! costmap_ros_->getRobotPose(current_pose_)) {
       ROS_ERROR("Could not get robot pose");
       return false;
     }
+    
+    return computeVelocityCommands(current_pose_, cmd_vel);
+  }
+
+  bool DWAPlannerROS::computeVelocityCommands(tf::Stamped<tf::Pose>& global_pose, geometry_msgs::Twist& cmd_vel) {
+    // dispatches to either dwa sampling control or stop and rotate control, depending on whether we have been close enough to goal
+
     std::vector<geometry_msgs::PoseStamped> transformed_plan;
-    if ( ! planner_util_.getLocalPlan(current_pose_, transformed_plan)) {
+    if ( ! planner_util_.getLocalPlan(global_pose, transformed_plan)) {
       ROS_ERROR("Could not get local plan");
       return false;
     }
@@ -269,9 +276,9 @@ namespace dwa_local_planner {
     ROS_DEBUG_NAMED("dwa_local_planner", "Received a transformed plan with %zu points.", transformed_plan.size());
 
     // update plan in dwa_planner even if we just stop and rotate, to allow checkTrajectory
-    dp_->updatePlanAndLocalCosts(current_pose_, transformed_plan);
+    dp_->updatePlanAndLocalCosts(global_pose, transformed_plan);
 
-    if (latchedStopRotateController_.isPositionReached(&planner_util_, current_pose_)) {
+    if (automatic_rotate_at_end_ && latchedStopRotateController_.isPositionReached(&planner_util_, global_pose)) {
       //publish an empty plan because we've reached our goal position
       std::vector<geometry_msgs::PoseStamped> local_plan;
       std::vector<geometry_msgs::PoseStamped> transformed_plan;
@@ -284,10 +291,10 @@ namespace dwa_local_planner {
           dp_->getSimPeriod(),
           &planner_util_,
           odom_helper_,
-          current_pose_,
+          global_pose,
           boost::bind(&DWAPlanner::checkTrajectory, dp_, _1, _2, _3));
     } else {
-      bool isOk = dwaComputeVelocityCommands(current_pose_, cmd_vel);
+      bool isOk = dwaComputeVelocityCommands(global_pose, cmd_vel);
       if (isOk) {
         publishGlobalPlan(transformed_plan);
       } else {
@@ -298,6 +305,40 @@ namespace dwa_local_planner {
       return isOk;
     }
   }
+  
+  double DWAPlannerROS::scoreTrajectory(double x, double y, double theta, 
+                             double vx, double vy, double vtheta,
+                             double cvx, double cvy, double cvtheta)
+ {
+    Eigen::Vector3f pos(x, y, theta);
+    Eigen::Vector3f vel(vx, vy, vtheta);
+    Eigen::Vector3f cvel(cvx, cvy, cvtheta);
+    
+    geometry_msgs::PoseStamped pose;
+    pose.header.frame_id = "/map";
+    pose.pose.position.x = x;
+    pose.pose.position.y = y;
+    pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,theta);
+    
+    tf::poseStampedMsgToTF(pose, current_pose_);
+    
+    tf::Stamped<tf::Pose> robot_vel;
+    pose.pose.position.x = vx;
+    pose.pose.position.y = vy;
+    pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,vtheta);
+    tf::poseStampedMsgToTF(pose, robot_vel);
+    
+    std::vector<geometry_msgs::PoseStamped> transformed_plan;
+    if ( ! planner_util_.getLocalPlan(current_pose_, transformed_plan)) {
+      ROS_ERROR("Could not get local plan");
+      return false;
+    }
 
+    // update plan in dwa_planner 
+    dp_->updatePlanAndLocalCosts(current_pose_, transformed_plan);
+    dp_->prepare(current_pose_, robot_vel, costmap_ros_->getRobotFootprint());
+  
+    return dp_->scoreTrajectory(pos, vel, cvel);
+ }
 
 };

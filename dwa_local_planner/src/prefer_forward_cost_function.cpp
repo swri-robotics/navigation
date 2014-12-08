@@ -5,11 +5,22 @@
  *      Author: tkruse
  */
 
-#include <base_local_planner/prefer_forward_cost_function.h>
+#include <dwa_local_planner/prefer_forward_cost_function.h>
 
 #include <math.h>
 
-namespace base_local_planner {
+PLUGINLIB_EXPORT_CLASS(dwa_local_planner::PreferForwardCostFunction, dwa_local_planner::TrajectoryCostFunction)
+
+
+using base_local_planner::Trajectory;
+
+namespace dwa_local_planner {
+
+void PreferForwardCostFunction::initialize(std::string name, base_local_planner::LocalPlannerUtil *planner_util)
+{
+    TrajectoryCostFunction::initialize(name, planner_util);
+    penalty_ = 1.0;
+}
 
 
 double PreferForwardCostFunction::scoreTrajectory(Trajectory &traj) {
@@ -25,4 +36,4 @@ double PreferForwardCostFunction::scoreTrajectory(Trajectory &traj) {
   return fabs(traj.thetav_) * 10;
 }
 
-} /* namespace base_local_planner */
+} /* namespace dwa_local_planner */

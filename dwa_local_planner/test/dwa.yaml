@@ -1,0 +1,4 @@
+local/origin_x: -5.0
+local/origin_y: -5.0
+local/plugins: []
+planner/critics: [PathAlign]

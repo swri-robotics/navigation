@@ -55,12 +55,12 @@
 #include <base_local_planner/local_planner_util.h>
 #include <base_local_planner/simple_trajectory_generator.h>
 
-#include <base_local_planner/oscillation_cost_function.h>
-#include <base_local_planner/map_grid_cost_function.h>
-#include <base_local_planner/obstacle_cost_function.h>
-#include <base_local_planner/simple_scored_sampling_planner.h>
+#include <dwa_local_planner/trajectory_cost_function.h>
+#include <dwa_local_planner/simple_scored_sampling_planner.h>
+#include <dwa_local_planner/scale_manager.h>
 
 #include <nav_msgs/Path.h>
+#include <pluginlib/class_loader.h>
 
 namespace dwa_local_planner {
   /**
@@ -98,9 +98,21 @@ namespace dwa_local_planner {
           const Eigen::Vector3f pos,
           const Eigen::Vector3f vel,
           const Eigen::Vector3f vel_samples);
+          
+      /**
+       * @brief  Score a trajectory for a position/velocity pair
+       * @param pos The robot's position
+       * @param vel The robot's velocity
+       * @param vel_samples The desired velocity
+       * @return True if the trajectory is valid, false otherwise
+       */
+      double scoreTrajectory(
+          const Eigen::Vector3f pos,
+          const Eigen::Vector3f vel,
+          const Eigen::Vector3f vel_samples);
 
       /**
-       * @brief Given the current position and velocity of the robot, find the best trajectory to exectue
+       * @brief Given the current position and velocity of the robot, find the best trajectory to execute
        * @param global_pose The current position of the robot 
        * @param global_vel The current velocity of the robot 
        * @param drive_velocities The velocities to send to the robot base
@@ -110,6 +122,18 @@ namespace dwa_local_planner {
           tf::Stamped<tf::Pose> global_pose,
           tf::Stamped<tf::Pose> global_vel,
           tf::Stamped<tf::Pose>& drive_velocities,
+          std::vector<geometry_msgs::Point> footprint_spec);
+
+      /**
+       * @brief Pass the current position and velocity of the robot to the trajectory cost functions
+       * @param global_pose The current position of the robot 
+       * @param global_vel The current velocity of the robot 
+       * @param drive_velocities The velocities to send to the robot base
+       * @return The highest scoring trajectory. A cost >= 0 means the trajectory is legal to execute.
+       */          
+      void prepare(
+          tf::Stamped<tf::Pose> global_pose,
+          tf::Stamped<tf::Pose> global_vel,
           std::vector<geometry_msgs::Point> footprint_spec);
 
       /**
@@ -143,17 +167,24 @@ namespace dwa_local_planner {
       bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
 
     private:
+      void reset() { 
+        COST_ITERATOR(critic, critics_){ (*critic)->reset(); }
+      }
+
+      void resetOldParameters(ros::NodeHandle& nh);
 
       base_local_planner::LocalPlannerUtil *planner_util_;
 
       double stop_time_buffer_; ///< @brief How long before hitting something we're going to enforce that the robot stop
       double pdist_scale_, gdist_scale_, occdist_scale_;
+      double porient_scale_, gorient_scale_;
       Eigen::Vector3f vsamples_;
 
       double sim_period_;///< @brief The number of seconds to use to compute max/min vels for dwa
       base_local_planner::Trajectory result_traj_;
 
       double forward_point_distance_;
+      double scaled_path_factor_;
 
       std::vector<geometry_msgs::PoseStamped> global_plan_;
 
@@ -169,14 +200,13 @@ namespace dwa_local_planner {
 
       // see constructor body for explanations
       base_local_planner::SimpleTrajectoryGenerator generator_;
-      base_local_planner::OscillationCostFunction oscillation_costs_;
-      base_local_planner::ObstacleCostFunction obstacle_costs_;
-      base_local_planner::MapGridCostFunction path_costs_;
-      base_local_planner::MapGridCostFunction goal_costs_;
-      base_local_planner::MapGridCostFunction goal_front_costs_;
-      base_local_planner::MapGridCostFunction alignment_costs_;
 
-      base_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
+      pluginlib::ClassLoader<TrajectoryCostFunction> plugin_loader_;
+      std::vector<CostFunctionPointer > critics_;
+
+      dwa_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
+
+      dwa_local_planner::ScaleManager scale_manager_;
   };
 };
 #endif

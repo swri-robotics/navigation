@@ -127,6 +127,8 @@ void SimpleTrajectoryGenerator::initialise(
           //ROS_DEBUG("Sample %f, %f, %f", vel_samp[0], vel_samp[1], vel_samp[2]);
           sample_params_.push_back(vel_samp);
         }
+        vel_samp[2] = 0.0;
+        sample_params_.push_back(vel_samp);
         th_it.reset();
       }
       y_it.reset();
